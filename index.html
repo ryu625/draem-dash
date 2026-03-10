@@ -181,10 +181,13 @@ body{min-height:100dvh}
 .al-fill.prev{background:var(--s2);opacity:.6}
 .al-dur{font-size:.42rem;color:var(--t3);margin-left:2px}
 .al-sessions{margin-top:.3rem}
-.al-s{display:flex;align-items:center;gap:.35rem;padding:.25rem 0;border-bottom:1px solid rgba(255,255,255,.03);font-size:.5rem}
+.al-s{display:flex;align-items:center;gap:.35rem;padding:.25rem 0;border-bottom:1px solid rgba(255,255,255,.03);font-size:.5rem;cursor:pointer}
+.al-s:active{background:var(--s1)}
 .al-s-date{color:var(--t3);width:38px;flex-shrink:0}
 .al-s-cat{color:var(--gold);font-weight:600;width:42px;flex-shrink:0}
 .al-s-time{color:var(--t2)}
+.al-s-del{color:var(--t3);font-size:.45rem;margin-left:auto;padding:.1rem .2rem}
+.al-s-del:active{color:var(--red)}
 .al-toggle{font-size:.45rem;color:var(--t3);cursor:pointer;text-align:center;padding:.25rem}
 .al-toggle:active{color:var(--t2)}
 .al-add-btn{font-size:.48rem;color:var(--gold);cursor:pointer;padding:.15rem .35rem;border:1px solid rgba(196,160,89,.3);border-radius:4px;white-space:nowrap}
@@ -739,10 +742,11 @@ function renderLog(){
 
   const recent=logs.slice().reverse();
   const shown=showAllSessions?recent.slice(0,30):recent.slice(0,5);
-  let sessions=shown.map(l=>{
+  let sessions=shown.map((l,j)=>{
+    const idx=logs.length-1-j;
     const d=new Date(l.ts||Date.now());
     const hm=String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
-    return `<div class="al-s"><div class="al-s-date">${l.date.slice(5)} ${l.manual?'手動':hm}</div><div class="al-s-cat">${l.cat}</div><div class="al-s-time">${fmtTime(l.sec)}</div></div>`;
+    return `<div class="al-s" data-li="${idx}"><div class="al-s-date">${l.date.slice(5)} ${l.manual?'手動':hm}</div><div class="al-s-cat">${l.cat}</div><div class="al-s-time">${fmtTime(l.sec)}</div><div class="al-s-del" data-li="${idx}">✕</div></div>`;
   }).join('');
 
   const toggleBtn=recent.length>5?`<div class="al-toggle" id="alToggle">${showAllSessions?'▲ 閉じる':'▼ もっと見る ('+recent.length+'件)'}</div>`:'';
@@ -753,6 +757,13 @@ function renderLog(){
   if(tb)tb.addEventListener('click',()=>{showAllSessions=!showAllSessions;renderLog();});
   const ab=$('#alAddBtn');
   if(ab)ab.addEventListener('click',()=>openModal('log'));
+  $('#actLog').querySelectorAll('.al-s').forEach(el=>{
+    const idx=+el.dataset.li;
+    el.addEventListener('click',e=>{if(!e.target.classList.contains('al-s-del'))openModal('logEdit',idx);});
+  });
+  $('#actLog').querySelectorAll('.al-s-del').forEach(el=>{
+    el.addEventListener('click',e=>{e.stopPropagation();if(confirm('この記録を削除しますか？')){DB.timerLog.splice(+el.dataset.li,1);save();render();}});
+  });
 }
 
 // ── Weekly Review Engine ──
@@ -1025,6 +1036,32 @@ function openModal(type,extra){
       if(sec<60){alert('1分以上入力してください');return;}
       const ts=new Date(date).getTime();
       DB.timerLog.push({date,cat,sec,ts,manual:true});
+      if(!DB.days.includes(date))DB.days.push(date);
+      save();render();
+      $('#modalBg').classList.remove('show');
+    };
+  }else if(type==='logEdit'){
+    const idx=extra;
+    const l=DB.timerLog[idx];
+    if(!l)return;
+    const h=Math.floor(l.sec/3600),m=Math.floor(l.sec%3600/60);
+    const catOpts=TCATS.map(c=>`<option value="${c}" ${c===l.cat?'selected':''}>${c}</option>`).join('');
+    $('#mTitle').textContent='作業時間を編集';
+    $('#mFields').innerHTML=`
+      <div class="mf"><label>カテゴリ</label><select id="lCat" style="width:100%;background:var(--s1);border:1px solid rgba(255,255,255,.1);border-radius:6px;padding:.35rem;color:var(--t1);font-size:.75rem;font-family:inherit;outline:none">${catOpts}</select></div>
+      <div class="mf"><label>日付</label><input type="date" id="lDate" value="${l.date}"></div>
+      <div style="display:flex;gap:.4rem">
+        <div class="mf" style="flex:1"><label>時間 (h)</label><input type="number" id="lH" min="0" max="12" value="${h}"></div>
+        <div class="mf" style="flex:1"><label>分 (m)</label><input type="number" id="lM" min="0" max="59" value="${m}"></div>
+      </div>`;
+    $('#mSave').onclick=()=>{
+      const cat=$('#lCat').value;
+      const date=$('#lDate').value||l.date;
+      const nh=+(($('#lH').value)||0);
+      const nm=+(($('#lM').value)||0);
+      const sec=nh*3600+nm*60;
+      if(sec<60){alert('1分以上入力してください');return;}
+      DB.timerLog[idx]={date,cat,sec,ts:l.ts||new Date(date).getTime(),manual:true};
       if(!DB.days.includes(date))DB.days.push(date);
       save();render();
       $('#modalBg').classList.remove('show');
