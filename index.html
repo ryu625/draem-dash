@@ -224,6 +224,28 @@ async function syncPull(){const c=gc();if(!c.id||!c.token)return;ss('wait');try{
 let st=null;function syncPush(){const c=gc();if(!c.id||!c.token)return;clearTimeout(st);st=setTimeout(async()=>{ss('wait');try{await fetch('https://api.github.com/gists/'+c.id,{method:'PATCH',headers:{'Authorization':'token '+c.token,'Content-Type':'application/json'},body:JSON.stringify({files:{'draem.json':{content:JSON.stringify(DB)}}})});ss('ok');}catch{ss('ng');}},1500);}
 function save(){saveDB();syncPush();}
 
+// ── YouTube Auto KPI ──
+const YT_KEY='draem_yt';
+function ytConf(){try{return JSON.parse(localStorage.getItem(YT_KEY))||{}}catch{return{}}}
+async function fetchYT(){
+  const c=ytConf();
+  if(!c.apiKey||!c.channelId)return;
+  try{
+    const r=await fetch(`https://www.googleapis.com/youtube/v3/channels?part=statistics&id=${c.channelId}&key=${c.apiKey}`);
+    if(!r.ok)return;
+    const d=await r.json();
+    const s=d.items?.[0]?.statistics;
+    if(!s)return;
+    const prev={...DB.kpi};
+    DB.kpi.subscribers=+(s.subscriberCount||0);
+    DB.kpi.total_plays=+(s.viewCount||0);
+    DB.kpi.songs=+(s.videoCount||0);
+    if(prev.subscribers!==DB.kpi.subscribers||prev.total_plays!==DB.kpi.total_plays||prev.songs!==DB.kpi.songs){
+      save();render();
+    }
+  }catch{}
+}
+
 // ── Timer ──
 function timerRunning(){return DB.timerStart!=null}
 function timerElapsed(){return timerRunning()?Math.floor((Date.now()-DB.timerStart)/1000):0}
@@ -346,10 +368,10 @@ function openModal(type){
     $('#mFields').innerHTML=`<div class="mf"><label>あなたのミッション</label><textarea id="missionText" rows="3">${esc(DB.mission||'')}</textarea></div><div style="font-size:.5rem;color:var(--t3)">1行目=メイン、2行目=サブ</div>`;
     $('#mSave').onclick=()=>{DB.mission=$('#missionText').value;save();render();$('#modalBg').classList.remove('show');};
   }else if(type==='sync'){
-    const c=gc();
-    $('#mTitle').textContent='Sync 設定';
-    $('#mFields').innerHTML=`<div class="mf"><label>Gist ID</label><input id="sG" value="${c.id||''}"></div><div class="mf"><label>GitHub Token</label><input id="sT" type="password" value="${c.token||''}"></div>`;
-    $('#mSave').onclick=()=>{localStorage.setItem(GK,JSON.stringify({id:$('#sG').value.trim(),token:$('#sT').value.trim()}));$('#modalBg').classList.remove('show');syncPull();};
+    const c=gc(),y=ytConf();
+    $('#mTitle').textContent='設定';
+    $('#mFields').innerHTML=`<div style="font-size:.55rem;color:var(--gold);margin-bottom:.3rem;font-weight:600">SYNC (Gist)</div><div class="mf"><label>Gist ID</label><input id="sG" value="${c.id||''}"></div><div class="mf"><label>GitHub Token</label><input id="sT" type="password" value="${c.token||''}"></div><div style="font-size:.55rem;color:var(--gold);margin:.5rem 0 .3rem;font-weight:600">YOUTUBE AUTO KPI</div><div class="mf"><label>API Key</label><input id="yK" type="password" value="${y.apiKey||''}"></div><div class="mf"><label>Channel ID</label><input id="yC" value="${y.channelId||''}"></div>`;
+    $('#mSave').onclick=()=>{localStorage.setItem(GK,JSON.stringify({id:$('#sG').value.trim(),token:$('#sT').value.trim()}));localStorage.setItem(YT_KEY,JSON.stringify({apiKey:$('#yK').value.trim(),channelId:$('#yC').value.trim()}));$('#modalBg').classList.remove('show');syncPull();fetchYT();};
   }
   $('#modalBg').classList.add('show');
 }
@@ -370,6 +392,7 @@ $('#dayB').textContent=`${today.getMonth()+1}/${today.getDate()} (${dn[today.get
 $('#ftr').textContent=`Day ${dayN}`;
 render();
 syncPull();
+fetchYT();
 </script>
 </body>
 </html>
