@@ -11,7 +11,7 @@
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{--bg:#0D0906;--s1:rgba(255,255,255,.04);--s2:rgba(255,255,255,.07);--gold:#C4A059;--gl:#DFC07A;--gd:#8B6F47;--gdim:rgba(196,160,89,.15);--t1:#E8DDD0;--t2:#A89585;--t3:#6D5A4A;--grn:#5CB870;--red:#C45B5B}
-html{background:var(--bg);color:var(--t1);font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue','Hiragino Sans',sans-serif;-webkit-font-smoothing:antialiased;font-size:15px}
+html{background:var(--bg);color:var(--t1);font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue','Hiragino Sans',sans-serif;-webkit-font-smoothing:antialiased;font-size:var(--fs,15px)}
 body{min-height:100dvh}
 .w{max-width:480px;margin:0 auto;padding:1.5rem 1.25rem 4rem}
 .hdr{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:.8rem}
@@ -19,6 +19,9 @@ body{min-height:100dvh}
 .sync-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-left:4px;vertical-align:middle;cursor:pointer}
 .sync-dot.ok{background:var(--grn)}.sync-dot.ng{background:var(--red)}.sync-dot.wait{background:var(--gold);animation:blink 1s infinite}.sync-dot.off{background:var(--t3);opacity:.4}
 .day-b{font-size:.6rem;color:var(--t3);letter-spacing:.06em}
+.zoom{display:flex;gap:2px;align-items:center}
+.zoom-btn{width:22px;height:22px;border-radius:4px;border:1px solid rgba(255,255,255,.1);background:var(--s1);color:var(--t3);font-size:.55rem;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:inherit;font-weight:600}
+.zoom-btn:active{background:var(--s2);color:var(--t1)}
 
 /* Dream Countdown */
 .dream-bar{text-align:center;margin-bottom:.8rem;padding:.4rem 0}
@@ -205,7 +208,10 @@ body{min-height:100dvh}
 <div class="w">
   <div class="hdr">
     <div class="logo">dræm.<span class="sync-dot" id="syncDot"></span></div>
-    <div class="day-b" id="dayB"></div>
+    <div style="display:flex;align-items:baseline;gap:.5rem">
+      <div class="zoom"><button class="zoom-btn" id="zoomOut">A-</button><button class="zoom-btn" id="zoomIn">A+</button></div>
+      <div class="day-b" id="dayB"></div>
+    </div>
   </div>
 
   <div class="dream-bar" id="dreamBar"></div>
@@ -648,9 +654,10 @@ function renderTimer(){
     }).join('');
   }
 
-  $('#timerBox').innerHTML=`<div class="timer-row"><button class="timer-btn ${running?'running':''}" id="timerToggle">${running?'⏸':'▶'}</button><div class="timer-time">${fmtTime(sessionTime)}</div><div class="timer-info"><div class="timer-week">${running?'<b>'+DB.timerCat+'</b> 計測中':'今週 <b>'+fmtTime(wt)+'</b> / '+goalH+'h'}</div><div style="height:3px;border-radius:2px;background:var(--s1);margin-top:3px;overflow:hidden"><div style="height:100%;width:${pct}%;border-radius:2px;background:linear-gradient(90deg,var(--gd),var(--gold))"></div></div></div></div><div class="timer-cats">${catBtns}</div>${stats?'<div class="timer-stats">'+stats+'</div>':''}`;
+  $('#timerBox').innerHTML=`<div class="timer-row"><button class="timer-btn ${running?'running':''}" id="timerToggle">${running?'⏸':'▶'}</button><div class="timer-time">${fmtTime(sessionTime)}</div><div class="timer-info"><div class="timer-week">${running?'<b>'+DB.timerCat+'</b> 計測中':'今週 <b>'+fmtTime(wt)+'</b> / '+goalH+'h'}</div><div style="height:3px;border-radius:2px;background:var(--s1);margin-top:3px;overflow:hidden"><div style="height:100%;width:${pct}%;border-radius:2px;background:linear-gradient(90deg,var(--gd),var(--gold))"></div></div></div><div class="al-add-btn" id="timerManual" style="flex-shrink:0">✏️</div></div><div class="timer-cats">${catBtns}</div>${stats?'<div class="timer-stats">'+stats+'</div>':''}`;
 
   $('#timerToggle').addEventListener('click',toggleTimer);
+  $('#timerManual').addEventListener('click',()=>openModal('log'));
   $('#timerBox').querySelectorAll('.tc').forEach(el=>el.addEventListener('click',()=>setTimerCat(el.dataset.tc)));
 }
 
@@ -1044,6 +1051,14 @@ $('#gearBtn').addEventListener('click',()=>openModal('sync'));
 
 // Timer auto-update
 setInterval(()=>{if(timerRunning())renderTimer();},10000);
+
+// ── Zoom ──
+const ZK='draem_zoom';
+let zoomLv=+(localStorage.getItem(ZK)||15);
+function applyZoom(){document.documentElement.style.setProperty('--fs',zoomLv+'px');localStorage.setItem(ZK,zoomLv);}
+applyZoom();
+$('#zoomIn').addEventListener('click',()=>{if(zoomLv<22){zoomLv+=1;applyZoom();}});
+$('#zoomOut').addEventListener('click',()=>{if(zoomLv>12){zoomLv-=1;applyZoom();}});
 
 // Init
 const dn=['日','月','火','水','木','金','土'];
