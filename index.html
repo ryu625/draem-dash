@@ -6,6 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#0D0906">
+<link rel="manifest" href="manifest.json">
 <title>dræm.</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -393,6 +394,7 @@ $('#ftr').textContent=`Day ${dayN}`;
 render();
 syncPull();
 fetchYT();
+if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js');
 </script>
 </body>
 </html>
