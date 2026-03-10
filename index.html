@@ -181,12 +181,13 @@ body{min-height:100dvh}
 .al-fill.prev{background:var(--s2);opacity:.6}
 .al-dur{font-size:.42rem;color:var(--t3);margin-left:2px}
 .al-sessions{margin-top:.3rem}
-.al-s{display:flex;align-items:center;gap:.35rem;padding:.25rem 0;border-bottom:1px solid rgba(255,255,255,.03);font-size:.5rem;cursor:pointer}
-.al-s:active{background:var(--s1)}
+.al-s{display:flex;align-items:center;gap:.35rem;padding:.25rem 0;border-bottom:1px solid rgba(255,255,255,.03);font-size:.5rem}
 .al-s-date{color:var(--t3);width:38px;flex-shrink:0}
 .al-s-cat{color:var(--gold);font-weight:600;width:42px;flex-shrink:0}
 .al-s-time{color:var(--t2)}
-.al-s-del{color:var(--t3);font-size:.45rem;margin-left:auto;padding:.1rem .2rem}
+.al-s-edit{color:var(--gold);font-size:.55rem;padding:.15rem .25rem;cursor:pointer}
+.al-s-edit:active{opacity:.7}
+.al-s-del{color:var(--t3);font-size:.45rem;padding:.1rem .2rem;cursor:pointer}
 .al-s-del:active{color:var(--red)}
 .al-toggle{font-size:.45rem;color:var(--t3);cursor:pointer;text-align:center;padding:.25rem}
 .al-toggle:active{color:var(--t2)}
@@ -746,7 +747,7 @@ function renderLog(){
     const idx=logs.length-1-j;
     const d=new Date(l.ts||Date.now());
     const hm=String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
-    return `<div class="al-s" data-li="${idx}"><div class="al-s-date">${l.date.slice(5)} ${l.manual?'手動':hm}</div><div class="al-s-cat">${l.cat}</div><div class="al-s-time">${fmtTime(l.sec)}</div><div class="al-s-del" data-li="${idx}">✕</div></div>`;
+    return `<div class="al-s"><div class="al-s-date">${l.date.slice(5)} ${l.manual?'手動':hm}</div><div class="al-s-cat">${l.cat}</div><div class="al-s-time">${fmtTime(l.sec)}</div><div class="al-s-edit" data-li="${idx}">✎</div><div class="al-s-del" data-li="${idx}">✕</div></div>`;
   }).join('');
 
   const toggleBtn=recent.length>5?`<div class="al-toggle" id="alToggle">${showAllSessions?'▲ 閉じる':'▼ もっと見る ('+recent.length+'件)'}</div>`:'';
@@ -757,12 +758,11 @@ function renderLog(){
   if(tb)tb.addEventListener('click',()=>{showAllSessions=!showAllSessions;renderLog();});
   const ab=$('#alAddBtn');
   if(ab)ab.addEventListener('click',()=>openModal('log'));
-  $('#actLog').querySelectorAll('.al-s').forEach(el=>{
-    const idx=+el.dataset.li;
-    el.addEventListener('click',e=>{if(!e.target.classList.contains('al-s-del'))openModal('logEdit',idx);});
+  $('#actLog').querySelectorAll('.al-s-edit').forEach(el=>{
+    el.addEventListener('click',e=>{e.stopPropagation();const idx=+el.dataset.li;if(idx>=0&&DB.timerLog[idx])openModal('logEdit',idx);});
   });
   $('#actLog').querySelectorAll('.al-s-del').forEach(el=>{
-    el.addEventListener('click',e=>{e.stopPropagation();if(confirm('この記録を削除しますか？')){DB.timerLog.splice(+el.dataset.li,1);save();render();}});
+    el.addEventListener('click',e=>{e.stopPropagation();if(confirm('この記録を削除しますか？')){const idx=+el.dataset.li;if(idx>=0)DB.timerLog.splice(idx,1);save();render();}});
   });
 }
 
