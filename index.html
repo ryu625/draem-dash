@@ -784,6 +784,8 @@ function renderWeeklyReview(){
   const doneTasks=DB.tasks.filter(t=>t.done&&t.doneDate>=new Date(new Date(today).setDate(today.getDate()-today.getDay())).toISOString().slice(0,10)).length;
   const musicCats=['🎵作曲','🎛️MIX','🎬MV','🎤ボーカル','🚀リリース'];
   const musicTime=Object.entries(thisW).filter(([c])=>musicCats.some(mc=>c.includes(mc))).reduce((s,[,v])=>s+v,0);
+  const neutralCats=['💼コンサル','🎓JBG','仕事'];
+  const neutralTime=Object.entries(thisW).filter(([c])=>neutralCats.some(n=>c.includes(n))).reduce((s,[,v])=>s+v,0);
 
   let items=[];
 
@@ -794,8 +796,9 @@ function renderWeeklyReview(){
   // vs last week
   if(prevTotal>0){const diff=Math.round((thisTotal-prevTotal)/prevTotal*100);items.push({c:diff>=0?'good':'warn',t:`先週比 <b>${diff>=0?'+':''}${diff}%</b> (${fmtTime(prevTotal)} → ${fmtTime(thisTotal)})`});}
 
-  // Music ratio
-  if(thisTotal>1800){const pct=Math.round(musicTime/thisTotal*100);items.push({c:pct>=50?'good':'warn',t:`音楽制作の比率: <b>${pct}%</b> ${pct<50?'— もっと音楽に時間を':'— Good balance'}`});}
+  // Music ratio（仕事・コンサルなどを除いた比率）
+  const baseTotal=Math.max(1,thisTotal-neutralTime);
+  if(baseTotal>1800){const pct=Math.round(musicTime/baseTotal*100);items.push({c:pct>=50?'good':'warn',t:`音楽制作の比率 (仕事/コンサル除く): <b>${pct}%</b> ${pct<50?'— もっと音楽に時間を':'— Good balance'}`});}
 
   // Pace
   if(released<Math.floor(expectedSongs))items.push({c:'warn',t:`ペース遅れ: <b>${released}曲</b> / 期待 ${Math.round(expectedSongs*10)/10}曲 — 制作加速が必要`});
@@ -836,7 +839,9 @@ function calcFocus(){
   const sk=streak();
   const musicCats=['🎵作曲','🎛️MIX','🎬MV','🎤ボーカル','🚀リリース'];
   const musicTime=Object.entries(bc).filter(([c])=>musicCats.some(mc=>c.includes(mc))).reduce((s,[,v])=>s+v,0);
-  const nonMusicTime=wt-musicTime;
+  const neutralCats=['💼コンサル','🎓JBG','仕事'];
+  const neutralTime=Object.entries(bc).filter(([c])=>neutralCats.some(n=>c.includes(n))).reduce((s,[,v])=>s+v,0);
+  const nonMusicTime=Math.max(0,wt-musicTime-neutralTime);
 
   // Priority decision tree
   if(overdue.length){return{text:overdue[0].text,sub:`⚠️ ${overdue.length}件の期限超過タスク — 最優先`,color:'red'};}
