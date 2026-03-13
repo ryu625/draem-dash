@@ -425,6 +425,7 @@ if(!DB.bestStreak)DB.bestStreak=0;
 if(!DB.kpiLog)DB.kpiLog=[];           // [{date,subscribers,total_plays,revenue,songs}]
 if(!DB.weeklyLog)DB.weeklyLog=[];     // [{weekStart,totalSec,byCat,kpi}]
 if(!DB.suggestionLog)DB.suggestionLog=[]; // [{id,date,text,type,context,effective,evaluatedDate}]
+if(!DB.snsLog)DB.snsLog=[];           // [{weekStart,ig,tt}] Instagram/TikTok投稿数
 function SONGS(){return DB.songs||DEF_SONGS;}
 
 // ── Logging Engine ──
@@ -539,11 +540,19 @@ function calcPredictions(){
   const bestDow=byday.indexOf(Math.max(...byday));
   const dowNames=['日','月','火','水','木','金','土'];
 
+  // Best hour of day (from ts timestamp)
+  const byhour=Array(24).fill(0);
+  logs.forEach(l=>{if(l.ts){const h=new Date(l.ts).getHours();byhour[h]+=l.sec;}});
+  const bestHour=byhour.indexOf(Math.max(...byhour));
+  const bestHourTotal=byhour[bestHour];
+
   return {
     sub:{days:daysToTarget(sub,G.subTarget,subRate),fmt:fmtDays(daysToTarget(sub,G.subTarget,subRate)),onTrack:subRate>0&&daysToTarget(sub,G.subTarget,subRate)<=dreamDaysLeft},
     plays:{days:daysToTarget(plays,G.playTarget,playRate),fmt:fmtDays(daysToTarget(plays,G.playTarget,playRate)),onTrack:playRate>0&&daysToTarget(plays,G.playTarget,playRate)<=dreamDaysLeft},
     rev:{days:daysToTarget(rev,G.revenueTarget,revRate),fmt:fmtDays(daysToTarget(rev,G.revenueTarget,revRate)),onTrack:revRate>0&&daysToTarget(rev,G.revenueTarget,revRate)<=dreamDaysLeft},
-    weeklyAvg,bestDow:byday[bestDow]>3600?dowNames[bestDow]:null,
+    weeklyAvg,
+    bestDow:byday[bestDow]>3600?dowNames[bestDow]:null,
+    bestHour:bestHourTotal>3600?bestHour:null,
   };
 }
 
@@ -579,6 +588,11 @@ function calcInsights(){
   // Work pattern
   const pred=calcPredictions();
   if(pred.bestDow)insights.push(`最も作業多い曜日: <b>${pred.bestDow}曜日</b>`);
+  if(pred.bestHour!==null){const h=pred.bestHour;const label=h<12?'午前'+h+'時':h<18?'午後'+(h-12)+'時':'夜'+h+'時';insights.push(`最も生産的な時間帯: <b>${label}台</b>`);}
+  // SNS投稿ペース
+  const snsLog=DB.snsLog||[];
+  const ws=getWeekStart();const thisSns=snsLog.find(s=>s.weekStart===ws);
+  if(thisSns&&(thisSns.ig||0)+(thisSns.tt||0)===0)insights.push(`今週のSNS投稿が0件 — 登録者増加に影響する可能性`);
   if(pred.weeklyAvg>0&&pred.weeklyAvg<(DB.goals||DEF_GOALS).weeklyHours*0.7)insights.push(`直近4週の週平均: <b>${pred.weeklyAvg.toFixed(1)}h</b> — 目標の${Math.round(pred.weeklyAvg/(DB.goals||DEF_GOALS).weeklyHours*100)}%`);
 
   return insights;
@@ -713,6 +727,7 @@ async function fetchYT(){
   const c=ytConf();
   if(!c.apiKey||!c.channelId)return;
   try{
+    // チャンネル統計
     const r=await fetch(`https://www.googleapis.com/youtube/v3/channels?part=statistics&id=${c.channelId}&key=${c.apiKey}`);
     if(!r.ok)return;
     const d=await r.json();
@@ -722,6 +737,28 @@ async function fetchYT(){
     DB.kpi.subscribers=+(s.subscriberCount||0);
     DB.kpi.total_plays=+(s.viewCount||0);
     DB.kpi.songs=+(s.videoCount||0);
+
+    // 直近の投稿頻度（過去28日の動画数）
+    try{
+      const since=new Date(today);since.setDate(since.getDate()-28);
+      const sinceISO=since.toISOString();
+      const vr=await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${c.channelId}&type=video&order=date&publishedAfter=${sinceISO}&maxResults=50&key=${c.apiKey}`);
+      if(vr.ok){
+        const vd=await vr.json();
+        const recentVideos=vd.items||[];
+        if(!DB.ytUploadLog)DB.ytUploadLog=[];
+        // 今日分を記録
+        const existing=DB.ytUploadLog.find(e=>e.date===todayStr);
+        if(!existing)DB.ytUploadLog.push({date:todayStr,count28d:recentVideos.length});
+        else existing.count28d=recentVideos.length;
+        // 90日超は削除
+        const cut=new Date(today);cut.setDate(today.getDate()-90);
+        const cutStr=cut.toISOString().slice(0,10);
+        DB.ytUploadLog=DB.ytUploadLog.filter(e=>e.date>=cutStr);
+        DB.kpi.ytUploads28d=recentVideos.length;
+      }
+    }catch{}
+
     if(prev.subscribers!==DB.kpi.subscribers||prev.total_plays!==DB.kpi.total_plays||prev.songs!==DB.kpi.songs){
       save();render();
     }
@@ -946,7 +983,26 @@ function renderWeeklyReview(){
     items.push({c:avgMood>=3?'good':avgMood>=2?'tip':'warn',t:`今週の気分: ${weekRefs.map(r=>moods[r.mood||0]).join(' ')} → <b>${trend} ${moodLabel}</b>`});
   }
 
-  $('#weeklyReview').innerHTML=`<div class="wr"><div class="wr-head">📊 Week ${Math.ceil(dayN/7)} — ${todayStr.slice(5)} 時点</div>${items.map(i=>`<div class="wr-item ${i.c}">${i.t}</div>`).join('')}</div>`;
+  // SNS入力欄
+  const ws2=getWeekStart();
+  if(!DB.snsLog)DB.snsLog=[];
+  const thisSns=DB.snsLog.find(s=>s.weekStart===ws2)||{weekStart:ws2,ig:0,tt:0};
+  if(!DB.snsLog.find(s=>s.weekStart===ws2))DB.snsLog.push(thisSns);
+  const snsHtml=`<div class="wr-item tip" style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap">
+    <span style="flex:1;min-width:5rem">📱 今週の投稿数</span>
+    <span style="font-size:.5rem;color:var(--t3)">Instagram</span>
+    <input id="igCount" type="number" min="0" value="${thisSns.ig||0}" style="width:2.5rem;background:var(--s2);border:1px solid rgba(255,255,255,.1);border-radius:4px;color:var(--t1);font-size:.6rem;padding:.1rem .3rem;text-align:center">
+    <span style="font-size:.5rem;color:var(--t3)">TikTok</span>
+    <input id="ttCount" type="number" min="0" value="${thisSns.tt||0}" style="width:2.5rem;background:var(--s2);border:1px solid rgba(255,255,255,.1);border-radius:4px;color:var(--t1);font-size:.6rem;padding:.1rem .3rem;text-align:center">
+  </div>`;
+  $('#weeklyReview').innerHTML=`<div class="wr"><div class="wr-head">📊 Week ${Math.ceil(dayN/7)} — ${todayStr.slice(5)} 時点</div>${items.map(i=>`<div class="wr-item ${i.c}">${i.t}</div>`).join('')}${snsHtml}</div>`;
+  // SNS入力イベント
+  ['ig','tt'].forEach(k=>{
+    const el=$('#'+k+'Count');
+    if(el)el.addEventListener('change',()=>{
+      thisSns[k]=+el.value;save();
+    });
+  });
 }
 
 function recordDay(){if(!DB.days.includes(todayStr))DB.days.push(todayStr);}
@@ -1428,6 +1484,15 @@ function buildWeeklySummary(){
     `- 登録者: ${(DB.kpi?.subscribers||0).toLocaleString()} / 目標${G.subTarget.toLocaleString()} (現ペース: ${pred.sub.fmt}後)`,
     `- 再生数: ${(DB.kpi?.total_plays||0).toLocaleString()} / 目標${G.playTarget.toLocaleString()} (現ペース: ${pred.plays.fmt}後)`,
     `- 収益: ¥${(DB.kpi?.revenue||0).toLocaleString()} / 目標¥${G.revenueTarget.toLocaleString()}`,
+    `- YouTube投稿(28日): ${DB.kpi?.ytUploads28d??'—'}本`,
+    ``,
+    `## SNS投稿数（今週）`,
+    `- Instagram: ${(()=>{const s=DB.snsLog?.find(s=>s.weekStart===ws);return s?.ig??0;})()}投稿`,
+    `- TikTok: ${(()=>{const s=DB.snsLog?.find(s=>s.weekStart===ws);return s?.tt??0;})()}投稿`,
+    ``,
+    `## 作業パターン`,
+    pred.bestDow?`- 最も作業多い曜日: ${pred.bestDow}曜日`:'- 曜日データ蓄積中',
+    pred.bestHour!==null?`- 最も生産的な時間帯: ${pred.bestHour}時台`:'- 時間帯データ蓄積中',
     ``,
     `## 楽曲進捗`,
     `- リリース済: ${released}曲`,
@@ -1440,6 +1505,7 @@ function buildWeeklySummary(){
     `- 累計作業時間: ${Math.floor((DB.timerLog||[]).reduce((s,l)=>s+l.sec,0)/3600)}h`,
     `- 活動日数: ${DB.days?.length||0}日`,
     `- 週次ログ: ${DB.weeklyLog?.length||0}週分`,
+    `- SNSログ: ${DB.snsLog?.length||0}週分`,
     ``,
     `---`,
     `上記データをもとに：`,
