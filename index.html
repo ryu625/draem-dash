@@ -435,6 +435,53 @@ function showCeleb(){
   setTimeout(()=>{el.style.transition='opacity .5s';el.style.opacity='0';setTimeout(()=>{el.remove();celebQueue.shift();showCeleb();},500);},1800);
 }
 
+// ── Prediction Engine ──
+function calcPredictions(){
+  const G=DB.goals||DEF_GOALS;
+  const sub=DB.kpi?.subscribers||0;
+  const plays=DB.kpi?.total_plays||0;
+  const rev=DB.kpi?.revenue||0;
+  const logs=DB.timerLog||[];
+  const dn=Math.max(1,dayN);
+
+  // Growth rate per day (from day 1)
+  const subRate=sub/dn;
+  const playRate=plays/dn;
+  const revRate=rev/dn;
+
+  function daysToTarget(current,target,rate){
+    if(current>=target)return 0;
+    if(rate<=0)return null;
+    return Math.ceil((target-current)/rate);
+  }
+  function fmtDays(d){
+    if(d===null)return '—';
+    if(d===0)return '達成済';
+    if(d<30)return d+'日';
+    if(d<365)return Math.round(d/30)+'ヶ月';
+    return (d/365).toFixed(1)+'年';
+  }
+
+  // Weekly hours avg (last 4 weeks)
+  const fw=new Date(today);fw.setDate(fw.getDate()-28);
+  const fwStr=fw.toISOString().slice(0,10);
+  const recentH=logs.filter(l=>l.date>=fwStr).reduce((s,l)=>s+l.sec,0)/3600;
+  const weeklyAvg=recentH/4;
+
+  // Best day of week
+  const byday=[0,0,0,0,0,0,0];
+  logs.forEach(l=>{const dow=new Date(l.date).getDay();byday[dow]+=l.sec;});
+  const bestDow=byday.indexOf(Math.max(...byday));
+  const dowNames=['日','月','火','水','木','金','土'];
+
+  return {
+    sub:{days:daysToTarget(sub,G.subTarget,subRate),fmt:fmtDays(daysToTarget(sub,G.subTarget,subRate)),onTrack:subRate>0&&daysToTarget(sub,G.subTarget,subRate)<=dreamDaysLeft},
+    plays:{days:daysToTarget(plays,G.playTarget,playRate),fmt:fmtDays(daysToTarget(plays,G.playTarget,playRate)),onTrack:playRate>0&&daysToTarget(plays,G.playTarget,playRate)<=dreamDaysLeft},
+    rev:{days:daysToTarget(rev,G.revenueTarget,revRate),fmt:fmtDays(daysToTarget(rev,G.revenueTarget,revRate)),onTrack:revRate>0&&daysToTarget(rev,G.revenueTarget,revRate)<=dreamDaysLeft},
+    weeklyAvg,bestDow:byday[bestDow]>3600?dowNames[bestDow]:null,
+  };
+}
+
 // ── Insight Engine ──
 function calcInsights(){
   const insights=[];
@@ -463,6 +510,11 @@ function calcInsights(){
   const prevM=milestones.filter(m=>m<=totalH).pop();
   if(prevM&&totalH-prevM<3)insights.push(`🎉 累計 <b>${prevM}時間</b> 突破！`);
   if(nextM)insights.push(`次のマイルストーン: <b>${nextM}h</b> (あと${nextM-totalH}h)`);
+
+  // Work pattern
+  const pred=calcPredictions();
+  if(pred.bestDow)insights.push(`最も作業多い曜日: <b>${pred.bestDow}曜日</b>`);
+  if(pred.weeklyAvg>0&&pred.weeklyAvg<(DB.goals||DEF_GOALS).weeklyHours*0.7)insights.push(`直近4週の週平均: <b>${pred.weeklyAvg.toFixed(1)}h</b> — 目標の${Math.round(pred.weeklyAvg/(DB.goals||DEF_GOALS).weeklyHours*100)}%`);
 
   return insights;
 }
@@ -872,7 +924,11 @@ function calcFocus(){
 function render(){
   // Dream countdown
   const rp=calcRealProgress();
-  $('#dreamBar').innerHTML=`<div style="display:flex;justify-content:space-between;align-items:baseline;gap:.5rem"><div><div class="dream-pct">${rp.realPct}%</div><div class="dream-label">実績 — 曲・登録者・再生・収益・作業時間</div></div><div style="text-align:right;font-size:.5rem;color:var(--t3)"><div>${dreamPct}%</div><div class="dream-label">経過日数</div></div></div><div class="dream-track"><div class="dream-fill" style="width:${rp.realPct}%"></div></div><div class="dream-row"><span>曲 <b>${rp.released}</b>/${(DB.goals||DEF_GOALS).yearSongs}</span><span>登録者 <b>${(DB.kpi?.subscribers||0).toLocaleString()}</b></span><span>再生 <b>${(DB.kpi?.total_plays||0).toLocaleString()}</b></span><span>作業 <b>${rp.totalSec}h</b></span></div><div class="dream-track" style="margin-top:.25rem;height:2px;opacity:.5"><div class="dream-fill" style="width:${dreamPct}%"></div></div><div class="dream-label" style="margin-top:.15rem">2029年まで あと <b style="color:var(--gl)">${dreamDaysLeft}</b> 日 — Day ${dayN}（経過）</div>`;
+  const pred=calcPredictions();
+  const paceRatio=dreamPct>0?rp.realPct/dreamPct:1;
+  const paceLabel=rp.realPct>=(DB.kpi?.subscribers||0)===0?'—':paceRatio>=0.9?'ON TRACK ✓':paceRatio>=0.5?'CATCHING UP':'BEHIND';
+  const paceColor=paceRatio>=0.9?'var(--gl)':paceRatio>=0.5?'var(--gold)':'var(--red)';
+  $('#dreamBar').innerHTML=`<div style="display:flex;justify-content:space-between;align-items:baseline;gap:.5rem"><div><div class="dream-pct">${rp.realPct}%</div><div class="dream-label">実績 — 曲・登録者・再生・収益・作業時間</div></div><div style="text-align:right"><div style="font-size:.6rem;font-weight:700;color:${paceColor}">${paceLabel}</div><div style="font-size:.5rem;color:var(--t3)">${dreamPct}% 経過</div></div></div><div class="dream-track"><div class="dream-fill" style="width:${rp.realPct}%"></div></div><div class="dream-row"><span>曲 <b>${rp.released}</b>/${(DB.goals||DEF_GOALS).yearSongs}</span><span>登録者 <b>${(DB.kpi?.subscribers||0).toLocaleString()}</b></span><span>再生 <b>${(DB.kpi?.total_plays||0).toLocaleString()}</b></span><span>作業 <b>${rp.totalSec}h</b></span></div><div class="dream-track" style="margin-top:.25rem;height:2px;opacity:.5"><div class="dream-fill" style="width:${dreamPct}%"></div></div><div class="dream-label" style="margin-top:.15rem">2029年まで あと <b style="color:var(--gl)">${dreamDaysLeft}</b> 日 — Day ${dayN}（経過）</div>`;
 
   // Daily quote (changes daily based on date)
   const qi=dayN%QUOTES.length;
@@ -961,8 +1017,17 @@ function render(){
   renderWeeklyReview();
 
   // KPI
-  const KD=[{k:'subscribers',l:'Subscribers',t:G.subTarget,f:v=>v.toLocaleString()},{k:'total_plays',l:'Plays',t:G.playTarget,f:v=>v.toLocaleString()},{k:'songs',l:'Songs',t:G.yearSongs,f:v=>v+''},{k:'revenue',l:'Revenue',t:G.revenueTarget,f:v=>'¥'+v.toLocaleString()}];
-  $('#kpiGrid').innerHTML=KD.map(d=>{const v=DB.kpi[d.k]||0;const p=Math.min(100,d.t>0?v/d.t*100:0);return`<div class="kpi"><div class="kpi-l">${d.l}</div><div class="kpi-v">${d.f(v)}</div><div class="kpi-t">/ ${d.f(d.t)}</div><div class="kpi-bar"><div class="kpi-fill" style="width:${p}%"></div></div></div>`;}).join('');
+  const KD=[
+    {k:'subscribers',l:'Subscribers',t:G.subTarget,f:v=>v.toLocaleString(),p:pred.sub},
+    {k:'total_plays',l:'Plays',t:G.playTarget,f:v=>v.toLocaleString(),p:pred.plays},
+    {k:'songs',l:'Songs',t:G.yearSongs,f:v=>v+'',p:null},
+    {k:'revenue',l:'Revenue',t:G.revenueTarget,f:v=>'¥'+v.toLocaleString(),p:pred.rev},
+  ];
+  $('#kpiGrid').innerHTML=KD.map(d=>{
+    const v=DB.kpi[d.k]||0;const p=Math.min(100,d.t>0?v/d.t*100:0);
+    const predHtml=d.p?`<div style="font-size:.45rem;color:${d.p.onTrack?'var(--gl)':'var(--red)'};margin-top:.1rem">${d.p.onTrack?'✓ On Track':'⚡ '+d.p.fmt+'後'}</div>`:'';
+    return`<div class="kpi"><div class="kpi-l">${d.l}</div><div class="kpi-v">${d.f(v)}</div><div class="kpi-t">/ ${d.f(d.t)}</div><div class="kpi-bar"><div class="kpi-fill" style="width:${p}%"></div></div>${predHtml}</div>`;
+  }).join('');
   $('#kpiGrid').querySelectorAll('.kpi').forEach(el=>el.addEventListener('click',()=>openModal('kpi')));
 
   // Phase (dynamic songs)
@@ -1156,6 +1221,9 @@ $('#gearBtn').addEventListener('click',()=>openModal('sync'));
 
 // Timer auto-update
 setInterval(()=>{if(timerRunning())renderTimer();},10000);
+
+// YouTube 30分おき自動更新
+setInterval(()=>{if(!document.hidden)fetchYT();},30*60*1000);
 
 // ── Zoom ──
 const ZK='draem_zoom';
