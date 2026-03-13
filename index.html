@@ -425,7 +425,7 @@ if(!DB.bestStreak)DB.bestStreak=0;
 if(!DB.kpiLog)DB.kpiLog=[];           // [{date,subscribers,total_plays,revenue,songs}]
 if(!DB.weeklyLog)DB.weeklyLog=[];     // [{weekStart,totalSec,byCat,kpi}]
 if(!DB.suggestionLog)DB.suggestionLog=[]; // [{id,date,text,type,context,effective,evaluatedDate}]
-if(!DB.snsLog)DB.snsLog=[];           // [{weekStart,ig,tt}] Instagram/TikTok投稿数
+if(!DB.snsLog)DB.snsLog=[];           // [{weekStart,x,nn}] X/ニコニコ投稿数
 function SONGS(){return DB.songs||DEF_SONGS;}
 
 // ── Logging Engine ──
@@ -986,22 +986,19 @@ function renderWeeklyReview(){
   // SNS入力欄
   const ws2=getWeekStart();
   if(!DB.snsLog)DB.snsLog=[];
-  const thisSns=DB.snsLog.find(s=>s.weekStart===ws2)||{weekStart:ws2,ig:0,tt:0};
+  const thisSns=DB.snsLog.find(s=>s.weekStart===ws2)||{weekStart:ws2,x:0,nn:0};
   if(!DB.snsLog.find(s=>s.weekStart===ws2))DB.snsLog.push(thisSns);
   const snsHtml=`<div class="wr-item tip" style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap">
     <span style="flex:1;min-width:5rem">📱 今週の投稿数</span>
-    <span style="font-size:.5rem;color:var(--t3)">Instagram</span>
-    <input id="igCount" type="number" min="0" value="${thisSns.ig||0}" style="width:2.5rem;background:var(--s2);border:1px solid rgba(255,255,255,.1);border-radius:4px;color:var(--t1);font-size:.6rem;padding:.1rem .3rem;text-align:center">
-    <span style="font-size:.5rem;color:var(--t3)">TikTok</span>
-    <input id="ttCount" type="number" min="0" value="${thisSns.tt||0}" style="width:2.5rem;background:var(--s2);border:1px solid rgba(255,255,255,.1);border-radius:4px;color:var(--t1);font-size:.6rem;padding:.1rem .3rem;text-align:center">
+    <span style="font-size:.5rem;color:var(--t3)">X</span>
+    <input id="xCount" type="number" min="0" value="${thisSns.x||0}" style="width:2.5rem;background:var(--s2);border:1px solid rgba(255,255,255,.1);border-radius:4px;color:var(--t1);font-size:.6rem;padding:.1rem .3rem;text-align:center">
+    <span style="font-size:.5rem;color:var(--t3)">ニコニコ</span>
+    <input id="nnCount" type="number" min="0" value="${thisSns.nn||0}" style="width:2.5rem;background:var(--s2);border:1px solid rgba(255,255,255,.1);border-radius:4px;color:var(--t1);font-size:.6rem;padding:.1rem .3rem;text-align:center">
   </div>`;
   $('#weeklyReview').innerHTML=`<div class="wr"><div class="wr-head">📊 Week ${Math.ceil(dayN/7)} — ${todayStr.slice(5)} 時点</div>${items.map(i=>`<div class="wr-item ${i.c}">${i.t}</div>`).join('')}${snsHtml}</div>`;
-  // SNS入力イベント
-  ['ig','tt'].forEach(k=>{
+  ['x','nn'].forEach(k=>{
     const el=$('#'+k+'Count');
-    if(el)el.addEventListener('change',()=>{
-      thisSns[k]=+el.value;save();
-    });
+    if(el)el.addEventListener('change',()=>{thisSns[k]=+el.value;save();});
   });
 }
 
@@ -1368,6 +1365,8 @@ function openModal(type,extra){
       <div style="font-size:.55rem;color:var(--gold);margin:.5rem 0 .3rem;font-weight:600">YOUTUBE AUTO KPI</div>
       <div class="mf"><label>API Key</label><input id="yK" type="password" value="${y.apiKey||''}"></div>
       <div class="mf"><label>Channel ID</label><input id="yC" value="${y.channelId||''}"></div>
+      <div style="font-size:.55rem;color:var(--gold);margin:.5rem 0 .3rem;font-weight:600">NICONICO AUTO KPI</div>
+      <div class="mf"><label>User ID</label><input id="nnU" value="${nnConf().userId||''}" placeholder="数字のみ (例: 12345678)"></div>
       <div style="font-size:.55rem;color:var(--gold);margin:.5rem 0 .3rem;font-weight:600">TOOLS</div>
       <div style="display:flex;gap:.4rem;margin-bottom:.4rem">
         <button id="btnGoals" style="flex:1;padding:.35rem;background:var(--gdim);color:var(--gold);border:1px solid rgba(196,160,89,.2);border-radius:6px;font-size:.55rem;cursor:pointer;font-family:inherit">🎯 目標設定</button>
@@ -1379,7 +1378,13 @@ function openModal(type,extra){
         <button id="btnExport" style="flex:1;padding:.35rem;background:var(--s2);color:var(--t2);border:1px solid rgba(255,255,255,.1);border-radius:6px;font-size:.6rem;cursor:pointer;font-family:inherit">⬇ エクスポート</button>
         <label style="flex:1;padding:.35rem;background:var(--s2);color:var(--t2);border:1px solid rgba(255,255,255,.1);border-radius:6px;font-size:.6rem;cursor:pointer;text-align:center;font-family:inherit">⬆ インポート<input type="file" id="fileImport" accept=".json" style="display:none"></label>
       </div>`;
-    $('#mSave').onclick=()=>{localStorage.setItem(GK,JSON.stringify({id:$('#sG').value.trim(),token:$('#sT').value.trim()}));localStorage.setItem(YT_KEY,JSON.stringify({apiKey:$('#yK').value.trim(),channelId:$('#yC').value.trim()}));$('#modalBg').classList.remove('show');syncPull();fetchYT();};
+    $('#mSave').onclick=()=>{
+      localStorage.setItem(GK,JSON.stringify({id:$('#sG').value.trim(),token:$('#sT').value.trim()}));
+      localStorage.setItem(YT_KEY,JSON.stringify({apiKey:$('#yK').value.trim(),channelId:$('#yC').value.trim()}));
+      localStorage.setItem(NN_KEY,JSON.stringify({userId:$('#nnU').value.trim()}));
+      $('#modalBg').classList.remove('show');
+      syncPull();fetchYT();fetchNN();
+    };
     setTimeout(()=>{
       const ex=$('#btnExport');if(ex)ex.addEventListener('click',exportData);
       const fi=$('#fileImport');if(fi)fi.addEventListener('change',e=>{if(e.target.files[0])importData(e.target.files[0]);});
@@ -1402,6 +1407,30 @@ setInterval(()=>{if(timerRunning())renderTimer();},10000);
 
 // YouTube 30分おき自動更新
 setInterval(()=>{if(!document.hidden)fetchYT();},30*60*1000);
+
+// ── Niconico Auto KPI ──
+const NN_KEY='draem_nn';
+function nnConf(){try{return JSON.parse(localStorage.getItem(NN_KEY))||{}}catch{return{}}}
+async function fetchNN(){
+  const c=nnConf();
+  if(!c.userId)return;
+  try{
+    const r=await fetch(`https://nvapi.nicovideo.jp/v1/users/${c.userId}`,{headers:{'X-Frontend-Id':'6'}});
+    if(!r.ok)return;
+    const d=await r.json();
+    const u=d?.data?.user;
+    if(!u)return;
+    if(!DB.kpi.nnFollowers||DB.kpi.nnFollowers!==u.followerCount){
+      DB.kpi.nnFollowers=u.followerCount||0;
+      // kpiLogに追記
+      const today_entry=DB.kpiLog.find(e=>e.date===todayStr);
+      if(today_entry)today_entry.nnFollowers=DB.kpi.nnFollowers;
+      save();render();
+    }
+  }catch{}
+}
+// ニコニコ30分おき自動更新
+setInterval(()=>{if(!document.hidden)fetchNN();},30*60*1000);
 
 // ── Zoom ──
 const ZK='draem_zoom';
@@ -1487,8 +1516,9 @@ function buildWeeklySummary(){
     `- YouTube投稿(28日): ${DB.kpi?.ytUploads28d??'—'}本`,
     ``,
     `## SNS投稿数（今週）`,
-    `- Instagram: ${(()=>{const s=DB.snsLog?.find(s=>s.weekStart===ws);return s?.ig??0;})()}投稿`,
-    `- TikTok: ${(()=>{const s=DB.snsLog?.find(s=>s.weekStart===ws);return s?.tt??0;})()}投稿`,
+    `- X: ${(()=>{const s=DB.snsLog?.find(s=>s.weekStart===ws);return s?.x??0;})()}投稿`,
+    `- ニコニコ動画: ${(()=>{const s=DB.snsLog?.find(s=>s.weekStart===ws);return s?.nn??0;})()}投稿`,
+    `- ニコニコフォロワー: ${DB.kpi?.nnFollowers??'未設定'}人`,
     ``,
     `## 作業パターン`,
     pred.bestDow?`- 最も作業多い曜日: ${pred.bestDow}曜日`:'- 曜日データ蓄積中',
@@ -1529,6 +1559,7 @@ $('#btnWeeklyCopy').addEventListener('click',()=>{
 render();
 syncPull();
 fetchYT();
+fetchNN();
 if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js');
 $('#syncDot').addEventListener('click',()=>{const c=gc();if(!c.id||!c.token){openModal('sync');}else{syncPull();}});
 {const c=gc();if(!c.id||!c.token)ss('off');}
