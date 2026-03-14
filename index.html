@@ -1535,8 +1535,10 @@ function buildWeeklySummary(){
   const avgSleepStr=sleepRefs.length?(sleepRefs.reduce((s,r)=>s+r.sleep,0)/sleepRefs.length).toFixed(1)+'h':'(未記録)';
 
   // 音楽活動内訳
+  const mCats=['🎵作曲','🎛️MIX','🎬MV','🎤ボーカル','🚀リリース'];
   const mCatsSum={};
-  musicCats.forEach(mc=>{const s=Object.entries(wl.reduce((m,l)=>{m[l.cat]=(m[l.cat]||0)+l.sec;return m;},{})).filter(([c])=>c.includes(mc)).reduce((a,[,v])=>a+v,0);if(s>0)mCatsSum[mc]=s;});
+  const wlByCat=wl.reduce((m,l)=>{m[l.cat]=(m[l.cat]||0)+l.sec;return m;},{});
+  mCats.forEach(mc=>{const s=Object.entries(wlByCat).filter(([c])=>c.includes(mc)).reduce((a,[,v])=>a+v,0);if(s>0)mCatsSum[mc]=s;});
   const totalMusicSec2=Object.values(mCatsSum).reduce((s,v)=>s+v,0);
   const musicBreakdownStr=totalMusicSec2>0?Object.entries(mCatsSum).sort((a,b)=>b[1]-a[1]).map(([c,s])=>`  ${c}: ${fmtTime(s)} (${Math.round(s/totalMusicSec2*100)}%)`).join('\n'):'  (記録なし)';
 
