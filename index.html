@@ -868,8 +868,9 @@ function filtered(){const wk=new Date(today);wk.setDate(wk.getDate()+7);const ws
 function prevWeekLogs(){
   const d=new Date(today);d.setDate(d.getDate()-d.getDay()-7);
   const ws=d.toISOString().slice(0,10);
-  d.setDate(d.getDate()+7);
-  const we=d.toISOString().slice(0,10);
+  // 今週と同じ経過日数分だけ比較（週途中 vs フル週にならないよう）
+  const sameDayPrev=new Date(d);sameDayPrev.setDate(d.getDate()+dayOfWeek+1);
+  const we=sameDayPrev.toISOString().slice(0,10);
   return (DB.timerLog||[]).filter(l=>l.date>=ws&&l.date<we);
 }
 function logsByCat(logs){
@@ -887,7 +888,7 @@ function renderLog(){
   const prevTotal=Object.values(prevW).reduce((a,b)=>a+b,0);
   const diff=prevTotal>0?Math.round((thisTotal-prevTotal)/prevTotal*100):0;
   const cmpCls=diff>0?'up':diff<0?'down':'flat';
-  const cmpText=diff>0?`▲ ${diff}% vs 先週`:diff<0?`▼ ${Math.abs(diff)}% vs 先週`:'± 先週と同等';
+  const cmpText=diff>0?`▲ ${diff}% vs 先週同時点`:diff<0?`▼ ${Math.abs(diff)}% vs 先週同時点`:'± 先週同時点と同等';
 
   const allCats=[...new Set([...Object.keys(thisW),...Object.keys(prevW)])];
   const maxSec=Math.max(1,...allCats.map(c=>Math.max(thisW[c]||0,prevW[c]||0)));
@@ -952,7 +953,7 @@ function renderWeeklyReview(){
   else{const remain=goalSec-thisTotal;const daysLeft=7-dayOfWeek;items.push({c:'warn',t:`今週 <b>${fmtTime(thisTotal)}</b> / ${G.weeklyHours}h — 残り${daysLeft}日で <b>${fmtTime(remain)}</b> 必要`});}
 
   // vs last week
-  if(prevTotal>0){const diff=Math.round((thisTotal-prevTotal)/prevTotal*100);items.push({c:diff>=0?'good':'warn',t:`先週比 <b>${diff>=0?'+':''}${diff}%</b> (${fmtTime(prevTotal)} → ${fmtTime(thisTotal)})`});}
+  if(prevTotal>0){const diff=Math.round((thisTotal-prevTotal)/prevTotal*100);items.push({c:diff>=0?'good':'warn',t:`先週同時点比 <b>${diff>=0?'+':''}${diff}%</b> (${fmtTime(prevTotal)} → ${fmtTime(thisTotal)})`});}
 
   // 音楽活動内の比率分析（コンサル・JBG除外した上で、音楽カテゴリ間の比率を見る）
   const musicBreakdown={};
