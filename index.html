@@ -1459,7 +1459,8 @@ async function fetchNN(){
   const c=nnConf();
   if(!c.userId)return;
   try{
-    const r=await fetch(`https://nvapi.nicovideo.jp/v1/users/${c.userId}`,{headers:{'X-Frontend-Id':'6'}});
+    // GitHub Actions経由でキャッシュされたJSONを読む（CORS回避）
+    const r=await fetch(`./data/niconico.json?t=${Date.now()}`);
     if(!r.ok)return;
     const d=await r.json();
     const u=d?.data?.user;
