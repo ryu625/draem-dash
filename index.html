@@ -263,7 +263,7 @@ body{min-height:100dvh}
     <button class="tk-btn" id="taskBtn">追加</button>
   </div>
   <div class="task-add" style="margin-top:.15rem">
-    <select class="sel" id="catSel" style="flex:1">
+    <select class="sel" id="catSel" style="flex:1.5">
       <option value="">カテゴリ</option>
       <option value="song">🎵 作曲</option>
       <option value="mix">🎛️ MIX</option>
@@ -278,6 +278,7 @@ body{min-height:100dvh}
       <option value="health">🏃 健康</option>
     </select>
     <input type="date" class="tk-inp" id="dueSel" style="flex:1;font-size:.55rem">
+    <button class="tk-btn" id="btnRecurringTask" style="background:transparent;color:var(--gold);border:1px solid rgba(196,160,89,.25);font-size:.7rem;padding:0 .5rem" title="リピートタスク">🔁</button>
   </div>
 
   <div class="sec">作曲フロー</div>
@@ -634,6 +635,9 @@ function processRecurring(){
   const todayDow=today.getDay();
   rc.forEach(r=>{
     if(!r.text||!r.interval)return;
+    // 開始日・終了日チェック
+    if(r.startDate&&todayStr<r.startDate)return;
+    if(r.endDate&&todayStr>r.endDate)return;
     // 曜日指定がある場合は今日が対象外ならスキップ
     if(r.days&&r.days.length>0&&!r.days.includes(todayDow))return;
     const last=r.lastCreated||'';
@@ -1522,13 +1526,29 @@ function openModal(type,extra){
     const rc=DB.recurring||[];
     const catOpts=TCATS.map(c=>`<option value="${c}">${c}</option>`).join('');
     const dowLabels=['日','月','火','水','木','金','土'];
-    let listHtml=rc.length?rc.map((r,i)=>{const dow=r.days&&r.days.length<7?r.days.map(d=>dowLabels[d]).join(''):'毎';return`<div class="rc-item"><div class="rc-text">${r.text}</div><div class="rc-int">${r.interval==='daily'?'毎日':'毎週'}${r.interval==='weekly'&&r.days?.length?'('+r.days.map(d=>dowLabels[d]).join('')+')':''}</div><div class="rc-del" data-ri="${i}">✕</div></div>`;}).join(''):'<div style="font-size:.5rem;color:var(--t3);padding:.3rem 0">まだ設定なし</div>';
+    const inpSt='width:100%;background:var(--s1);border:1px solid rgba(255,255,255,.1);border-radius:6px;padding:.35rem;color:var(--t1);font-size:.7rem;font-family:inherit;outline:none';
+    let listHtml=rc.length?rc.map((r,i)=>{
+      const freq=(r.interval==='daily'?'毎日':'毎週')+(r.days?.length&&r.days.length<7?'('+r.days.map(d=>dowLabels[d]).join('')+')':'');
+      const dateRange=(r.startDate||r.endDate)?`<span style="font-size:.45rem;color:var(--t3)">${r.startDate||'...'} 〜 ${r.endDate||'∞'}</span>`:'';
+      return`<div class="rc-item"><div style="flex:1;min-width:0"><div class="rc-text">${r.text}</div><div style="display:flex;gap:.4rem;align-items:center;flex-wrap:wrap">${dateRange}<span class="rc-int">${freq}</span></div></div><div class="rc-del" data-ri="${i}">✕</div></div>`;
+    }).join(''):'<div style="font-size:.5rem;color:var(--t3);padding:.3rem 0">まだ設定なし</div>';
     const dowCheckboxes=dowLabels.map((d,i)=>`<label style="font-size:.5rem;display:flex;flex-direction:column;align-items:center;gap:.15rem;cursor:pointer"><input type="checkbox" name="rcDay" value="${i}" checked style="accent-color:var(--gold)">${d}</label>`).join('');
     $('#mTitle').textContent='リピートタスク';
-    $('#mFields').innerHTML=`${listHtml}<div style="border-top:1px solid rgba(255,255,255,.06);margin:.4rem 0;padding-top:.4rem"><div class="mf"><label>タスク名</label><input id="rcText" placeholder="例: ボーカル練習"></div><div style="display:flex;gap:.4rem"><div class="mf" style="flex:1"><label>カテゴリ</label><select id="rcCat" style="width:100%;background:var(--s1);border:1px solid rgba(255,255,255,.1);border-radius:6px;padding:.35rem;color:var(--t1);font-size:.7rem;font-family:inherit">${catOpts}</select></div><div class="mf" style="flex:1"><label>頻度</label><select id="rcInt" style="width:100%;background:var(--s1);border:1px solid rgba(255,255,255,.1);border-radius:6px;padding:.35rem;color:var(--t1);font-size:.7rem;font-family:inherit"><option value="daily">毎日</option><option value="weekly">毎週</option></select></div></div><div class="mf"><label>曜日（毎日の除外・毎週の指定）</label><div style="display:flex;gap:.5rem;margin-top:.2rem">${dowCheckboxes}</div></div></div>`;
+    $('#mFields').innerHTML=`${listHtml}<div style="border-top:1px solid rgba(255,255,255,.06);margin:.4rem 0;padding-top:.4rem">
+<div class="mf"><label>タスク名</label><input id="rcText" placeholder="例: ボーカル練習"></div>
+<div style="display:flex;gap:.4rem">
+  <div class="mf" style="flex:1"><label>カテゴリ</label><select id="rcCat" style="${inpSt}">${catOpts}</select></div>
+  <div class="mf" style="flex:1"><label>頻度</label><select id="rcInt" style="${inpSt}"><option value="daily">毎日</option><option value="weekly">毎週</option></select></div>
+</div>
+<div style="display:flex;gap:.4rem">
+  <div class="mf" style="flex:1"><label>開始日</label><input type="date" id="rcStart" style="${inpSt}"></div>
+  <div class="mf" style="flex:1"><label>終了日</label><input type="date" id="rcEnd" style="${inpSt}"></div>
+</div>
+<div class="mf"><label>曜日</label><div style="display:flex;gap:.5rem;margin-top:.2rem">${dowCheckboxes}</div></div>
+</div>`;
     $('#mSave').onclick=()=>{
       const text=$('#rcText').value.trim();
-      if(text){const days=[...document.querySelectorAll('[name="rcDay"]:checked')].map(el=>+el.value);DB.recurring.push({text,cat:$('#rcCat').value,interval:$('#rcInt').value,days,lastCreated:''});processRecurring();}
+      if(text){const days=[...document.querySelectorAll('[name="rcDay"]:checked')].map(el=>+el.value);const startDate=$('#rcStart').value||'';const endDate=$('#rcEnd').value||'';DB.recurring.push({text,cat:$('#rcCat').value,interval:$('#rcInt').value,days,startDate,endDate,lastCreated:''});processRecurring();}
       save();render();$('#modalBg').classList.remove('show');
     };
     setTimeout(()=>{$('#mFields').querySelectorAll('.rc-del').forEach(el=>el.addEventListener('click',e=>{e.stopPropagation();DB.recurring.splice(+el.dataset.ri,1);save();openModal('recurring');}));},50);
@@ -1660,6 +1680,7 @@ $('#modalBg').addEventListener('click',e=>{if(e.target===$('#modalBg'))$('#modal
 function submitTask(){addTask($('#taskInp').value,$('#catSel').value,$('#dueSel').value);$('#taskInp').value='';$('#dueSel').value='';}
 $('#taskBtn').addEventListener('click',submitTask);
 $('#taskInp').addEventListener('keydown',e=>{if(e.key==='Enter')submitTask();});
+$('#btnRecurringTask').addEventListener('click',()=>openModal('recurring'));
 $('#gearBtn').addEventListener('click',()=>openModal('sync'));
 
 // Timer auto-update
