@@ -744,7 +744,7 @@ function mergeDB(remote){
     if(remote.timerCat&&remote.timerCat!==local.timerCat){local.timerCat=remote.timerCat;changed=true;}
     if(remote.songs&&JSON.stringify(remote.songs)!==JSON.stringify(local.songs)){local.songs=remote.songs;changed=true;}
     if(remote.goals&&JSON.stringify(remote.goals)!==JSON.stringify(local.goals)){local.goals=remote.goals;changed=true;}
-    if(remote.recurring&&JSON.stringify(remote.recurring)!==JSON.stringify(local.recurring)){local.recurring=remote.recurring;changed=true;}
+    if(remote.recurring&&JSON.stringify(remote.recurring)!==JSON.stringify(local.recurring)){const localRcMap=new Map((local.recurring||[]).map(r=>[r.text,r]));local.recurring=remote.recurring.map(rr=>{const lr=localRcMap.get(rr.text);return lr?{...rr,lastCreated:rr.lastCreated>lr.lastCreated?rr.lastCreated:lr.lastCreated}:rr;});changed=true;}
     if(remote.bestStreak>(local.bestStreak||0)){local.bestStreak=remote.bestStreak;changed=true;}
     if(remote.apiSettings&&JSON.stringify(remote.apiSettings)!==JSON.stringify(local.apiSettings)){local.apiSettings=remote.apiSettings;changed=true;}
   }
