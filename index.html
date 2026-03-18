@@ -1841,7 +1841,7 @@ function openModal(type,extra){
       <div class="mf"><label>Good 2</label><input id="gm2" value="${esc(entry.goods?.[1]||'')}" placeholder="よかったこと②"></div>
       <div class="mf"><label>Good 3</label><input id="gm3" value="${esc(entry.goods?.[2]||'')}" placeholder="よかったこと③"></div>
       <div class="mf"><label>改善（こうすればよかった）</label><input id="gm4" value="${esc(entry.improve||entry.mot||'')}" placeholder="こうすればよかった…"></div>
-      <div class="mf"><label>次アクション（明日やること）</label><input id="gm5" value="${esc(entry.action||'')}" placeholder="明日やること…"></div>
+      <div class="mf"><label>次アクション（今日やること）</label><input id="gm5" value="${esc(entry.action||'')}" placeholder="今日やること…"></div>
       ${histHtml}`;
     $('#mSave').onclick=()=>{
       if(!DB.goodmot)DB.goodmot=[];
