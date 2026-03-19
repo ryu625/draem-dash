@@ -1621,7 +1621,7 @@ function renderAsset(){
   const TARGET=55000000;
 
   // Portfolio allocation by age
-  const PALETTE=['#C4A059','#6abf8a','#7EB8D4','#D4896A'];
+  const PALETTE=['#C4A059','#6abf8a','#7EB8D4','#D4896A','#9B8FD4','#D4C06A','#6ABDB4','#D47A6A'];
   const portfolio=ageNow<35?[{name:'NASDAQ100',pct:70},{name:'FANG+',pct:30}]:ageNow<38?[{name:'オルカン',pct:50},{name:'NASDAQ100',pct:50}]:[{name:'オルカン',pct:70},{name:'債券',pct:30}];
 
   // Donut chart SVG
@@ -1630,7 +1630,7 @@ function renderAsset(){
     let offset=0,segs='';
     items.forEach((item,i)=>{
       const len=circ*item.pct/100;
-      segs+=`<circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="${PALETTE[i]}" stroke-width="10" stroke-dasharray="${len} ${circ-len}" stroke-dashoffset="${-offset}" transform="rotate(-90 ${cx} ${cy})"/>`;
+      segs+=`<circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="${PALETTE[i%PALETTE.length]}" stroke-width="10" stroke-dasharray="${len} ${circ-len}" stroke-dashoffset="${-offset}" transform="rotate(-90 ${cx} ${cy})"/>`;
       offset+=len;
     });
     return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">${segs}<circle cx="${cx}" cy="${cy}" r="18" fill="var(--bg)"/></svg>`;
