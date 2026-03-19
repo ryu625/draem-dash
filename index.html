@@ -1608,7 +1608,10 @@ function parseSBICSV(buf){
 
 function calcMonthlyInvest(salary){
   const takeHome=salary*0.72/14;
-  return Math.max(0,Math.round(takeHome-310000));
+  const monthly=Math.max(0,Math.round(takeHome-310000));
+  const bonus=Math.max(0,Math.round(takeHome));
+  const annual=Math.max(0,Math.round(salary*0.72-3720000));
+  return {monthly,bonus,annual};
 }
 
 function renderAsset(){
@@ -1637,7 +1640,8 @@ function renderAsset(){
   }
 
   // Salary input + monthly recommendation
-  const monthlyInvest=calcMonthlyInvest(salary);
+  const inv=calcMonthlyInvest(salary);
+  const monthlyInvest=inv.monthly;
   // ポートフォリオ比率で各ファンドの目標額を計算
   const TSUMITATE_MAX=100000;const SEICH_MAX=200000;
   const fundTargets=portfolio.map(p=>({name:p.name,target:Math.round(monthlyInvest*p.pct/100),color:PALETTE[portfolio.indexOf(p)%PALETTE.length]}));
@@ -1658,7 +1662,7 @@ function renderAsset(){
   if(seichItems.length)nisaRows.push({label:'成長投資枠',max:'上限20万/月',amount:seichItems.reduce((a,i)=>a+i.amount,0),detail:fmtItems(seichItems),color:seichItems[0].color});
   if(tokuteiItems.length)nisaRows.push({label:'特定口座',max:'',amount:tokuteiItems.reduce((a,i)=>a+i.amount,0),detail:fmtItems(tokuteiItems),color:PALETTE[2]});
   let html=`<div class="asset-salary-row"><span style="font-size:.5rem;color:var(--t3);white-space:nowrap">年収</span><input class="asset-salary-inp" id="assetSalaryInp" type="number" value="${salary}" placeholder="9800000"><span style="font-size:.5rem;color:var(--t3);white-space:nowrap">円</span></div>`;
-  html+=`<div class="asset-monthly"><div><div class="asset-monthly-l">今月の推奨投資額</div><div class="asset-monthly-v">¥${monthlyInvest.toLocaleString()}<span style="font-size:.5rem;font-weight:400;color:var(--t3)">/月</span></div></div><div style="display:flex;align-items:center;gap:.5rem">${donutChart(portfolio)}<div>${portfolio.map((p,i)=>`<div style="display:flex;align-items:center;gap:.3rem;margin-bottom:.2rem"><span style="width:7px;height:7px;border-radius:2px;background:${PALETTE[i%PALETTE.length]};flex-shrink:0;display:inline-block"></span><span style="font-size:.48rem;color:var(--t2)">${p.name} ${p.pct}%</span><span style="font-size:.48rem;color:var(--gold);font-weight:700">¥${Math.round(monthlyInvest*p.pct/100).toLocaleString()}</span></div>`).join('')}</div></div></div>`;
+  html+=`<div class="asset-monthly"><div><div class="asset-monthly-l">推奨投資額</div><div class="asset-monthly-v">¥${inv.annual.toLocaleString()}<span style="font-size:.5rem;font-weight:400;color:var(--t3)">/年</span></div><div style="font-size:.45rem;color:var(--t3);margin-top:.15rem">通常月 ¥${inv.monthly.toLocaleString()}×12 + ボーナス ¥${inv.bonus.toLocaleString()}×2</div></div><div style="display:flex;align-items:center;gap:.5rem">${donutChart(portfolio)}<div>${portfolio.map((p,i)=>`<div style="display:flex;align-items:center;gap:.3rem;margin-bottom:.2rem"><span style="width:7px;height:7px;border-radius:2px;background:${PALETTE[i%PALETTE.length]};flex-shrink:0;display:inline-block"></span><span style="font-size:.48rem;color:var(--t2)">${p.name} ${p.pct}%</span><span style="font-size:.48rem;color:var(--gold);font-weight:700">¥${Math.round(monthlyInvest*p.pct/100).toLocaleString()}</span></div>`).join('')}</div></div></div>`;
   html+=`<div style="background:var(--s1);border:1px solid rgba(255,255,255,.06);border-radius:8px;padding:.45rem .6rem;margin:.3rem 0">${nisaRows.map(r=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:.2rem 0;border-bottom:1px solid rgba(255,255,255,.04)"><div style="display:flex;align-items:center;gap:.3rem"><span style="width:6px;height:6px;border-radius:1px;background:${r.color};flex-shrink:0;display:inline-block"></span><div><div style="font-size:.52rem;font-weight:600;color:var(--t1)">${r.label}</div><div style="font-size:.45rem;color:var(--t3)">${r.detail}${r.max?' · '+r.max:''}</div></div></div><div style="font-size:.65rem;font-weight:700;color:var(--gold)">¥${r.amount.toLocaleString()}</div></div>`).join('')}</div>`;
 
   if(funds.length===0){
@@ -1675,8 +1679,9 @@ function renderAsset(){
       <div class="asset-tot-item"><div class="asset-l">損益</div><div class="asset-v asset-gain-line ${gainCls}">${gainSign}¥${totalGain.toLocaleString()}<span style="font-size:.5rem;margin-left:.2rem">(${gainSign}${gainPct}%)</span></div></div>
     </div>`;
 
+    const ylYrs=Math.floor(yearsLeft);const ylMos=Math.round((yearsLeft-ylYrs)*12);const ylStr=ylYrs>0?`${ylYrs}年${ylMos}ヶ月`:`${ylMos}ヶ月`;
     html+=`<div class="asset-proj">
-      <div class="asset-proj-row"><span style="font-size:.5rem;color:var(--t3)">予実グラフ（〜38歳）</span><span style="font-size:.5rem;color:var(--t3)">残り <b style="color:var(--t1)">${yearsLeft.toFixed(1)}年</b></span></div>
+      <div class="asset-proj-row"><span style="font-size:.5rem;color:var(--t3)">予実グラフ（〜38歳）</span><span style="font-size:.5rem;color:var(--t3)">残り <b style="color:var(--t1)">${ylStr}</b></span></div>
       ${(()=>{
         const BIRTH=new Date('1996-06-01');
         const startAge=29;const endAge=38;const steps=endAge-startAge;
@@ -1694,7 +1699,7 @@ function renderAsset(){
           if(projAge>=endAge)break;
           const yearsSinceBase=Math.round(projAge-startAge);
           const sal=Math.min(baseSalary+yearsSinceBase*salaryStep,salaryCap);
-          const annualInvest=Math.max(0,(sal*0.72/14-310000)*14);
+          const annualInvest=Math.max(0,sal*0.72-3720000);
           const r=projAge<35?0.12:0.10;
           fv=fv*(1+r)+annualInvest;
           futureProj.push({age:projAge+1,value:fv});
@@ -1711,8 +1716,8 @@ function renderAsset(){
         const actualPts=hist.length>=2?hist.map(h=>{const age=(new Date(h.date)-BIRTH)/(365.25*86400000);return `${toX(age).toFixed(1)},${toY(h.value).toFixed(1)}`;}).join(' '):'';
         // Y軸ラベル
         const yLabels=[0,2000,4000,6000].map(v=>`<text x="${PAD-1}" y="${toY(v*10000).toFixed(1)}" font-size="4.5" fill="rgba(255,255,255,.25)" text-anchor="end" dominant-baseline="middle">${v}</text>`).join('');
-        // X軸ラベル
-        const xLabels=[29,31,33,35,37,38].map(a=>`<text x="${toX(a).toFixed(1)}" y="${H+5}" font-size="4.5" fill="rgba(255,255,255,.3)" text-anchor="middle">${a}</text>`).join('');
+        // X軸ラベル（29〜38全て）
+        const xLabels=[29,30,31,32,33,34,35,36,37,38].map(a=>`<text x="${toX(a).toFixed(1)}" y="${H+5}" font-size="4.5" fill="rgba(255,255,255,.3)" text-anchor="middle">${a}</text>`).join('');
         // 現在位置マーカー
         const nowX=toX(curAge);const nowY=toY(curVal);
         return `<svg width="100%" viewBox="0 0 ${W} ${H+10}" style="overflow:visible;margin-top:.3rem">
