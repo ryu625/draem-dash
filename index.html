@@ -734,7 +734,10 @@ function mergeDB(remote){
     if(l&&r){merged.push(l.done&&!r.done?l:!l.done&&r.done?r:(l.id>=r.id?l:r));}
     else{merged.push(l||r);}
   });
-  if(JSON.stringify(merged)!==JSON.stringify(local.tasks)){local.tasks=merged;changed=true;}
+  // Dedup recurring tasks by text+created (keep first occurrence)
+  const rcSeen=new Set();
+  const deduped=merged.filter(t=>{if(!t.recurring)return true;const k=t.text+'|'+t.created;if(rcSeen.has(k))return false;rcSeen.add(k);return true;});
+  if(JSON.stringify(deduped)!==JSON.stringify(local.tasks)){local.tasks=deduped;changed=true;}
 
   // Merge timer logs: union by timestamp
   const localTs=new Set((local.timerLog||[]).map(l=>l.ts));
