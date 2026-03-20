@@ -1,4 +1,4 @@
-const V='v92';
+const V='v93';
 self.addEventListener('install',e=>{
   e.waitUntil(caches.open(V).then(c=>c.addAll(['./index.html','./',])));
   self.skipWaiting();
