@@ -1646,11 +1646,27 @@ function renderAsset(){
   const TSUMITATE_MAX=100000;const SEICH_MAX=200000;
   const fundTargets=portfolio.map(p=>({name:p.name,target:Math.round(monthlyInvest*p.pct/100),color:PALETTE[portfolio.indexOf(p)%PALETTE.length]}));
   function calcFundNisa(targets){
+    // FANG+(名前にFANGを含む) → 積立枠のみ
+    // NASDAQ100 → 成長枠のみ
+    // それ以外 → 積立→成長→特定の順
     const nisa=targets.map(()=>({tsumitate:0,seichi:0,tokutei:0}));
     let tl=TSUMITATE_MAX,sl=SEICH_MAX;
-    // FANG+(後ろのファンド=小さいpct)を積立枠に優先配分
-    const order=[...targets.keys()].reverse();
-    order.forEach(fi=>{let rem=targets[fi].target;const ta=Math.min(rem,tl);if(ta>0){nisa[fi].tsumitate=ta;tl-=ta;rem-=ta;}const sa=Math.min(rem,sl);if(sa>0){nisa[fi].seichi=sa;sl-=sa;rem-=sa;}if(rem>0)nisa[fi].tokutei=rem;});
+    targets.forEach((f,fi)=>{
+      let rem=f.target;
+      const isFang=f.name.toUpperCase().includes('FANG');
+      const isNasdaq=f.name.toUpperCase().includes('NASDAQ');
+      if(isFang){
+        const ta=Math.min(rem,tl);if(ta>0){nisa[fi].tsumitate=ta;tl-=ta;rem-=ta;}
+        if(rem>0)nisa[fi].tokutei=rem;
+      }else if(isNasdaq){
+        const sa=Math.min(rem,sl);if(sa>0){nisa[fi].seichi=sa;sl-=sa;rem-=sa;}
+        if(rem>0)nisa[fi].tokutei=rem;
+      }else{
+        const ta=Math.min(rem,tl);if(ta>0){nisa[fi].tsumitate=ta;tl-=ta;rem-=ta;}
+        const sa=Math.min(rem,sl);if(sa>0){nisa[fi].seichi=sa;sl-=sa;rem-=sa;}
+        if(rem>0)nisa[fi].tokutei=rem;
+      }
+    });
     return nisa;
   }
   const fundNisa=calcFundNisa(fundTargets);
