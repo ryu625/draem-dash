@@ -396,7 +396,7 @@ const QUOTES=[
 ];
 const $=s=>document.querySelector(s);
 const START=new Date('2026-02-11'),today=new Date();today.setHours(0,0,0,0);
-const todayStr=today.toISOString().slice(0,10);
+const todayStr=`${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
 const dayN=Math.floor((today-START)/864e5);
 const dayOfWeek=today.getDay();
 const dreamDaysLeft=Math.max(0,Math.floor((DREAM_DATE-today)/864e5));
@@ -1628,7 +1628,7 @@ function getMonthKey(d){return new Date(d).toISOString().slice(0,7);}
 function renderCommitments(){
   const el=$('#commitSection');if(!el)return;
   const commits=DB.commitments||[];
-  const todayKey=today.toISOString().slice(0,10);
+  const todayKey=todayStr;
   const weekKey=getWeekKey(today);
   const monthKey=getMonthKey(today);
   let html='';
