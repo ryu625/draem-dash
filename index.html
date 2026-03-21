@@ -895,6 +895,7 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)syncPull()
 // ── YouTube Auto KPI ──
 const YT_KEY='draem_yt';
 function ytConf(){try{return JSON.parse(localStorage.getItem(YT_KEY))||{}}catch{return{}}}
+function parseDuration(iso){const m=/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/.exec(iso||'');if(!m)return 0;return(+(m[1]||0))*3600+(+(m[2]||0))*60+(+(m[3]||0));}
 async function fetchYT(){
   const c=ytConf();
   if(!c.apiKey||!c.channelId)return;
@@ -907,27 +908,42 @@ async function fetchYT(){
     if(!s)return;
     const prev={...DB.kpi};
     DB.kpi.subscribers=+(s.subscriberCount||0);
-    DB.kpi.total_plays=+(s.viewCount||0);
     DB.kpi.songs=+(s.videoCount||0);
 
-    // 直近の投稿頻度（過去28日の動画数）
+    // 全動画取得 → Shorts(≤60s) / メイン(>60s) に分類
     try{
-      const since=new Date(today);since.setDate(since.getDate()-28);
-      const sinceISO=since.toISOString();
-      const vr=await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${c.channelId}&type=video&order=date&publishedAfter=${sinceISO}&maxResults=50&key=${c.apiKey}`);
+      const vr=await fetch(`https://www.googleapis.com/youtube/v3/search?part=id&channelId=${c.channelId}&type=video&order=date&maxResults=50&key=${c.apiKey}`);
       if(vr.ok){
         const vd=await vr.json();
-        const recentVideos=vd.items||[];
-        if(!DB.ytUploadLog)DB.ytUploadLog=[];
-        // 今日分を記録
-        const existing=DB.ytUploadLog.find(e=>e.date===todayStr);
-        if(!existing)DB.ytUploadLog.push({date:todayStr,count28d:recentVideos.length});
-        else existing.count28d=recentVideos.length;
-        // 90日超は削除
-        const cut=new Date(today);cut.setDate(today.getDate()-90);
-        const cutStr=cut.toISOString().slice(0,10);
-        DB.ytUploadLog=DB.ytUploadLog.filter(e=>e.date>=cutStr);
-        DB.kpi.ytUploads28d=recentVideos.length;
+        const ids=(vd.items||[]).map(v=>v.id?.videoId).filter(Boolean);
+        if(ids.length>0){
+          const dr=await fetch(`https://www.googleapis.com/youtube/v3/videos?part=contentDetails,statistics&id=${ids.join(',')}&key=${c.apiKey}`);
+          if(dr.ok){
+            const dd=await dr.json();
+            let shortViews=0,mainViews=0;
+            (dd.items||[]).forEach(v=>{
+              const secs=parseDuration(v.contentDetails?.duration);
+              const views=+(v.statistics?.viewCount||0);
+              if(secs<=60)shortViews+=views;else mainViews+=views;
+            });
+            DB.kpi.short_plays=shortViews;
+            DB.kpi.main_plays=mainViews;
+            DB.kpi.total_plays=shortViews+mainViews;
+          }
+        }
+        // 28日以内の投稿数
+        const since=new Date(today);since.setDate(since.getDate()-28);
+        const recentVr=await fetch(`https://www.googleapis.com/youtube/v3/search?part=id&channelId=${c.channelId}&type=video&order=date&publishedAfter=${since.toISOString()}&maxResults=50&key=${c.apiKey}`);
+        if(recentVr.ok){
+          const recentVd=await recentVr.json();
+          DB.kpi.ytUploads28d=(recentVd.items||[]).length;
+          if(!DB.ytUploadLog)DB.ytUploadLog=[];
+          const ex=DB.ytUploadLog.find(e=>e.date===todayStr);
+          if(!ex)DB.ytUploadLog.push({date:todayStr,count28d:DB.kpi.ytUploads28d});
+          else ex.count28d=DB.kpi.ytUploads28d;
+          const cut=new Date(today);cut.setDate(today.getDate()-90);
+          DB.ytUploadLog=DB.ytUploadLog.filter(e=>e.date>=localDateStr(cut));
+        }
       }
     }catch{}
 
