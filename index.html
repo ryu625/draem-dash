@@ -1571,7 +1571,8 @@ function render(){
   // KPI
   const KD=[
     {k:'subscribers',l:'Subscribers',t:G.subTarget,f:v=>v.toLocaleString(),p:pred.sub},
-    {k:'total_plays',l:'Plays',t:G.playTarget,f:v=>v.toLocaleString(),p:pred.plays},
+    {k:'short_plays',l:'Shorts 再生',t:G.shortPlayTarget||100000,f:v=>v.toLocaleString(),p:null},
+    {k:'main_plays',l:'メイン 再生',t:G.mainPlayTarget||50000,f:v=>v.toLocaleString(),p:pred.plays},
     {k:'nnFollowers',l:'ニコニコ',t:0,f:v=>v.toLocaleString(),p:null},
     {k:'songs',l:'Songs',t:G.yearSongs,f:v=>v+'',p:null},
     {k:'revenue',l:'Revenue',t:G.revenueTarget,f:v=>'¥'+v.toLocaleString(),p:pred.rev},
