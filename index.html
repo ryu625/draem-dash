@@ -280,6 +280,7 @@ body{min-height:100dvh}
     </div>
   </div>
 
+  <div id="gistWarnBanner" style="display:none;background:rgba(196,100,60,.18);border:1px solid rgba(196,100,60,.4);border-radius:8px;padding:.4rem .8rem;font-size:.55rem;color:#e08060;margin-bottom:.5rem;cursor:pointer" onclick="window.__openSettings&&window.__openSettings()">⚠️ Gist未設定 — データはこのブラウザにしか保存されません。タップして設定してください。</div>
   <div class="dream-bar" id="dreamBar"></div>
 
   <div class="focus" id="focus"></div>
@@ -484,6 +485,28 @@ function importData(file){
         localStorage.setItem(DB_KEY,JSON.stringify(DB));
         render();
         syncPush(true);
+      });
+    }catch{showAlert('ファイルが読み込めませんでした');}
+  };
+  reader.readAsText(file);
+}
+function overwriteData(file){
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const imported=JSON.parse(e.target.result);
+      if(!imported||typeof imported!=='object')throw 0;
+      showConfirm(`⚠️ 完全上書き復元します。現在のデータはすべて置き換えられます。<br>タスク: ${imported.tasks?.length||0}件<br>ログ: ${imported.timerLog?.length||0}件`,()=>{
+        // apiSettingsだけ現在の値を保持（Gist設定が消えないように）
+        const savedApi=DB.apiSettings;
+        DB=imported;
+        if(savedApi&&!DB.apiSettings)DB.apiSettings=savedApi;
+        DB.ver=(DB.ver||0)+9999;
+        DB.updated=new Date().toISOString();
+        localStorage.setItem(DB_KEY,JSON.stringify(DB));
+        render();
+        syncPush(true);
+        showAlert('復元完了。Gistに同期しました。');
       });
     }catch{showAlert('ファイルが読み込めませんでした');}
   };
@@ -2245,7 +2268,8 @@ function openModal(type,extra){
       <div style="display:flex;gap:.4rem">
         <button id="btnExport" style="flex:1;padding:.35rem;background:var(--s2);color:var(--t2);border:1px solid rgba(255,255,255,.1);border-radius:6px;font-size:.6rem;cursor:pointer;font-family:inherit">⬇ エクスポート</button>
         <label style="flex:1;padding:.35rem;background:var(--s2);color:var(--t2);border:1px solid rgba(255,255,255,.1);border-radius:6px;font-size:.6rem;cursor:pointer;text-align:center;font-family:inherit">⬆ インポート<input type="file" id="fileImport" accept=".json" style="display:none"></label>
-      </div>`;
+      </div>
+      <label style="display:block;width:100%;margin-top:.4rem;padding:.35rem;background:rgba(196,160,89,.12);color:var(--gold);border:1px solid rgba(196,160,89,.3);border-radius:6px;font-size:.6rem;cursor:pointer;text-align:center;font-family:inherit">⚠️ 完全上書き復元（先祖返り時に使用）<input type="file" id="fileOverwrite" accept=".json" style="display:none"></label>`;
     function saveApiSettings(){
       const prevApi=DB.apiSettings||{};
       const prevG=gc();
@@ -2281,6 +2305,7 @@ function openModal(type,extra){
       ['sG','sT','yK','yC','nnU'].forEach(id=>{const el=$('#'+id);if(el)el.addEventListener('blur',saveApiSettings);});
       const ex=$('#btnExport');if(ex)ex.addEventListener('click',exportData);
       const fi=$('#fileImport');if(fi)fi.addEventListener('change',e=>{if(e.target.files[0])importData(e.target.files[0]);});
+      const fo=$('#fileOverwrite');if(fo)fo.addEventListener('change',e=>{if(e.target.files[0])overwriteData(e.target.files[0]);});
       const bg=$('#btnGoals');if(bg)bg.addEventListener('click',()=>{$('#modalBg').classList.remove('show');setTimeout(()=>openModal('goals'),100);});
       const br=$('#btnRecurring');if(br)br.addEventListener('click',()=>{$('#modalBg').classList.remove('show');setTimeout(()=>openModal('recurring'),100);});
       const bcf=$('#btnCompFlow');if(bcf)bcf.addEventListener('click',()=>{$('#modalBg').classList.remove('show');setTimeout(()=>openModal('compFlow',0),100);});
@@ -2550,7 +2575,7 @@ fetchNN();
 if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js');
 const _syncDot=$('#syncDot');
 if(_syncDot)_syncDot.addEventListener('click',()=>{const c=gc();if(!c.id||!c.token){openModal('sync');}else{syncPull();}});
-{const c=gc();if(!c.id||!c.token)ss('off');}
+{const c=gc();if(!c.id||!c.token){ss('off');const b=$('#gistWarnBanner');if(b)b.style.display='block';}}
 </script>
 </body>
 </html>
