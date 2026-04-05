@@ -524,6 +524,7 @@ const DEFAULT_DB = {
     lastPulledAt: "",
     lastPushedAt: "",
     lastRemoteUpdated: "",
+    lastSyncError: "",
     deviceId: ""
   },
   mission: "まずは音楽活動を前に進める",
@@ -550,6 +551,7 @@ const DEFAULT_DB = {
 let DB = loadDB();
 let pushTimer = null;
 let syncBusy = false;
+let syncPending = false;
 
 function uid(){
   return `${Date.now()}_${Math.random().toString(36).slice(2,8)}`;
@@ -691,11 +693,14 @@ function restoreApiFromDB(){
 async function syncPush(immediate = false){
   clearTimeout(pushTimer);
   if(!immediate){
-    pushTimer = setTimeout(()=>syncPush(true), 1200);
+    pushTimer = setTimeout(()=>syncPush(true), 500);
     updateStatus("waiting");
     return;
   }
-  if(syncBusy) return;
+  if(syncBusy){
+    syncPending = true;
+    return;
+  }
   syncBusy = true;
   const gist = gc();
   if(!gist.token) {
@@ -753,9 +758,15 @@ async function syncPush(immediate = false){
     updateStatus("ok");
   }catch(err){
     console.error(err);
+    DB.meta.lastSyncError = err?.message || String(err);
+    persistState();
     updateStatus("error");
   }finally{
     syncBusy = false;
+    if(syncPending){
+      syncPending = false;
+      queueMicrotask(()=>syncPush(true));
+    }
   }
 }
 
@@ -790,6 +801,8 @@ async function syncPull(options = {}){
     return remote;
   }catch(err){
     console.error(err);
+    DB.meta.lastSyncError = err?.message || String(err);
+    persistState();
     if(!quiet) updateStatus("error");
   }
 }
@@ -836,7 +849,8 @@ function render(){
   const pull = DB.meta?.lastPulledAt ? `受信 ${new Date(DB.meta.lastPulledAt).toLocaleTimeString("ja-JP")}` : "受信なし";
   const push = DB.meta?.lastPushedAt ? `送信 ${new Date(DB.meta.lastPushedAt).toLocaleTimeString("ja-JP")}` : "送信なし";
   const saved = DB.updated ? `保存 ${new Date(DB.updated).toLocaleString("ja-JP")}` : "未保存";
-  document.getElementById("updatedLabel").textContent = `${saved} / ${pull} / ${push}`;
+  const err = DB.meta?.lastSyncError ? ` / err ${DB.meta.lastSyncError}` : "";
+  document.getElementById("updatedLabel").textContent = `${saved} / ${pull} / ${push}${err}`;
   document.getElementById("briefBox").textContent = buildBrief();
   renderProjects();
   renderQueue();
@@ -1135,10 +1149,12 @@ function bindEvents(){
 
   document.addEventListener("visibilitychange", ()=>{
     if(document.visibilityState === "visible") syncPull();
+    if(document.visibilityState === "hidden") syncPush(true);
   });
   window.addEventListener("focus", syncPull);
   window.addEventListener("online", syncPull);
-  window.addEventListener("beforeunload", ()=>persistState());
+  window.addEventListener("pagehide", ()=>syncPush(true));
+  window.addEventListener("beforeunload", ()=>syncPush(true));
   setInterval(syncPull, 10000);
 }
 
