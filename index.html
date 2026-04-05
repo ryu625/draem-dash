@@ -208,6 +208,22 @@ body{min-height:100dvh}
 
 .ftr{text-align:center;margin-top:.8rem;font-size:.45rem;color:rgba(255,255,255,.12)}
 .gear{cursor:pointer;font-size:.6rem;color:var(--t3);padding:.15rem}
+.quick-settings{
+  position:fixed;
+  right:14px;
+  bottom:calc(14px + env(safe-area-inset-bottom));
+  width:42px;
+  height:42px;
+  border-radius:50%;
+  border:1px solid rgba(196,160,89,.35);
+  background:rgba(13,9,6,.92);
+  color:var(--gold);
+  font-size:1rem;
+  z-index:420;
+  cursor:pointer;
+  box-shadow:0 6px 18px rgba(0,0,0,.45);
+}
+.quick-settings:active{opacity:.7}
 
 /* Activity Log */
 .al-week{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:.35rem}
@@ -258,6 +274,7 @@ body{min-height:100dvh}
     <div class="logo">dræm.<span class="sync-dot" id="syncDot"></span></div>
     <div style="display:flex;align-items:baseline;gap:.4rem">
       <button class="refresh-btn" id="btnRefresh">⟳</button>
+      <button class="hdr-btn" id="headerSettingsBtn" title="設定" onclick="window.__openSettings&&window.__openSettings()">⚙️</button>
       <div class="zoom"><button class="zoom-btn" id="zoomOut">A-</button><button class="zoom-btn" id="zoomIn">A+</button></div>
       <div class="day-b" id="dayB"></div>
     </div>
@@ -339,8 +356,9 @@ body{min-height:100dvh}
 
   <div class="mission" id="mission"></div>
 
-  <div class="ftr"><span id="ftr"></span> <span class="gear" id="gearBtn">⚙️</span></div>
+  <div class="ftr"><span id="ftr"></span> <span class="gear" id="gearBtn" onclick="window.__openSettings&&window.__openSettings()">⚙️</span></div>
 </div>
+<button class="quick-settings" id="quickSettingsBtn" title="設定" onclick="window.__openSettings&&window.__openSettings()">⚙️</button>
 
 <div id="undoToast" style="display:none;position:fixed;bottom:1.2rem;left:50%;transform:translateX(-50%);background:var(--s2);border:1px solid rgba(255,255,255,.18);border-radius:10px;padding:.4rem .9rem;font-size:.55rem;color:var(--t1);gap:.8rem;align-items:center;z-index:300;box-shadow:0 4px 16px rgba(0,0,0,.5);white-space:nowrap"><span id="undoMsg"></span><span id="undoBtn" style="color:var(--gold);cursor:pointer;font-weight:700">↩ 取り消し</span></div>
 
@@ -749,9 +767,30 @@ processRecurring();
 
 // ── Gist Sync (robust) ──
 const GK='draem_gist';
+const YT_KEY='draem_yt';
+const NN_KEY='draem_nn';
 let lastSyncHash='',syncBusy=false;
 function setCookie(k,v,days){document.cookie=`${k}=${encodeURIComponent(v)};max-age=${days*86400};path=/;SameSite=Strict`;}
 function getCookie(k){const m=document.cookie.match(new RegExp('(?:^|;\\s*)'+k+'=([^;]*)'));return m?decodeURIComponent(m[1]):null;}
+function readJSONCookie(k){try{return JSON.parse(getCookie(k)||'null')||{}}catch{return{}}}
+function hasApiSettings(a){
+  if(!a||typeof a!=='object')return false;
+  return !!(a.gist?.id||a.gist?.token||a.yt?.apiKey||a.yt?.channelId||a.nn?.userId);
+}
+function mergeApiSettingsSafe(localA,remoteA){
+  const l=localA||{},r=remoteA||{};
+  const out={
+    gist:{id:l.gist?.id||'',token:l.gist?.token||''},
+    yt:{apiKey:l.yt?.apiKey||'',channelId:l.yt?.channelId||''},
+    nn:{userId:l.nn?.userId||''},
+  };
+  if(r.gist?.id)out.gist.id=r.gist.id;
+  if(r.gist?.token)out.gist.token=r.gist.token;
+  if(r.yt?.apiKey)out.yt.apiKey=r.yt.apiKey;
+  if(r.yt?.channelId)out.yt.channelId=r.yt.channelId;
+  if(r.nn?.userId)out.nn.userId=r.nn.userId;
+  return out;
+}
 function gc(){
   let v=localStorage.getItem(GK);
   if(!v){v=getCookie(GK);}  // LocalStorage消えてもcookieから復元
@@ -804,7 +843,10 @@ function mergeDB(remote){
     if(remote.goals&&JSON.stringify(remote.goals)!==JSON.stringify(local.goals)){local.goals=remote.goals;changed=true;}
     if(remote.recurring&&JSON.stringify(remote.recurring)!==JSON.stringify(local.recurring)){const localRcMap=new Map((local.recurring||[]).map(r=>[r.text,r]));local.recurring=remote.recurring.map(rr=>{const lr=localRcMap.get(rr.text);return lr?{...rr,lastCreated:rr.lastCreated>lr.lastCreated?rr.lastCreated:lr.lastCreated}:rr;});changed=true;}
     if(remote.bestStreak>(local.bestStreak||0)){local.bestStreak=remote.bestStreak;changed=true;}
-    if(remote.apiSettings&&JSON.stringify(remote.apiSettings)!==JSON.stringify(local.apiSettings)){local.apiSettings=remote.apiSettings;changed=true;}
+    if(remote.apiSettings&&hasApiSettings(remote.apiSettings)){
+      const mergedApi=mergeApiSettingsSafe(local.apiSettings,remote.apiSettings);
+      if(JSON.stringify(mergedApi)!==JSON.stringify(local.apiSettings||{})){local.apiSettings=mergedApi;changed=true;}
+    }
   }
   // Merge reflections by date
   const localRefDates=new Set((local.reflections||[]).map(r=>r.date));
@@ -840,9 +882,24 @@ function mergeDB(remote){
 function restoreApiFromDB(){
   const a=DB.apiSettings;if(!a)return;
   if(a.gist?.id&&!gc().id){localStorage.setItem(GK,JSON.stringify(a.gist));setCookie(GK,JSON.stringify(a.gist),365);}
-  if(a.yt?.apiKey&&!ytConf().apiKey)localStorage.setItem(YT_KEY,JSON.stringify(a.yt));
-  if(a.nn?.userId&&!nnConf().userId)localStorage.setItem(NN_KEY,JSON.stringify(a.nn));
+  if(a.yt?.apiKey&&!ytConf().apiKey){localStorage.setItem(YT_KEY,JSON.stringify(a.yt));setCookie(YT_KEY,JSON.stringify(a.yt),365);}
+  if(a.nn?.userId&&!nnConf().userId){localStorage.setItem(NN_KEY,JSON.stringify(a.nn));setCookie(NN_KEY,JSON.stringify(a.nn),365);}
 }
+function bootstrapApiSettings(){
+  const gist=gc();
+  const yt=ytConf();
+  const nn=nnConf();
+  const fromCookieYT=readJSONCookie(YT_KEY);
+  const fromCookieNN=readJSONCookie(NN_KEY);
+  if(!yt.apiKey&&fromCookieYT.apiKey)localStorage.setItem(YT_KEY,JSON.stringify(fromCookieYT));
+  if(!nn.userId&&fromCookieNN.userId)localStorage.setItem(NN_KEY,JSON.stringify(fromCookieNN));
+  const merged=mergeApiSettingsSafe(DB.apiSettings,{gist:gc(),yt:ytConf(),nn:nnConf()});
+  if(hasApiSettings(merged)&&JSON.stringify(merged)!==JSON.stringify(DB.apiSettings||{})){
+    DB.apiSettings=merged;
+    saveDB();
+  }
+}
+bootstrapApiSettings();
 restoreApiFromDB();
 
 async function syncPull(){
@@ -893,8 +950,12 @@ setInterval(()=>{if(!document.hidden)syncPull();},30000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)syncPull();});
 
 // ── YouTube Auto KPI ──
-const YT_KEY='draem_yt';
-function ytConf(){try{return JSON.parse(localStorage.getItem(YT_KEY))||{}}catch{return{}}}
+function ytConf(){
+  try{
+    const raw=localStorage.getItem(YT_KEY)||getCookie(YT_KEY);
+    return JSON.parse(raw)||{};
+  }catch{return{}}
+}
 function parseDuration(iso){const m=/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/.exec(iso||'');if(!m)return 0;return(+(m[1]||0))*3600+(+(m[2]||0))*60+(+(m[3]||0));}
 async function fetchYT(){
   const c=ytConf();
@@ -2178,6 +2239,7 @@ function openModal(type,extra){
       </div>
       <div style="font-size:.55rem;color:var(--gold);margin:.5rem 0 .3rem;font-weight:600">UPDATE</div>
       <button id="btnForceUpdate" style="width:100%;padding:.35rem;background:var(--s2);color:var(--t2);border:1px solid rgba(255,255,255,.1);border-radius:6px;font-size:.6rem;cursor:pointer;font-family:inherit;margin-bottom:.4rem">🔄 キャッシュをクリアして最新版に更新</button>
+      <div style="font-size:.48rem;color:var(--t3);margin:-.2rem 0 .5rem">※ 空欄は既存値を保持して保存します</div>
       <div style="font-size:.55rem;color:var(--gold);margin:.5rem 0 .3rem;font-weight:600">BACKUP / RESTORE</div>
       <div style="font-size:.48rem;color:var(--t3);margin-bottom:.35rem">現在: タスク ${taskCount}件 / ログ ${logCount}件</div>
       <div style="display:flex;gap:.4rem">
@@ -2185,13 +2247,29 @@ function openModal(type,extra){
         <label style="flex:1;padding:.35rem;background:var(--s2);color:var(--t2);border:1px solid rgba(255,255,255,.1);border-radius:6px;font-size:.6rem;cursor:pointer;text-align:center;font-family:inherit">⬆ インポート<input type="file" id="fileImport" accept=".json" style="display:none"></label>
       </div>`;
     function saveApiSettings(){
-      const gist={id:$('#sG').value.trim(),token:$('#sT').value.trim()};
-      const yt={apiKey:$('#yK').value.trim(),channelId:$('#yC').value.trim()};
-      const nn={userId:$('#nnU').value.trim()};
+      const prevApi=DB.apiSettings||{};
+      const prevG=gc();
+      const prevY=ytConf();
+      const prevN=nnConf();
+      const v=(id)=>{const el=$('#'+id);return el?el.value.trim():'';};
+      const keep=(next,cur)=>next!==''?next:(cur||'');
+      const gist={
+        id:keep(v('sG'),prevApi.gist?.id||prevG.id),
+        token:keep(v('sT'),prevApi.gist?.token||prevG.token),
+      };
+      const yt={
+        apiKey:keep(v('yK'),prevApi.yt?.apiKey||prevY.apiKey),
+        channelId:keep(v('yC'),prevApi.yt?.channelId||prevY.channelId),
+      };
+      const nn={
+        userId:keep(v('nnU'),prevApi.nn?.userId||prevN.userId),
+      };
       localStorage.setItem(GK,JSON.stringify(gist));
       setCookie(GK,JSON.stringify(gist),365);  // cookie backup
       localStorage.setItem(YT_KEY,JSON.stringify(yt));
+      setCookie(YT_KEY,JSON.stringify(yt),365);
       localStorage.setItem(NN_KEY,JSON.stringify(nn));
+      setCookie(NN_KEY,JSON.stringify(nn),365);
       // DBにも保存してGist同期に乗せる
       if(!DB.apiSettings)DB.apiSettings={};
       DB.apiSettings={gist,yt,nn};
@@ -2206,7 +2284,7 @@ function openModal(type,extra){
       const bg=$('#btnGoals');if(bg)bg.addEventListener('click',()=>{$('#modalBg').classList.remove('show');setTimeout(()=>openModal('goals'),100);});
       const br=$('#btnRecurring');if(br)br.addEventListener('click',()=>{$('#modalBg').classList.remove('show');setTimeout(()=>openModal('recurring'),100);});
       const bcf=$('#btnCompFlow');if(bcf)bcf.addEventListener('click',()=>{$('#modalBg').classList.remove('show');setTimeout(()=>openModal('compFlow',0),100);});
-      const bfu=$('#btnForceUpdate');if(bfu)bfu.addEventListener('click',async()=>{bfu.textContent='保存中...';bfu.disabled=true;try{await syncPush(true);}catch(e){}bfu.textContent='更新中...';try{if('serviceWorker' in navigator){const regs=await navigator.serviceWorker.getRegistrations();await Promise.all(regs.map(r=>r.unregister()));}const keys=await caches.keys();await Promise.all(keys.map(k=>caches.delete(k)));}catch(e){}location.reload(true);});
+      const bfu=$('#btnForceUpdate');if(bfu)bfu.addEventListener('click',async()=>{bfu.textContent='保存中...';bfu.disabled=true;try{saveApiSettings();}catch(e){}try{await syncPush(true);}catch(e){}bfu.textContent='更新中...';try{if('serviceWorker' in navigator){const regs=await navigator.serviceWorker.getRegistrations();await Promise.all(regs.map(r=>r.unregister()));}const keys=await caches.keys();await Promise.all(keys.map(k=>caches.delete(k)));}catch(e){}location.reload(true);});
     },50);
   }else if(type==='goodmot'){
     const entry=(DB.goodmot||[]).find(g=>g.date===todayStr)||{date:todayStr,goods:['','',''],improve:'',action:''};
@@ -2239,7 +2317,12 @@ function submitTask(){addTask($('#taskInp').value,$('#catSel').value,$('#dueSel'
 $('#taskBtn').addEventListener('click',submitTask);
 $('#taskInp').addEventListener('keydown',e=>{if(e.key==='Enter')submitTask();});
 $('#btnRecurringTask').addEventListener('click',()=>openModal('recurring'));
-$('#gearBtn').addEventListener('click',()=>openModal('sync'));
+function openSettingsModal(){openModal('sync');}
+window.__openSettings=openSettingsModal;
+['gearBtn','headerSettingsBtn','quickSettingsBtn'].forEach(id=>{
+  const el=$('#'+id);
+  if(el)el.addEventListener('click',openSettingsModal);
+});
 
 // SBI CSV import
 $('#assetCsvInput').addEventListener('change',e=>{
@@ -2269,8 +2352,12 @@ setInterval(()=>{if(timerRunning())renderTimer();},10000);
 setInterval(()=>{if(!document.hidden)fetchYT();},30*60*1000);
 
 // ── Niconico Auto KPI ──
-const NN_KEY='draem_nn';
-function nnConf(){try{return JSON.parse(localStorage.getItem(NN_KEY))||{}}catch{return{}}}
+function nnConf(){
+  try{
+    const raw=localStorage.getItem(NN_KEY)||getCookie(NN_KEY);
+    return JSON.parse(raw)||{};
+  }catch{return{}}
+}
 async function fetchNN(){
   const c=nnConf();
   if(!c.userId)return;
@@ -2461,7 +2548,8 @@ syncPull();
 fetchYT();
 fetchNN();
 if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js');
-$('#syncDot').addEventListener('click',()=>{const c=gc();if(!c.id||!c.token){openModal('sync');}else{syncPull();}});
+const _syncDot=$('#syncDot');
+if(_syncDot)_syncDot.addEventListener('click',()=>{const c=gc();if(!c.id||!c.token){openModal('sync');}else{syncPull();}});
 {const c=gc();if(!c.id||!c.token)ss('off');}
 </script>
 </body>
