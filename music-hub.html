@@ -443,6 +443,7 @@ a.inline-link{color:var(--gold-2)}
       </div>
       <div class="row" style="margin-top:10px">
         <button class="btn gold small" id="quickCaptureSmartBtn">ワンタップ実行</button>
+        <button class="btn ghost small" id="quickCaptureVoiceBtn">音声入力</button>
         <button class="btn ghost small" id="quickCapturePasteBtn">クリップボード取込</button>
         <button class="btn ghost small" id="quickCaptureSampleBtn">サンプル</button>
       </div>
@@ -471,6 +472,28 @@ a.inline-link{color:var(--gold-2)}
           <input class="input autosave" id="oneThingInput" placeholder="最初の5分でやること">
         </div>
       </div>
+    </section>
+
+    <section class="card">
+      <div class="section-title">
+        <h2>Auto Pilot</h2>
+        <span class="tiny" id="autopilotLabel">今日の実行順を自動で作る</span>
+      </div>
+      <div class="row" style="margin-bottom:10px">
+        <input class="input" id="autopilotMinutes" type="number" min="20" max="720" placeholder="使える時間(分)">
+        <select class="select" id="autopilotContext" style="max-width:140px">
+          <option>通常</option>
+          <option>出社日</option>
+          <option>移動中</option>
+          <option>在宅集中</option>
+        </select>
+        <button class="btn gold small" id="autopilotBuildBtn">プラン生成</button>
+      </div>
+      <div class="row">
+        <button class="btn ghost small" id="autopilotOneThingBtn">先頭を次の1手へ</button>
+        <button class="btn ghost small" id="autopilotCopyBtn">プランをコピー</button>
+      </div>
+      <div class="brief" id="autopilotPlan" style="margin-top:10px">まだ未生成です。</div>
     </section>
 
     <section class="card">
@@ -619,6 +642,12 @@ const DEFAULT_DB = {
   mission: "まずは音楽活動を前に進める",
   focus: "",
   oneThing: "",
+  autopilot: {
+    minutes: 90,
+    context: "通常",
+    plan: [],
+    generatedAt: ""
+  },
   currentSong: {
     title: "",
     phase: "企画",
@@ -720,6 +749,10 @@ function loadDB(){
   db.meta = {
     ...deepClone(DEFAULT_DB.meta),
     ...(loaded.meta || {})
+  };
+  db.autopilot = {
+    ...deepClone(DEFAULT_DB.autopilot),
+    ...(loaded.autopilot || {})
   };
   db.projects = Array.isArray(loaded.projects) ? loaded.projects : [];
   db.empireQueue = Array.isArray(loaded.empireQueue) ? loaded.empireQueue : [];
@@ -1215,6 +1248,95 @@ function buildBrief(){
   ].join("\n");
 }
 
+function estimateTaskMinutes(text, context = "通常"){
+  const t = String(text || "");
+  let base = 25;
+  if(/MV|映像|動画/.test(t)) base = 45;
+  if(/調査|比較|分析/.test(t)) base = 20;
+  if(/fix|修正|エラー|不具合/.test(t)) base = 30;
+  if(context === "移動中" && /録る|演奏|制作/.test(t)) base += 15;
+  if(context === "在宅集中") base = Math.max(15, base - 5);
+  return base;
+}
+
+function scoreTaskCandidate(task, context = "通常"){
+  const text = String(task.text || "");
+  let score = 40;
+  if(task.risk === "高め") score += 40;
+  if(task.risk === "注意") score += 20;
+  if(task.dept === "制作") score += 12;
+  if(task.dept === "秘書") score += 8;
+  if(context === "移動中" && /調査|歌詞|メモ|整理/.test(text)) score += 15;
+  if(context === "出社日" && /短時間|確認|調整/.test(text)) score += 8;
+  if(DB.currentSong?.title && text.includes(DB.currentSong.title)) score += 15;
+  return score;
+}
+
+function buildAutopilotPlan(){
+  const minutes = Math.max(20, Number(DB.autopilot?.minutes || 90));
+  const context = DB.autopilot?.context || "通常";
+  const plan = [];
+  let used = 0;
+  const candidates = [];
+  if(DB.currentSong?.nextAction){
+    candidates.push({
+      text: `現在曲: ${DB.currentSong.nextAction}`,
+      dept: "制作",
+      risk: "",
+      fixed: true
+    });
+  }
+  (DB.empireQueue || []).filter(item=>!item.done).forEach(item=>{
+    candidates.push({ ...item, fixed: false });
+  });
+  (DB.risks || []).slice(0, 3).forEach(risk=>{
+    candidates.push({
+      text: `リスク対応: ${risk}`,
+      dept: "秘書",
+      risk: "注意",
+      fixed: false
+    });
+  });
+  const ranked = candidates
+    .map(item=>({ ...item, score: scoreTaskCandidate(item, context), minutes: estimateTaskMinutes(item.text, context) }))
+    .sort((a,b)=>(b.score - a.score));
+  for(const item of ranked){
+    if(plan.some(p=>p.text === item.text)) continue;
+    if(used + item.minutes > minutes && plan.length > 0) continue;
+    plan.push({
+      text: item.text,
+      dept: item.dept || "制作",
+      minutes: item.minutes,
+      score: item.score
+    });
+    used += item.minutes;
+    if(plan.length >= 6) break;
+  }
+  DB.autopilot.plan = plan;
+  DB.autopilot.generatedAt = nowISO();
+}
+
+function buildAutopilotPlanText(){
+  const plan = DB.autopilot?.plan || [];
+  const generated = DB.autopilot?.generatedAt
+    ? new Date(DB.autopilot.generatedAt).toLocaleString("ja-JP")
+    : "未生成";
+  if(!plan.length){
+    return `Auto Pilot\n- generated: ${generated}\n- まだプランがありません`;
+  }
+  const lines = [
+    `Auto Pilot`,
+    `- generated: ${generated}`,
+    `- context: ${DB.autopilot?.context || "通常"}`,
+    `- budget: ${DB.autopilot?.minutes || 90} min`,
+    ""
+  ];
+  plan.forEach((item, idx)=>{
+    lines.push(`${idx + 1}. [${item.dept}] ${item.text} (${item.minutes}m)`);
+  });
+  return lines.join("\n");
+}
+
 function render(){
   document.getElementById("missionInput").value = DB.mission || "";
   document.getElementById("focusInput").value = DB.focus || "";
@@ -1223,12 +1345,15 @@ function render(){
   document.getElementById("phaseInput").value = DB.currentSong.phase || "企画";
   document.getElementById("refInput").value = DB.currentSong.ref || "";
   document.getElementById("nextActionInput").value = DB.currentSong.nextAction || "";
+  document.getElementById("autopilotMinutes").value = Number(DB.autopilot?.minutes || 90);
+  document.getElementById("autopilotContext").value = DB.autopilot?.context || "通常";
   const pull = DB.meta?.lastPulledAt ? `受信 ${new Date(DB.meta.lastPulledAt).toLocaleTimeString("ja-JP")}` : "受信なし";
   const push = DB.meta?.lastPushedAt ? `送信 ${new Date(DB.meta.lastPushedAt).toLocaleTimeString("ja-JP")}` : "送信なし";
   const saved = DB.updated ? `保存 ${new Date(DB.updated).toLocaleString("ja-JP")}` : "未保存";
   const err = DB.meta?.lastSyncError ? ` / err ${DB.meta.lastSyncError}` : "";
   document.getElementById("updatedLabel").textContent = `${saved} / ${pull} / ${push}${err}`;
   document.getElementById("briefBox").textContent = buildBrief();
+  document.getElementById("autopilotPlan").textContent = buildAutopilotPlanText();
   renderProjects();
   renderQueue();
   renderRisks();
@@ -1602,6 +1727,32 @@ function runSmartCapture(rawText){
   applyQuickCapture(text, { forcedType: mapModeToType(mode) });
 }
 
+function startVoiceCapture(){
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const label = document.getElementById("quickCaptureResult");
+  if(!SpeechRecognition){
+    if(label) label.textContent = "この端末は音声入力に非対応です。";
+    return;
+  }
+  const rec = new SpeechRecognition();
+  rec.lang = "ja-JP";
+  rec.interimResults = false;
+  rec.maxAlternatives = 1;
+  if(label) label.textContent = "音声入力中…話してください";
+  rec.onresult = (event)=>{
+    const text = event.results?.[0]?.[0]?.transcript || "";
+    document.getElementById("quickCaptureInput").value = text;
+    refreshQuickCapturePreview();
+    runSmartCapture(text);
+    document.getElementById("quickCaptureInput").value = "";
+    refreshQuickCapturePreview();
+  };
+  rec.onerror = ()=>{
+    if(label) label.textContent = "音声入力に失敗。もう一度試してください。";
+  };
+  rec.start();
+}
+
 function applyQuickCapture(rawText, options = {}){
   const forcedType = options.forcedType || "";
   const lines = String(rawText || "").split(/\r?\n/).map(v=>v.trim()).filter(Boolean);
@@ -1776,6 +1927,7 @@ function bindEvents(){
   document.getElementById("addProjectBtn").addEventListener("click", addProject);
   document.getElementById("addQueueBtn").addEventListener("click", addQueue);
   document.getElementById("addRiskBtn").addEventListener("click", addRisk);
+  document.getElementById("quickCaptureVoiceBtn").addEventListener("click", startVoiceCapture);
   document.getElementById("quickCaptureMode").addEventListener("change", e=>{
     setQuickCaptureMode(e.target.value);
     refreshQuickCapturePreview();
@@ -1826,6 +1978,42 @@ function bindEvents(){
     }
   });
   document.getElementById("quickCaptureInput").addEventListener("input", refreshQuickCapturePreview);
+  document.getElementById("autopilotMinutes").addEventListener("input", ()=>{
+    DB.autopilot.minutes = Math.max(20, Number(document.getElementById("autopilotMinutes").value || 90));
+    saveDB(false);
+  });
+  document.getElementById("autopilotContext").addEventListener("change", ()=>{
+    DB.autopilot.context = document.getElementById("autopilotContext").value;
+    saveDB(false);
+  });
+  document.getElementById("autopilotBuildBtn").addEventListener("click", ()=>{
+    DB.autopilot.minutes = Math.max(20, Number(document.getElementById("autopilotMinutes").value || 90));
+    DB.autopilot.context = document.getElementById("autopilotContext").value;
+    buildAutopilotPlan();
+    if(DB.autopilot.plan?.[0]?.text){
+      DB.oneThing = DB.autopilot.plan[0].text;
+    }
+    saveDB();
+    const label = document.getElementById("autopilotLabel");
+    if(label) label.textContent = "今日の実行順を更新しました";
+  });
+  document.getElementById("autopilotOneThingBtn").addEventListener("click", ()=>{
+    const first = DB.autopilot?.plan?.[0];
+    if(!first){
+      const label = document.getElementById("autopilotLabel");
+      if(label) label.textContent = "先にプラン生成してください";
+      return;
+    }
+    DB.oneThing = first.text;
+    saveDB();
+    const label = document.getElementById("autopilotLabel");
+    if(label) label.textContent = "次の1手に反映しました";
+  });
+  document.getElementById("autopilotCopyBtn").addEventListener("click", async ()=>{
+    await navigator.clipboard.writeText(buildAutopilotPlanText());
+    const label = document.getElementById("autopilotLabel");
+    if(label) label.textContent = "プランをコピーしました";
+  });
 
   document.getElementById("settingsBtn").addEventListener("click", ()=>document.getElementById("settingsModal").classList.add("show"));
   document.getElementById("closeSettingsBtn").addEventListener("click", ()=>document.getElementById("settingsModal").classList.remove("show"));
