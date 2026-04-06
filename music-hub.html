@@ -501,6 +501,33 @@ a.inline-link{color:var(--gold-2)}
 
     <section class="card">
       <div class="section-title">
+        <h2>Growth Engine</h2>
+        <span class="tiny" id="growthLabel">知名度を上げる週次実行</span>
+      </div>
+      <div class="grid two">
+        <div>
+          <label class="label" for="growthNorthStarInput">北極星目標</label>
+          <input class="input" id="growthNorthStarInput" placeholder="例: 日本で知れるアーティストになる">
+        </div>
+        <div>
+          <label class="label" for="growthQuarterInput">今期テーマ</label>
+          <input class="input" id="growthQuarterInput" placeholder="例: 月1リリース + SNS導線整備">
+        </div>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <input class="input" id="growthWeeklySongs" type="number" min="0" max="10" placeholder="週の制作ブロック数">
+        <input class="input" id="growthWeeklyPosts" type="number" min="0" max="30" placeholder="週の投稿数">
+        <input class="input" id="growthWeeklyReach" type="number" min="0" max="30" placeholder="週の新規接触アクション">
+      </div>
+      <div class="row" style="margin-top:10px">
+        <button class="btn gold small" id="growthBuildBtn">今週プラン生成</button>
+        <button class="btn ghost small" id="growthCopyBtn">コピー</button>
+      </div>
+      <div class="brief" id="growthBoard" style="margin-top:10px">まだ未生成です。</div>
+    </section>
+
+    <section class="card">
+      <div class="section-title">
         <h2>Current Song</h2>
         <span class="tiny">今触っている曲</span>
       </div>
@@ -653,6 +680,17 @@ const DEFAULT_DB = {
     autoRunDaily: true,
     lastAutoRunDate: ""
   },
+  growth: {
+    northStar: "日本で知れるアーティストになる",
+    quarterTheme: "月1リリースを継続する",
+    weekly: {
+      songs: 5,
+      posts: 3,
+      reach: 3
+    },
+    board: [],
+    generatedAt: ""
+  },
   currentSong: {
     title: "",
     phase: "企画",
@@ -716,6 +754,21 @@ function mergeDB(remote){
   merged.risks = Array.from(new Set([...(merged.risks || []), ...(incoming.risks || [])])).filter(Boolean);
 
   if((incoming.updated || "") >= (merged.updated || "")){
+    merged.autopilot = {
+      ...deepClone(DEFAULT_DB.autopilot),
+      ...(merged.autopilot || {}),
+      ...(incoming.autopilot || {})
+    };
+    merged.growth = {
+      ...deepClone(DEFAULT_DB.growth),
+      ...(merged.growth || {}),
+      ...(incoming.growth || {})
+    };
+    merged.growth.weekly = {
+      ...deepClone(DEFAULT_DB.growth.weekly),
+      ...(merged?.growth?.weekly || {}),
+      ...(incoming?.growth?.weekly || {})
+    };
     merged.apiSettings = {
       gist: {
         id: incoming?.apiSettings?.gist?.id || merged?.apiSettings?.gist?.id || "",
@@ -758,6 +811,14 @@ function loadDB(){
   db.autopilot = {
     ...deepClone(DEFAULT_DB.autopilot),
     ...(loaded.autopilot || {})
+  };
+  db.growth = {
+    ...deepClone(DEFAULT_DB.growth),
+    ...(loaded.growth || {})
+  };
+  db.growth.weekly = {
+    ...deepClone(DEFAULT_DB.growth.weekly),
+    ...(loaded?.growth?.weekly || {})
   };
   db.projects = Array.isArray(loaded.projects) ? loaded.projects : [];
   db.empireQueue = Array.isArray(loaded.empireQueue) ? loaded.empireQueue : [];
@@ -1342,6 +1403,59 @@ function buildAutopilotPlanText(){
   return lines.join("\n");
 }
 
+function buildGrowthBoardText(){
+  const generated = DB.growth?.generatedAt
+    ? new Date(DB.growth.generatedAt).toLocaleString("ja-JP")
+    : "未生成";
+  const board = DB.growth?.board || [];
+  const lines = [
+    `Growth Engine`,
+    `- generated: ${generated}`,
+    `- north_star: ${DB.growth?.northStar || "未設定"}`,
+    `- quarter_theme: ${DB.growth?.quarterTheme || "未設定"}`,
+    `- targets: 制作${DB.growth?.weekly?.songs || 0} / 投稿${DB.growth?.weekly?.posts || 0} / 新規接触${DB.growth?.weekly?.reach || 0}`,
+    ""
+  ];
+  if(!board.length){
+    lines.push("- まだプランがありません");
+    return lines.join("\n");
+  }
+  board.forEach((item, idx)=>lines.push(`${idx + 1}. [${item.dept}] ${item.text}`));
+  return lines.join("\n");
+}
+
+function buildGrowthPlan(){
+  const tasks = [];
+  const song = DB.currentSong?.title || "現在曲";
+  const songs = Math.max(0, Number(DB.growth?.weekly?.songs || 0));
+  const posts = Math.max(0, Number(DB.growth?.weekly?.posts || 0));
+  const reach = Math.max(0, Number(DB.growth?.weekly?.reach || 0));
+
+  for(let i = 1; i <= songs; i += 1){
+    tasks.push({ dept: "制作", text: `${song}: 制作ブロック ${i}/${songs} を実施` });
+  }
+  for(let i = 1; i <= posts; i += 1){
+    tasks.push({ dept: "映像", text: `${song}: 投稿ネタ ${i}/${posts} を作成して下書き` });
+  }
+  for(let i = 1; i <= reach; i += 1){
+    tasks.push({ dept: "秘書", text: `新規接触アクション ${i}/${reach}: コラボ候補・コミュニティ接点を作る` });
+  }
+  if(DB.currentSong?.nextAction){
+    tasks.unshift({ dept: "制作", text: `${song}: 最優先 ${DB.currentSong.nextAction}` });
+  }
+  DB.growth.board = tasks.slice(0, 14);
+  DB.growth.generatedAt = nowISO();
+
+  let added = 0;
+  DB.growth.board.forEach(item=>{
+    if(addQueueEntry(item.text, item.dept, "")) added += 1;
+  });
+  if(DB.growth.board[0]?.text){
+    DB.oneThing = DB.growth.board[0].text;
+  }
+  return added;
+}
+
 function todayKey(){
   const d = new Date();
   const y = d.getFullYear();
@@ -1377,6 +1491,11 @@ function render(){
   document.getElementById("autopilotMinutes").value = Number(DB.autopilot?.minutes || 90);
   document.getElementById("autopilotContext").value = DB.autopilot?.context || "通常";
   document.getElementById("autopilotAutoDaily").checked = Boolean(DB.autopilot?.autoRunDaily ?? true);
+  document.getElementById("growthNorthStarInput").value = DB.growth?.northStar || "";
+  document.getElementById("growthQuarterInput").value = DB.growth?.quarterTheme || "";
+  document.getElementById("growthWeeklySongs").value = Number(DB.growth?.weekly?.songs || 0);
+  document.getElementById("growthWeeklyPosts").value = Number(DB.growth?.weekly?.posts || 0);
+  document.getElementById("growthWeeklyReach").value = Number(DB.growth?.weekly?.reach || 0);
   const pull = DB.meta?.lastPulledAt ? `受信 ${new Date(DB.meta.lastPulledAt).toLocaleTimeString("ja-JP")}` : "受信なし";
   const push = DB.meta?.lastPushedAt ? `送信 ${new Date(DB.meta.lastPushedAt).toLocaleTimeString("ja-JP")}` : "送信なし";
   const saved = DB.updated ? `保存 ${new Date(DB.updated).toLocaleString("ja-JP")}` : "未保存";
@@ -1384,6 +1503,7 @@ function render(){
   document.getElementById("updatedLabel").textContent = `${saved} / ${pull} / ${push}${err}`;
   document.getElementById("briefBox").textContent = buildBrief();
   document.getElementById("autopilotPlan").textContent = buildAutopilotPlanText();
+  document.getElementById("growthBoard").textContent = buildGrowthBoardText();
   renderProjects();
   renderQueue();
   renderRisks();
@@ -2047,6 +2167,42 @@ function bindEvents(){
     await navigator.clipboard.writeText(buildAutopilotPlanText());
     const label = document.getElementById("autopilotLabel");
     if(label) label.textContent = "プランをコピーしました";
+  });
+  document.getElementById("growthNorthStarInput").addEventListener("input", ()=>{
+    DB.growth.northStar = document.getElementById("growthNorthStarInput").value;
+    saveDB(false);
+  });
+  document.getElementById("growthQuarterInput").addEventListener("input", ()=>{
+    DB.growth.quarterTheme = document.getElementById("growthQuarterInput").value;
+    saveDB(false);
+  });
+  document.getElementById("growthWeeklySongs").addEventListener("input", ()=>{
+    DB.growth.weekly.songs = Math.max(0, Number(document.getElementById("growthWeeklySongs").value || 0));
+    saveDB(false);
+  });
+  document.getElementById("growthWeeklyPosts").addEventListener("input", ()=>{
+    DB.growth.weekly.posts = Math.max(0, Number(document.getElementById("growthWeeklyPosts").value || 0));
+    saveDB(false);
+  });
+  document.getElementById("growthWeeklyReach").addEventListener("input", ()=>{
+    DB.growth.weekly.reach = Math.max(0, Number(document.getElementById("growthWeeklyReach").value || 0));
+    saveDB(false);
+  });
+  document.getElementById("growthBuildBtn").addEventListener("click", ()=>{
+    DB.growth.northStar = document.getElementById("growthNorthStarInput").value;
+    DB.growth.quarterTheme = document.getElementById("growthQuarterInput").value;
+    DB.growth.weekly.songs = Math.max(0, Number(document.getElementById("growthWeeklySongs").value || 0));
+    DB.growth.weekly.posts = Math.max(0, Number(document.getElementById("growthWeeklyPosts").value || 0));
+    DB.growth.weekly.reach = Math.max(0, Number(document.getElementById("growthWeeklyReach").value || 0));
+    const added = buildGrowthPlan();
+    saveDB();
+    const label = document.getElementById("growthLabel");
+    if(label) label.textContent = `今週プラン更新: Queueへ ${added}件 追加`;
+  });
+  document.getElementById("growthCopyBtn").addEventListener("click", async ()=>{
+    await navigator.clipboard.writeText(buildGrowthBoardText());
+    const label = document.getElementById("growthLabel");
+    if(label) label.textContent = "Growthプランをコピーしました";
   });
 
   document.getElementById("settingsBtn").addEventListener("click", ()=>document.getElementById("settingsModal").classList.add("show"));
