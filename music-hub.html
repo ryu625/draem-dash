@@ -493,6 +493,9 @@ a.inline-link{color:var(--gold-2)}
         <button class="btn ghost small" id="autopilotOneThingBtn">先頭を次の1手へ</button>
         <button class="btn ghost small" id="autopilotCopyBtn">プランをコピー</button>
       </div>
+      <div class="quick-tools">
+        <label class="quick-toggle"><input type="checkbox" id="autopilotAutoDaily" checked> 朝起動モード（1日1回自動生成）</label>
+      </div>
       <div class="brief" id="autopilotPlan" style="margin-top:10px">まだ未生成です。</div>
     </section>
 
@@ -646,7 +649,9 @@ const DEFAULT_DB = {
     minutes: 90,
     context: "通常",
     plan: [],
-    generatedAt: ""
+    generatedAt: "",
+    autoRunDaily: true,
+    lastAutoRunDate: ""
   },
   currentSong: {
     title: "",
@@ -1337,6 +1342,30 @@ function buildAutopilotPlanText(){
   return lines.join("\n");
 }
 
+function todayKey(){
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+function maybeRunAutopilotOnOpen(){
+  if(!DB.autopilot?.autoRunDaily) return false;
+  const today = todayKey();
+  if(DB.autopilot?.lastAutoRunDate === today) return false;
+  buildAutopilotPlan();
+  DB.autopilot.lastAutoRunDate = today;
+  if(DB.autopilot.plan?.[0]?.text){
+    DB.oneThing = DB.autopilot.plan[0].text;
+  }
+  DB.updated = nowISO();
+  persistState();
+  const label = document.getElementById("autopilotLabel");
+  if(label) label.textContent = "朝起動モードで自動生成しました";
+  return true;
+}
+
 function render(){
   document.getElementById("missionInput").value = DB.mission || "";
   document.getElementById("focusInput").value = DB.focus || "";
@@ -1347,6 +1376,7 @@ function render(){
   document.getElementById("nextActionInput").value = DB.currentSong.nextAction || "";
   document.getElementById("autopilotMinutes").value = Number(DB.autopilot?.minutes || 90);
   document.getElementById("autopilotContext").value = DB.autopilot?.context || "通常";
+  document.getElementById("autopilotAutoDaily").checked = Boolean(DB.autopilot?.autoRunDaily ?? true);
   const pull = DB.meta?.lastPulledAt ? `受信 ${new Date(DB.meta.lastPulledAt).toLocaleTimeString("ja-JP")}` : "受信なし";
   const push = DB.meta?.lastPushedAt ? `送信 ${new Date(DB.meta.lastPushedAt).toLocaleTimeString("ja-JP")}` : "送信なし";
   const saved = DB.updated ? `保存 ${new Date(DB.updated).toLocaleString("ja-JP")}` : "未保存";
@@ -1986,6 +2016,10 @@ function bindEvents(){
     DB.autopilot.context = document.getElementById("autopilotContext").value;
     saveDB(false);
   });
+  document.getElementById("autopilotAutoDaily").addEventListener("change", ()=>{
+    DB.autopilot.autoRunDaily = Boolean(document.getElementById("autopilotAutoDaily").checked);
+    saveDB(false);
+  });
   document.getElementById("autopilotBuildBtn").addEventListener("click", ()=>{
     DB.autopilot.minutes = Math.max(20, Number(document.getElementById("autopilotMinutes").value || 90));
     DB.autopilot.context = document.getElementById("autopilotContext").value;
@@ -2128,8 +2162,10 @@ async function boot(){
   refreshQuickCapturePreview();
   updateStatus();
   await loadSharedSyncChannel();
+  await syncPull({ quiet: true });
+  maybeRunAutopilotOnOpen();
   render();
-  syncPull();
+  updateStatus();
 }
 
 boot();
