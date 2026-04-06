@@ -382,6 +382,7 @@ a.inline-link{color:var(--gold-2)}
         <div class="status" id="syncStatus">local only</div>
         <button class="icon-btn" id="refreshBtn" title="同期">↻</button>
         <button class="icon-btn" id="pushBtn" title="送信">⇪</button>
+        <button class="icon-btn" id="diagBtn" title="診断">?</button>
       </div>
     </div>
 
@@ -828,6 +829,11 @@ function gc(){
   return DB?.apiSettings?.gist || {id:"", token:""};
 }
 
+function parseAcceptedPerm(headerValue){
+  if(!headerValue) return "n/a";
+  return headerValue;
+}
+
 function restoreApiFromDB(){
   const gist = gc();
   document.getElementById("gistIdInput").value = gist.id || "";
@@ -902,6 +908,8 @@ async function syncPush(immediate = false){
     if(sharedSync.gistId !== gistId){
       await publishSharedSyncChannel(true);
     }
+    DB.meta.lastSyncError = "";
+    persistState();
     updateStatus("ok");
   }catch(err){
     console.error(err);
@@ -920,7 +928,10 @@ async function syncPush(immediate = false){
 async function syncPull(options = {}){
   const { persist = true, quiet = false, skipPush = false } = options;
   const gist = gc();
-  if(!gist.id || !gist.token) return;
+  if(!gist.id || !gist.token) {
+    if(!quiet) updateStatus("local");
+    return;
+  }
   try{
     if(!quiet) updateStatus("syncing");
     const res = await fetch(`https://api.github.com/gists/${gist.id}?t=${Date.now()}`, {
@@ -941,6 +952,7 @@ async function syncPull(options = {}){
     mergeDB(remote);
     DB.meta.lastPulledAt = nowISO();
     DB.meta.lastRemoteUpdated = remote.updated || "";
+    DB.meta.lastSyncError = "";
     if(persist){
       persistState();
     }
@@ -951,6 +963,59 @@ async function syncPull(options = {}){
     DB.meta.lastSyncError = err?.message || String(err);
     persistState();
     if(!quiet) updateStatus("error");
+  }
+}
+
+async function runSyncDiagnostics(){
+  const gist = gc();
+  if(!gist.token){
+    setSharedSyncState("diag", "token が未設定です。");
+    return;
+  }
+  try{
+    updateStatus("syncing");
+    const userRes = await fetch("https://api.github.com/user", {
+      headers:{
+        "Authorization":`Bearer ${gist.token}`,
+        "Accept":"application/vnd.github+json"
+      },
+      cache:"no-store"
+    });
+    const userPerm = parseAcceptedPerm(userRes.headers.get("X-Accepted-GitHub-Permissions"));
+    if(!userRes.ok){
+      const body = await userRes.text();
+      throw new Error(`token認証失敗 user=${userRes.status} ${body.slice(0,120)}`);
+    }
+    const user = await userRes.json();
+    if(!gist.id){
+      setSharedSyncState("diag", `token は有効。user=${user.login}。 gist id を設定して再診断してください。 accepted=${userPerm}`);
+      updateStatus();
+      return;
+    }
+    const gistRes = await fetch(`https://api.github.com/gists/${gist.id}?t=${Date.now()}`, {
+      headers:{
+        "Authorization":`Bearer ${gist.token}`,
+        "Accept":"application/vnd.github+json"
+      },
+      cache:"no-store"
+    });
+    const gistPerm = parseAcceptedPerm(gistRes.headers.get("X-Accepted-GitHub-Permissions"));
+    if(!gistRes.ok){
+      const body = await gistRes.text();
+      throw new Error(`gist参照失敗 ${gistRes.status} ${body.slice(0,120)} accepted=${gistPerm}`);
+    }
+    const gistJson = await gistRes.json();
+    const hasFile = Boolean(gistJson?.files?.[GIST_FILENAME]?.content);
+    const remoteUpdated = hasFile ? (JSON.parse(gistJson.files[GIST_FILENAME].content).updated || "none") : "missing file";
+    DB.meta.lastSyncError = "";
+    persistState();
+    setSharedSyncState("diag", `ok user=${user.login} gist=${gist.id.slice(-6)} file=${hasFile ? "yes" : "no"} remote.updated=${remoteUpdated} accepted=${gistPerm || userPerm}`);
+    updateStatus("ok");
+  }catch(err){
+    DB.meta.lastSyncError = err?.message || String(err);
+    persistState();
+    setSharedSyncState("diag-error", `診断エラー: ${DB.meta.lastSyncError}`);
+    updateStatus("error");
   }
 }
 
@@ -1216,12 +1281,12 @@ function bindEvents(){
   });
   document.getElementById("refreshBtn").addEventListener("click", ()=>syncPull());
   document.getElementById("pushBtn").addEventListener("click", ()=>syncPush(true));
+  document.getElementById("diagBtn").addEventListener("click", ()=>runSyncDiagnostics());
   document.getElementById("loadSharedChannelBtn").addEventListener("click", async ()=>{ await loadSharedSyncChannel(true); });
   document.getElementById("adoptSharedChannelBtn").addEventListener("click", async ()=>{ await adoptSharedSyncChannel(); });
   document.getElementById("shareLocalChannelBtn").addEventListener("click", async ()=>{ await publishSharedSyncChannel(false); });
   document.getElementById("copyBriefBtn").addEventListener("click", async ()=>{
     await navigator.clipboard.writeText(buildBrief());
-    updateStatus("ok");
   });
   document.getElementById("downloadBriefBtn").addEventListener("click", downloadBrief);
   document.getElementById("exportBtn").addEventListener("click", exportDB);
