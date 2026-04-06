@@ -413,10 +413,11 @@ a.inline-link{color:var(--gold-2)}
       <textarea class="textarea" id="quickCaptureInput" placeholder="例:&#10;P: 新曲 再起 / 作曲&#10;Q: Bメロのコード3案を作る&#10;R: サビ詞が弱い&#10;I: メロ断片 4小節"></textarea>
       <div class="row" style="margin-top:10px">
         <button class="btn gold small" id="quickCaptureApplyBtn">自動整理</button>
+        <button class="btn gold small" id="quickCaptureMusicBtn">楽曲メモ解析</button>
         <button class="btn ghost small" id="quickCapturePasteBtn">クリップボード取込</button>
         <button class="btn ghost small" id="quickCaptureSampleBtn">サンプル</button>
       </div>
-      <div class="tiny" style="margin-top:8px;color:var(--sub)">先頭に `P:` `Q:` `R:` `I:` を付けると確実です。未指定は Queue に入ります。</div>
+      <div class="tiny" style="margin-top:8px;color:var(--sub)">`P/Q/R/I` 形式は「自動整理」。`曲名/BPM/Key/[コード]` 形式は「楽曲メモ解析」を押してください。</div>
     </section>
 
     <section class="card">
@@ -1456,6 +1457,88 @@ function applyQuickCapture(rawText){
   }
 }
 
+function appendRefLine(line){
+  const clean = String(line || "").trim();
+  if(!clean) return false;
+  const current = String(DB.currentSong.ref || "").trim();
+  if(current.includes(clean)) return false;
+  DB.currentSong.ref = current ? `${current} / ${clean}` : clean;
+  return true;
+}
+
+function parseChordsFromText(raw){
+  const bracket = [...String(raw || "").matchAll(/\[([^\]]+)\]/g)].map(m=>m[1].trim()).filter(Boolean);
+  if(bracket.length) return bracket;
+  const tokens = String(raw || "")
+    .replace(/\|/g, " ")
+    .replace(/,/g, " ")
+    .split(/\s+/)
+    .map(v=>v.trim())
+    .filter(Boolean);
+  const chordLike = tokens.filter(token => /^([A-G](?:#|b)?(?:m|maj|min|dim|aug|sus[24]?|add\d+|m7b5|m7|maj7|7|9|11|13)?(?:\([^)]+\))?(?:\/[A-G](?:#|b)?)?)$/.test(token));
+  return chordLike;
+}
+
+function applyMusicMemo(rawText){
+  const text = String(rawText || "").trim();
+  if(!text){
+    const label = document.getElementById("quickCaptureResult");
+    if(label) label.textContent = "解析するテキストが空です。";
+    return;
+  }
+  let touched = false;
+  const titleMatch = text.match(/(?:曲名|title)\s*[:：]\s*(.+)/i);
+  if(titleMatch && titleMatch[1]){
+    const title = titleMatch[1].split(/\r?\n/)[0].trim();
+    if(title){
+      DB.currentSong.title = title;
+      if(!hasProjectTitle(title)){
+        DB.projects.unshift({
+          id: uid(),
+          title,
+          phase: DB.currentSong.phase || "企画",
+          ref: "",
+          nextAction: "",
+          createdAt: nowISO()
+        });
+      }
+      touched = true;
+    }
+  }
+  const phaseMatch = text.match(/(?:phase|フェーズ)\s*[:：]\s*(企画|作曲|アレンジ|仮歌|制作|MV|配信|分析)/i);
+  if(phaseMatch && phaseMatch[1]){
+    DB.currentSong.phase = phaseMatch[1];
+    touched = true;
+  }
+  const bpmMatch = text.match(/(?:\bBPM\b)\s*[:：]?\s*(\d{2,3}(?:\.\d+)?)/i);
+  if(bpmMatch && bpmMatch[1]){
+    touched = appendRefLine(`BPM ${bpmMatch[1]}`) || touched;
+  }
+  const keyMatch = text.match(/(?:\bKEY\b|キー)\s*[:：]?\s*([A-G](?:#|b)?(?:m|min|maj)?)/i);
+  if(keyMatch && keyMatch[1]){
+    touched = appendRefLine(`Key ${keyMatch[1]}`) || touched;
+  }
+  const chords = parseChordsFromText(text);
+  if(chords.length){
+    const progression = chords.slice(0, 16).join(" / ");
+    touched = appendRefLine(`Chords ${progression}`) || touched;
+    if(addQueueEntry(`コード進行確認: ${progression}`, "制作", "")){
+      touched = true;
+    }
+  }
+  if(!DB.currentSong.nextAction && chords.length){
+    DB.currentSong.nextAction = "コード進行に合わせてメロの当たりを録る";
+    touched = true;
+  }
+  const label = document.getElementById("quickCaptureResult");
+  if(touched){
+    saveDB();
+    if(label) label.textContent = `楽曲メモを反映: ${DB.currentSong.title || "曲名未設定"} / ${DB.currentSong.phase || "企画"}`;
+  }else if(label){
+    label.textContent = "抽出できる項目がありませんでした。";
+  }
+}
+
 function addQueue(){
   const text = document.getElementById("queueText").value.trim();
   if(!text) return;
@@ -1524,6 +1607,10 @@ function bindEvents(){
     applyQuickCapture(document.getElementById("quickCaptureInput").value);
     document.getElementById("quickCaptureInput").value = "";
   });
+  document.getElementById("quickCaptureMusicBtn").addEventListener("click", ()=>{
+    applyMusicMemo(document.getElementById("quickCaptureInput").value);
+    document.getElementById("quickCaptureInput").value = "";
+  });
   document.getElementById("quickCapturePasteBtn").addEventListener("click", async ()=>{
     try{
       const clip = await navigator.clipboard.readText();
@@ -1536,7 +1623,7 @@ function bindEvents(){
     }
   });
   document.getElementById("quickCaptureSampleBtn").addEventListener("click", ()=>{
-    document.getElementById("quickCaptureInput").value = "P: 新曲 再起 / 作曲\nQ: Bメロのコード3案を作る\nR: サビの歌詞が弱い\nI: メロ断片 4小節";
+    document.getElementById("quickCaptureInput").value = "曲名: 再起\nphase: 作曲\nBPM: 136\nKey: Bm\n[Gm7(b5)] [Gb(maj7)] [Bm7] [Ebm7] [Eb(7)] [Fm7]";
     const label = document.getElementById("quickCaptureResult");
     if(label) label.textContent = "サンプルを入れました。";
   });
