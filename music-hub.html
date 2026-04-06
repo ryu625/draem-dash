@@ -407,6 +407,20 @@ a.inline-link{color:var(--gold-2)}
 
     <section class="card">
       <div class="section-title">
+        <h2>Quick Capture</h2>
+        <span class="tiny" id="quickCaptureResult">雑に貼ってOK</span>
+      </div>
+      <textarea class="textarea" id="quickCaptureInput" placeholder="例:&#10;P: 新曲 再起 / 作曲&#10;Q: Bメロのコード3案を作る&#10;R: サビ詞が弱い&#10;I: メロ断片 4小節"></textarea>
+      <div class="row" style="margin-top:10px">
+        <button class="btn gold small" id="quickCaptureApplyBtn">自動整理</button>
+        <button class="btn ghost small" id="quickCapturePasteBtn">クリップボード取込</button>
+        <button class="btn ghost small" id="quickCaptureSampleBtn">サンプル</button>
+      </div>
+      <div class="tiny" style="margin-top:8px;color:var(--sub)">先頭に `P:` `Q:` `R:` `I:` を付けると確実です。未指定は Queue に入ります。</div>
+    </section>
+
+    <section class="card">
+      <div class="section-title">
         <h2>Today</h2>
         <span class="tiny" id="updatedLabel">未保存</span>
       </div>
@@ -519,7 +533,7 @@ a.inline-link{color:var(--gold-2)}
       <div class="brief" id="briefBox"></div>
     </section>
 
-    <div class="footer-note">公開URLで開ける別アプリです。設定すると Gist に同期します。</div>
+    <div class="footer-note">公開URLで開ける別アプリです。設定すると Gist / Repo に同期します。</div>
   </main>
 
   <button class="fab" id="settingsBtn" title="設定">⚙</button>
@@ -1317,38 +1331,156 @@ function addProject(){
   saveDB();
 }
 
-function addQueue(){
-  const text = document.getElementById("queueText").value.trim();
-  if(!text) return;
+function normalizeKey(text){
+  return String(text || "").trim().toLowerCase().replace(/\s+/g, " ");
+}
+
+function detectDept(text){
+  const t = String(text || "").toLowerCase();
+  if(/mv|動画|映像|premiere|after effects|ae/.test(t)) return "映像";
+  if(/調査|リサーチ|調べ|比較|分析/.test(t)) return "リサーチ";
+  if(/依頼|連携|引き継ぎ|秘書|調整/.test(t)) return "秘書";
+  return "制作";
+}
+
+function detectRisk(text){
+  const t = String(text || "").toLowerCase();
+  if(/急ぎ|今日中|詰み|ブロック|エラー|失敗/.test(t)) return "高め";
+  if(/注意|確認|不安|懸念/.test(t)) return "注意";
+  return "";
+}
+
+function hasQueueText(text){
+  const key = normalizeKey(text);
+  return (DB.empireQueue || []).some(item=>normalizeKey(item.text) === key);
+}
+
+function hasRiskText(text){
+  const key = normalizeKey(text);
+  return (DB.risks || []).some(item=>normalizeKey(item) === key);
+}
+
+function hasInboxText(text){
+  const key = normalizeKey(text);
+  return (DB.inbox || []).some(item=>normalizeKey(item.text) === key);
+}
+
+function hasProjectTitle(title){
+  const key = normalizeKey(title);
+  return (DB.projects || []).some(item=>normalizeKey(item.title) === key);
+}
+
+function addProjectEntry(raw){
+  const text = String(raw || "").trim();
+  if(!text) return false;
+  const [titlePart, phasePart] = text.split("/").map(v=>v.trim());
+  const title = titlePart || text;
+  if(!title || hasProjectTitle(title)) return false;
+  const phase = PHASES.includes(phasePart) ? phasePart : (DB.currentSong.phase || "企画");
+  DB.projects.unshift({
+    id: uid(),
+    title,
+    phase,
+    ref: "",
+    nextAction: "",
+    createdAt: nowISO()
+  });
+  if(!DB.currentSong.title){
+    DB.currentSong.title = title;
+    DB.currentSong.phase = phase;
+  }
+  return true;
+}
+
+function addQueueEntry(text, dept = "", risk = ""){
+  const clean = String(text || "").trim();
+  if(!clean || hasQueueText(clean)) return false;
   DB.empireQueue.unshift({
     id: uid(),
-    text,
-    dept: document.getElementById("queueDept").value,
-    risk: document.getElementById("queueRisk").value,
+    text: clean,
+    dept: dept || detectDept(clean),
+    risk: risk || detectRisk(clean),
     done: false,
     createdAt: nowISO()
   });
+  return true;
+}
+
+function addRiskEntry(text){
+  const clean = String(text || "").trim();
+  if(!clean || hasRiskText(clean)) return false;
+  DB.risks.unshift(clean);
+  return true;
+}
+
+function addInboxEntry(text){
+  const clean = String(text || "").trim();
+  if(!clean || hasInboxText(clean)) return false;
+  DB.inbox.unshift({ id: uid(), text: clean, createdAt: nowISO() });
+  return true;
+}
+
+function parseQuickCaptureLine(line){
+  const raw = String(line || "").trim();
+  if(!raw) return null;
+  const match = raw.match(/^([PQRI]):\s*(.+)$/i);
+  if(match){
+    return { type: match[1].toUpperCase(), text: match[2].trim() };
+  }
+  return { type: "Q", text: raw };
+}
+
+function applyQuickCapture(rawText){
+  const lines = String(rawText || "").split(/\r?\n/).map(v=>v.trim()).filter(Boolean);
+  let addedProject = 0;
+  let addedQueue = 0;
+  let addedRisk = 0;
+  let addedInbox = 0;
+  lines.forEach(line=>{
+    const parsed = parseQuickCaptureLine(line);
+    if(!parsed) return;
+    if(parsed.type === "P"){ if(addProjectEntry(parsed.text)) addedProject += 1; return; }
+    if(parsed.type === "R"){ if(addRiskEntry(parsed.text)) addedRisk += 1; return; }
+    if(parsed.type === "I"){ if(addInboxEntry(parsed.text)) addedInbox += 1; return; }
+    if(addQueueEntry(parsed.text)) addedQueue += 1;
+  });
+  if(addedProject || addedQueue || addedRisk || addedInbox){
+    saveDB();
+  }
+  const total = addedProject + addedQueue + addedRisk + addedInbox;
+  const label = document.getElementById("quickCaptureResult");
+  if(label){
+    label.textContent = total
+      ? `追加: 曲${addedProject} / 依頼${addedQueue} / リスク${addedRisk} / Inbox${addedInbox}`
+      : "追加なし（重複または空行）";
+  }
+}
+
+function addQueue(){
+  const text = document.getElementById("queueText").value.trim();
+  if(!text) return;
+  const added = addQueueEntry(text, document.getElementById("queueDept").value, document.getElementById("queueRisk").value);
   document.getElementById("queueText").value = "";
   document.getElementById("queueRisk").value = "";
-  saveDB();
+  if(added) saveDB();
 }
 
 function addRisk(){
   const input = document.getElementById("riskText");
   const text = input.value.trim();
   if(!text) return;
-  DB.risks.unshift(text);
+  const added = addRiskEntry(text);
   input.value = "";
-  saveDB();
+  if(added) saveDB();
 }
 
 function addInbox(){
   const input = document.getElementById("inboxText");
   const text = input.value.trim();
   if(!text) return;
-  DB.inbox.unshift({ id: uid(), text, createdAt: nowISO() });
+  const added = addInboxEntry(text);
   input.value = "";
-  saveDB();
+  if(added) saveDB();
 }
 
 function exportDB(){
@@ -1388,10 +1520,37 @@ function bindEvents(){
   document.getElementById("addProjectBtn").addEventListener("click", addProject);
   document.getElementById("addQueueBtn").addEventListener("click", addQueue);
   document.getElementById("addRiskBtn").addEventListener("click", addRisk);
+  document.getElementById("quickCaptureApplyBtn").addEventListener("click", ()=>{
+    applyQuickCapture(document.getElementById("quickCaptureInput").value);
+    document.getElementById("quickCaptureInput").value = "";
+  });
+  document.getElementById("quickCapturePasteBtn").addEventListener("click", async ()=>{
+    try{
+      const clip = await navigator.clipboard.readText();
+      document.getElementById("quickCaptureInput").value = clip || "";
+      applyQuickCapture(clip || "");
+      document.getElementById("quickCaptureInput").value = "";
+    }catch{
+      const label = document.getElementById("quickCaptureResult");
+      if(label) label.textContent = "クリップボード読込に失敗。手動で貼ってください。";
+    }
+  });
+  document.getElementById("quickCaptureSampleBtn").addEventListener("click", ()=>{
+    document.getElementById("quickCaptureInput").value = "P: 新曲 再起 / 作曲\nQ: Bメロのコード3案を作る\nR: サビの歌詞が弱い\nI: メロ断片 4小節";
+    const label = document.getElementById("quickCaptureResult");
+    if(label) label.textContent = "サンプルを入れました。";
+  });
   document.getElementById("riskText").addEventListener("keydown", e=>{ if(e.key === "Enter"){ e.preventDefault(); addRisk(); } });
   document.getElementById("addInboxBtn").addEventListener("click", addInbox);
   document.getElementById("inboxText").addEventListener("keydown", e=>{ if(e.key === "Enter"){ e.preventDefault(); addInbox(); } });
   document.getElementById("queueText").addEventListener("keydown", e=>{ if(e.key === "Enter"){ e.preventDefault(); addQueue(); } });
+  document.getElementById("quickCaptureInput").addEventListener("keydown", e=>{
+    if((e.metaKey || e.ctrlKey) && e.key === "Enter"){
+      e.preventDefault();
+      applyQuickCapture(document.getElementById("quickCaptureInput").value);
+      document.getElementById("quickCaptureInput").value = "";
+    }
+  });
 
   document.getElementById("settingsBtn").addEventListener("click", ()=>document.getElementById("settingsModal").classList.add("show"));
   document.getElementById("closeSettingsBtn").addEventListener("click", ()=>document.getElementById("settingsModal").classList.remove("show"));
