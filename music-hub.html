@@ -549,6 +549,11 @@ a.inline-link{color:var(--gold-2)}
 const STORAGE_KEY = "codex_music_hub_db";
 const COOKIE_KEY = "codex_music_hub_backup";
 const GIST_FILENAME = "codex_music_hub.json";
+const REPO_SYNC_FILE = "codex_music_hub.json";
+const REPO_OWNER = "ryu625";
+const REPO_NAME = "draem-dash";
+const REPO_BRANCH = "main";
+const REPO_SYNC_URL = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${REPO_SYNC_FILE}`;
 const SHARED_SYNC_FILE = "music-hub-sync.json";
 const SHARED_SYNC_URL = `./${SHARED_SYNC_FILE}`;
 const PHASES = ["企画","作曲","アレンジ","仮歌","制作","MV","配信","分析"];
@@ -834,6 +839,83 @@ function parseAcceptedPerm(headerValue){
   return headerValue;
 }
 
+async function pullFromRepo(token){
+  if(!token) return null;
+  const res = await fetch(`${REPO_SYNC_URL}?ref=${REPO_BRANCH}&t=${Date.now()}`, {
+    headers:{
+      "Authorization":`Bearer ${token}`,
+      "Accept":"application/vnd.github+json"
+    },
+    cache:"no-store"
+  });
+  if(res.status === 404) return null;
+  if(!res.ok){
+    const body = await res.text();
+    throw new Error(`Repo読込に失敗 ${res.status} ${body.slice(0,120)}`);
+  }
+  const json = await res.json();
+  const raw = json?.content ? decodeURIComponent(escape(atob(json.content.replace(/\n/g, "")))) : "";
+  if(!raw) return null;
+  return safeParse(raw);
+}
+
+async function pushToRepo(token){
+  if(!token) throw new Error("token未設定");
+  const metaRes = await fetch(`${REPO_SYNC_URL}?ref=${REPO_BRANCH}&t=${Date.now()}`, {
+    headers:{
+      "Authorization":`Bearer ${token}`,
+      "Accept":"application/vnd.github+json"
+    },
+    cache:"no-store"
+  });
+  let sha = "";
+  if(metaRes.ok){
+    const metaJson = await metaRes.json();
+    sha = metaJson?.sha || "";
+  }else if(metaRes.status !== 404){
+    const body = await metaRes.text();
+    throw new Error(`Repo事前確認に失敗 ${metaRes.status} ${body.slice(0,120)}`);
+  }
+  const res = await fetch(REPO_SYNC_URL, {
+    method:"PUT",
+    headers:{
+      "Content-Type":"application/json",
+      "Authorization":`Bearer ${token}`,
+      "Accept":"application/vnd.github+json"
+    },
+    cache:"no-store",
+    body: JSON.stringify({
+      message: "chore: sync music hub db",
+      content: toBase64Utf8(JSON.stringify(DB, null, 2)),
+      branch: REPO_BRANCH,
+      ...(sha ? { sha } : {})
+    })
+  });
+  if(!res.ok){
+    const body = await res.text();
+    throw new Error(`Repo同期に失敗 ${res.status} ${body.slice(0,120)}`);
+  }
+}
+
+async function syncPullFromRepo(options = {}){
+  const { persist = true, quiet = false } = options;
+  const gist = gc();
+  const remote = await pullFromRepo(gist.token);
+  if(!remote){
+    if(!quiet) updateStatus("ok");
+    return null;
+  }
+  mergeDB(remote);
+  DB.meta.lastPulledAt = nowISO();
+  DB.meta.lastRemoteUpdated = remote.updated || "";
+  DB.meta.lastSyncError = "";
+  if(persist){
+    persistState();
+  }
+  if(!quiet) updateStatus("ok");
+  return remote;
+}
+
 function restoreApiFromDB(){
   const gist = gc();
   document.getElementById("gistIdInput").value = gist.id || "";
@@ -860,52 +942,72 @@ async function syncPush(immediate = false){
   }
   try{
     updateStatus("syncing");
+    let usedRepoFallback = false;
     if(gist.id){
-      await syncPull({ persist: false, quiet: true, skipPush: true });
+      try{
+        await syncPull({ persist: false, quiet: true, skipPush: true });
+      }catch{
+        usedRepoFallback = true;
+      }
     }
     let gistId = gist.id;
-    const body = {
-      description: "dræm. music hub sync",
-      public: false,
-      files: {
-        [GIST_FILENAME]: { content: JSON.stringify(DB, null, 2) }
+    if(!usedRepoFallback){
+      const body = {
+        description: "dræm. music hub sync",
+        public: false,
+        files: {
+          [GIST_FILENAME]: { content: JSON.stringify(DB, null, 2) }
+        }
+      };
+      if(!gistId){
+        const res = await fetch("https://api.github.com/gists", {
+          method:"POST",
+          headers:{
+            "Content-Type":"application/json",
+            "Authorization":`Bearer ${gist.token}`,
+            "Accept":"application/vnd.github+json"
+          },
+          cache:"no-store",
+          body: JSON.stringify(body)
+        });
+        if(!res.ok){
+          usedRepoFallback = true;
+        }else{
+          const json = await res.json();
+          gistId = json.id;
+          DB.apiSettings.gist.id = gistId;
+          DB.meta.lastPushedAt = nowISO();
+          persistState();
+          restoreApiFromDB();
+        }
+      }else{
+        const res = await fetch(`https://api.github.com/gists/${gistId}`, {
+          method:"PATCH",
+          headers:{
+            "Content-Type":"application/json",
+            "Authorization":`Bearer ${gist.token}`,
+            "Accept":"application/vnd.github+json"
+          },
+          cache:"no-store",
+          body: JSON.stringify(body)
+        });
+        if(!res.ok){
+          usedRepoFallback = true;
+        }else{
+          DB.meta.lastPushedAt = nowISO();
+          DB.meta.lastRemoteUpdated = DB.updated || "";
+          persistState();
+        }
       }
-    };
-    if(!gistId){
-      const res = await fetch("https://api.github.com/gists", {
-        method:"POST",
-        headers:{
-          "Content-Type":"application/json",
-          "Authorization":`Bearer ${gist.token}`,
-          "Accept":"application/vnd.github+json"
-        },
-        cache:"no-store",
-        body: JSON.stringify(body)
-      });
-      if(!res.ok) throw new Error("Gist作成に失敗");
-      const json = await res.json();
-      gistId = json.id;
-      DB.apiSettings.gist.id = gistId;
-      DB.meta.lastPushedAt = nowISO();
-      persistState();
-      restoreApiFromDB();
-    }else{
-      const res = await fetch(`https://api.github.com/gists/${gistId}`, {
-        method:"PATCH",
-        headers:{
-          "Content-Type":"application/json",
-          "Authorization":`Bearer ${gist.token}`,
-          "Accept":"application/vnd.github+json"
-        },
-        cache:"no-store",
-        body: JSON.stringify(body)
-      });
-      if(!res.ok) throw new Error("Gist同期に失敗");
+    }
+    if(usedRepoFallback){
+      await pushToRepo(gist.token);
       DB.meta.lastPushedAt = nowISO();
       DB.meta.lastRemoteUpdated = DB.updated || "";
       persistState();
+      setSharedSyncState("fallback", "Gist連携に失敗。Repo同期で継続しています。");
     }
-    if(sharedSync.gistId !== gistId){
+    if(gistId && sharedSync.gistId !== gistId){
       await publishSharedSyncChannel(true);
     }
     DB.meta.lastSyncError = "";
@@ -928,12 +1030,15 @@ async function syncPush(immediate = false){
 async function syncPull(options = {}){
   const { persist = true, quiet = false, skipPush = false } = options;
   const gist = gc();
-  if(!gist.id || !gist.token) {
+  if(!gist.token) {
     if(!quiet) updateStatus("local");
     return;
   }
   try{
     if(!quiet) updateStatus("syncing");
+    if(!gist.id){
+      return await syncPullFromRepo({ persist, quiet });
+    }
     const res = await fetch(`https://api.github.com/gists/${gist.id}?t=${Date.now()}`, {
       headers:{
         "Authorization":`Bearer ${gist.token}`,
@@ -941,7 +1046,9 @@ async function syncPull(options = {}){
       },
       cache:"no-store"
     });
-    if(!res.ok) throw new Error("Gist読込に失敗");
+    if(!res.ok){
+      return await syncPullFromRepo({ persist, quiet });
+    }
     const json = await res.json();
     const file = json.files?.[GIST_FILENAME];
     if(!file?.content) {
@@ -959,10 +1066,15 @@ async function syncPull(options = {}){
     if(!quiet) updateStatus("ok");
     return remote;
   }catch(err){
-    console.error(err);
-    DB.meta.lastSyncError = err?.message || String(err);
-    persistState();
-    if(!quiet) updateStatus("error");
+    try{
+      return await syncPullFromRepo({ persist, quiet });
+    }catch(repoErr){
+      console.error(repoErr);
+      DB.meta.lastSyncError = repoErr?.message || String(repoErr);
+      persistState();
+      if(!quiet) updateStatus("error");
+      return null;
+    }
   }
 }
 
@@ -988,7 +1100,8 @@ async function runSyncDiagnostics(){
     }
     const user = await userRes.json();
     if(!gist.id){
-      setSharedSyncState("diag", `token は有効。user=${user.login}。 gist id を設定して再診断してください。 accepted=${userPerm}`);
+      const repoRemote = await pullFromRepo(gist.token);
+      setSharedSyncState("diag", `token は有効。user=${user.login}。repo同期=${repoRemote ? "読込OK" : "未作成"} accepted=${userPerm}`);
       updateStatus();
       return;
     }
@@ -1001,8 +1114,10 @@ async function runSyncDiagnostics(){
     });
     const gistPerm = parseAcceptedPerm(gistRes.headers.get("X-Accepted-GitHub-Permissions"));
     if(!gistRes.ok){
-      const body = await gistRes.text();
-      throw new Error(`gist参照失敗 ${gistRes.status} ${body.slice(0,120)} accepted=${gistPerm}`);
+      const repoRemote = await pullFromRepo(gist.token);
+      setSharedSyncState("diag", `gist参照NG(${gistRes.status})。repo同期=${repoRemote ? "読込OK" : "未作成"} accepted=${gistPerm || userPerm}`);
+      updateStatus("ok");
+      return;
     }
     const gistJson = await gistRes.json();
     const hasFile = Boolean(gistJson?.files?.[GIST_FILENAME]?.content);
@@ -1166,7 +1281,15 @@ function updateStatus(kind = ""){
   if(kind === "ok"){ el.textContent = "synced"; return; }
   if(kind === "error"){ el.textContent = "sync error"; return; }
   const gist = gc();
-  el.textContent = gist.id && gist.token ? `ready ${gist.id.slice(-6)}` : "local only";
+  if(gist.id && gist.token){
+    el.textContent = `ready ${gist.id.slice(-6)}`;
+    return;
+  }
+  if(gist.token){
+    el.textContent = "ready repo";
+    return;
+  }
+  el.textContent = "local only";
 }
 
 function escapeHtml(value){
