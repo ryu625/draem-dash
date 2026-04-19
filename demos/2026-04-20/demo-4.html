@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="ja"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>60s Nanohelp — Demo</title>
+<style>
+:root{--bg:#0D0906;--s1:rgba(255,255,255,.04);--s2:rgba(255,255,255,.08);--gold:#C4A059;--gl:#DFC07A;--t1:#E8DDD0;--t2:#A89585;--t3:#6D5A4A;--grn:#5CB870;--red:#C45B5B;--amb:#D4954A}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--t1);font-family:-apple-system,'Hiragino Sans',sans-serif;padding:1rem;max-width:680px;margin:0 auto;font-size:14px;line-height:1.5}
+h1{font-size:1.3rem;color:var(--gold);margin-bottom:.4rem}
+.sub{color:var(--t2);font-size:.8rem;margin-bottom:1rem}
+.card{background:var(--s1);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:1rem;margin-bottom:.8rem}
+.prob{background:rgba(196,91,91,.08);border-left:3px solid var(--red);padding:.6rem .8rem;border-radius:6px;margin-bottom:1rem;font-size:.85rem}
+.prob b{color:var(--red)}
+label{display:block;font-size:.7rem;color:var(--t3);margin-bottom:.25rem;text-transform:uppercase;letter-spacing:.05em}
+textarea,input{width:100%;background:var(--s2);border:1px solid rgba(255,255,255,.1);border-radius:6px;padding:.5rem;color:var(--t1);font-family:inherit;font-size:.85rem;margin-bottom:.5rem}
+button{background:var(--gold);color:var(--bg);border:0;padding:.55rem 1rem;border-radius:6px;font-weight:700;cursor:pointer;font-size:.85rem}
+button.sec{background:var(--s2);color:var(--t1);border:1px solid rgba(255,255,255,.1)}
+button:disabled{opacity:.5;cursor:not-allowed}
+.q{background:rgba(196,160,89,.05);border:1px solid rgba(196,160,89,.2);border-radius:8px;padding:.8rem;font-size:.88rem;margin-bottom:.6rem;line-height:1.55}
+.q-tag{font-size:.65rem;color:var(--gold);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.3rem}
+.timer{text-align:center;margin:.6rem 0}
+.tv{font-size:2.6rem;color:var(--gl);font-family:Georgia,serif;font-weight:700;letter-spacing:.05em;transition:color .2s}
+.tv.warn{color:var(--amb)}
+.tv.bad{color:var(--red)}
+.bar{height:6px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden;margin-top:.3rem}
+.bar-f{height:100%;background:var(--grn);transition:width .1s linear,background .2s}
+.vp{background:rgba(92,184,112,.08);border-left:3px solid var(--grn);padding:.6rem .8rem;border-radius:6px;margin:1rem 0;font-size:.82rem}
+.ft{color:var(--t3);font-size:.7rem;margin-top:1rem;line-height:1.6}
+.ft b{color:var(--gold)}
+.src{color:var(--t3);font-size:.65rem;margin-top:.5rem}
+.src a{color:var(--t3)}
+.grade{padding:.8rem;border-radius:8px;margin-top:.6rem;font-size:.85rem}
+.grade.a{background:rgba(92,184,112,.08);border-left:3px solid var(--grn);color:var(--grn)}
+.grade.b{background:rgba(212,149,74,.08);border-left:3px solid var(--amb);color:var(--amb)}
+.grade.c{background:rgba(196,91,91,.08);border-left:3px solid var(--red);color:var(--red)}
+.grade-body{color:var(--t1);margin-top:.3rem;font-size:.78rem}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:.4rem;margin-top:.5rem}
+.stat{background:var(--s2);padding:.4rem;border-radius:6px;text-align:center}
+.stat-v{color:var(--gl);font-family:Georgia,serif;font-weight:700;font-size:1rem}
+.stat-l{font-size:.6rem;color:var(--t3);margin-top:.15rem}
+.log{font-size:.7rem;color:var(--t3);padding:.35rem .5rem;border-left:2px solid rgba(196,160,89,.2);margin-bottom:.25rem;display:flex;justify-content:space-between;gap:.5rem}
+.log b{color:var(--t1)}
+</style></head>
+<body>
+<h1>⏱ 60s Nanohelp</h1>
+<div class="sub">60秒以内に質問に答える練習 — エキスパートの「ナノ回答力」を鍛える</div>
+
+<div class="prob"><b>痛み (研究発想):</b> フォーラム質問の1/4は「60秒で答えられる」タイプだが、人を待たせて数時間〜数日。逆に教える側は「簡潔に答える」訓練を積む機会が少ない。</div>
+
+<div class="card">
+  <div class="q">
+    <div class="q-tag">今日の質問</div>
+    <div id="qtxt">—</div>
+  </div>
+  <div class="timer">
+    <div class="tv" id="tv">60.0</div>
+    <div style="font-size:.7rem;color:var(--t3);margin-top:.2rem">残り秒数</div>
+    <div class="bar"><div class="bar-f" id="barf" style="width:100%"></div></div>
+  </div>
+  <label>あなたの回答 (60秒以内)</label>
+  <textarea id="ans" rows="4" placeholder="Startを押してから書き始めてください" disabled></textarea>
+  <div style="display:flex;gap:.4rem">
+    <button id="startBtn" onclick="start()">▶ Start (質問を新規で出題)</button>
+    <button id="submitBtn" class="sec" onclick="done()" disabled>判定</button>
+  </div>
+</div>
+
+<div id="out"></div>
+
+<div id="logs" class="card" style="display:none">
+  <label>練習ログ (ローカル保存)</label>
+  <div id="logList"></div>
+</div>
+
+<div class="vp"><b>価値:</b> 論文「Nanomentoring」が示す「短い質問は60秒で答えられる」を訓練化。教える側の簡潔さを鍛え、フォーラムやSlackでのヘルプ待ち時間を分→秒に縮める。</div>
+
+<div class="ft">
+  <b>本番版で追加される機能:</b><br>
+  ・自分の専門分野 (例: Figma / Python / Photoshop) に合わせた質問生成<br>
+  ・実際のStack Overflow / Redditの回答と比較した「圧縮率」フィードバック<br>
+  ・Slack/Discord連携で実際のナノ質問をリアルタイム配信<br>
+  ・チームでランキング (平均回答時間 / 簡潔さスコア)
+</div>
+
+<div class="src">Source: <a href="http://arxiv.org/abs/2604.13621v1" target="_blank">arxiv 2604.13621 — Nanomentoring: How Quickly People Can Help Learn Feature-Rich Software</a></div>
+
+<script src="../_shared/capture.js"></script>
+<script>renderCapture({demoId:'demo-4',title:'60s Nanohelp',priceYen:480,earlyFeatures:'分野別質問生成 + SO/Reddit回答との圧縮率比較 + Slack/Discord連携'});</script>
+
+<script>
+const QUESTIONS = [
+  {q:'Figmaで作ったフレームを1つだけ複製するショートカットは？', ideal:20, kw:['option','alt','drag','ドラッグ','複製']},
+  {q:'Pythonのdictで「キーが無ければデフォルト値、あれば既存値」を1行で書くには？', ideal:40, kw:['setdefault','get','||']},
+  {q:'Git で直前のコミットメッセージだけ書き直したい。コマンドは？', ideal:15, kw:['amend','commit']},
+  {q:'CSS で position:sticky が効かない時に最初に疑うのは？', ideal:25, kw:['overflow','hidden','親','parent']},
+  {q:'Excelで「A列が空でない行だけ」カウントする関数は？', ideal:20, kw:['COUNTA','COUNT','IF']},
+  {q:'JSの for...of と for...in の使い分けは？', ideal:30, kw:['value','key','index','配列','オブジェクト']},
+  {q:'VS Codeで同じ変数名を全部選択して一括リネームするには？', ideal:15, kw:['F2','Cmd','D','Ctrl','rename']},
+  {q:'PostgreSQL で UPSERT を一発で書くには？', ideal:35, kw:['ON CONFLICT','insert','update']},
+  {q:'Figmaでコンポーネントのインスタンスを「detach」する意味は？', ideal:30, kw:['切り離','独立','リンク','元']},
+  {q:'正規表現で「3桁の数字の直前」を非捕獲で一致させるには？', ideal:30, kw:['?=','?!','lookahead','先読']},
+];
+
+let t0=0, tid=null, currentQ=null, logs=JSON.parse(localStorage.getItem('nanohelp_logs')||'[]');
+
+function pickQ(){ return QUESTIONS[Math.floor(Math.random()*QUESTIONS.length)]; }
+
+function start(){
+  currentQ = pickQ();
+  document.getElementById('qtxt').textContent = currentQ.q;
+  document.getElementById('ans').value='';
+  document.getElementById('ans').disabled=false;
+  document.getElementById('ans').focus();
+  document.getElementById('submitBtn').disabled=false;
+  document.getElementById('startBtn').disabled=true;
+  document.getElementById('out').innerHTML='';
+  t0 = performance.now();
+  if(tid) clearInterval(tid);
+  tid = setInterval(tick, 80);
+}
+
+function tick(){
+  const elapsed = (performance.now()-t0)/1000;
+  const left = Math.max(0, 60-elapsed);
+  const tv = document.getElementById('tv');
+  tv.textContent = left.toFixed(1);
+  tv.className = 'tv' + (left<10?' bad': left<25?' warn':'');
+  const barf = document.getElementById('barf');
+  barf.style.width = (left/60*100) + '%';
+  barf.style.background = left<10?'var(--red)':left<25?'var(--amb)':'var(--grn)';
+  if(left<=0) done(true);
+}
+
+function done(timeout=false){
+  if(!currentQ) return;
+  clearInterval(tid);
+  const elapsed = Math.min(60, (performance.now()-t0)/1000);
+  const ans = document.getElementById('ans').value.trim();
+  document.getElementById('ans').disabled=true;
+  document.getElementById('submitBtn').disabled=true;
+  document.getElementById('startBtn').disabled=false;
+  const chars = [...ans].length;
+  const kwHit = currentQ.kw.filter(k=>ans.toLowerCase().includes(k.toLowerCase())).length;
+  const kwRate = kwHit / currentQ.kw.length;
+
+  let grade='c', title='', msg='';
+  if(chars === 0){ grade='c'; title='未提出'; msg='質問は60秒で答えられます。まず1センテンス書くところから。'; }
+  else if(elapsed <= currentQ.ideal && kwRate >= 0.4 && chars <= 200){ grade='a'; title='A — ナノ回答'; msg='理想時間以内 + 核ワード命中。フォーラムで「救世主」扱いされるレベル。'; }
+  else if(elapsed <= 60 && kwRate >= 0.2){ grade='b'; title='B — 合格'; msg='60秒以内で要点を押さえたが、もう少し圧縮できます。不要な前置きを削るのが次の練習。'; }
+  else { grade='c'; title='C — 要訓練'; msg='時間超過か核ワード不足。まず「答えそのもの」を先頭に書いて、理由は後ろに。'; }
+
+  const entry = {q: currentQ.q, ans, t: Math.round(elapsed*10)/10, chars, kwRate: Math.round(kwRate*100), grade, at: Date.now()};
+  logs.unshift(entry);
+  logs = logs.slice(0,10);
+  localStorage.setItem('nanohelp_logs', JSON.stringify(logs));
+
+  document.getElementById('out').innerHTML = `
+    <div class="card">
+      <div class="grade ${grade}">${title}${timeout && chars===0?' (タイムアップ)':''}<div class="grade-body">${msg}</div></div>
+      <div class="stats">
+        <div class="stat"><div class="stat-v">${elapsed.toFixed(1)}s</div><div class="stat-l">所要時間</div></div>
+        <div class="stat"><div class="stat-v">${chars}</div><div class="stat-l">文字数</div></div>
+        <div class="stat"><div class="stat-v">${Math.round(kwRate*100)}%</div><div class="stat-l">核ワード命中</div></div>
+      </div>
+    </div>`;
+  renderLogs();
+}
+
+function renderLogs(){
+  if(logs.length===0){ document.getElementById('logs').style.display='none'; return; }
+  document.getElementById('logs').style.display='block';
+  document.getElementById('logList').innerHTML = logs.map(l=>`<div class="log"><span>${new Date(l.at).toLocaleTimeString('ja-JP')} · ${l.q.slice(0,30)}...</span><span><b>${l.grade.toUpperCase()}</b> ${l.t}s / ${l.chars}字</span></div>`).join('');
+}
+renderLogs();
+</script>
+</body></html>

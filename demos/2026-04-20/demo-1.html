@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="ja"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Review Text Composer — Demo</title>
+<style>
+:root{--bg:#0D0906;--s1:rgba(255,255,255,.04);--s2:rgba(255,255,255,.08);--gold:#C4A059;--gl:#DFC07A;--t1:#E8DDD0;--t2:#A89585;--t3:#6D5A4A;--grn:#5CB870;--red:#C45B5B}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--t1);font-family:-apple-system,'Hiragino Sans',sans-serif;padding:1rem;max-width:680px;margin:0 auto;font-size:14px;line-height:1.5}
+h1{font-size:1.3rem;color:var(--gold);margin-bottom:.4rem}
+.sub{color:var(--t2);font-size:.8rem;margin-bottom:1rem}
+.card{background:var(--s1);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:1rem;margin-bottom:.8rem}
+.prob{background:rgba(196,91,91,.08);border-left:3px solid var(--red);padding:.6rem .8rem;border-radius:6px;margin-bottom:1rem;font-size:.85rem}
+.prob b{color:var(--red)}
+label{display:block;font-size:.7rem;color:var(--t3);margin-bottom:.25rem;text-transform:uppercase;letter-spacing:.05em}
+input,textarea,select{width:100%;background:var(--s2);border:1px solid rgba(255,255,255,.1);border-radius:6px;padding:.5rem;color:var(--t1);font-family:inherit;font-size:.85rem;margin-bottom:.5rem}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:.5rem}
+button{background:var(--gold);color:var(--bg);border:0;padding:.55rem 1rem;border-radius:6px;font-weight:700;cursor:pointer;font-size:.85rem}
+button.sec{background:var(--s2);color:var(--t1);border:1px solid rgba(255,255,255,.1)}
+.preview{background:#E8DDD0;color:#0D0906;padding:.9rem;border-radius:12px;margin-top:.5rem;font-size:.85rem;line-height:1.5;position:relative;max-width:92%}
+.preview:before{content:'';position:absolute;right:-6px;top:12px;width:0;height:0;border:6px solid transparent;border-left-color:#E8DDD0;border-right:0}
+.preview b{color:var(--gold);background:rgba(196,160,89,.15);padding:0 .15rem;border-radius:2px}
+.phone{background:var(--s2);border-radius:14px;padding:1rem;margin:.6rem 0}
+.phone-hd{font-size:.65rem;color:var(--t3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.5rem;display:flex;justify-content:space-between}
+.vp{background:rgba(92,184,112,.08);border-left:3px solid var(--grn);padding:.6rem .8rem;border-radius:6px;margin:1rem 0;font-size:.82rem}
+.ft{color:var(--t3);font-size:.7rem;margin-top:1rem;line-height:1.6}
+.ft b{color:var(--gold)}
+.src{color:var(--t3);font-size:.65rem;margin-top:.5rem}
+.src a{color:var(--t3)}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;margin:.6rem 0}
+.stat{background:var(--s2);padding:.5rem;border-radius:8px;text-align:center}
+.stat-v{color:var(--gl);font-weight:700;font-size:1.1rem;font-family:Georgia,serif}
+.stat-l{font-size:.6rem;color:var(--t3);text-transform:uppercase;letter-spacing:.05em;margin-top:.15rem}
+.tip{font-size:.72rem;color:var(--t3);margin-top:.3rem;padding-left:.5rem;border-left:2px solid rgba(196,160,89,.3)}
+.ok{color:var(--grn)}
+.warn{color:var(--red)}
+</style></head>
+<body>
+<h1>💬 Review Text Composer</h1>
+<div class="sub">ローカルビジネス向け・Googleレビュー依頼テキスト自動生成</div>
+
+<div class="prob"><b>痛み:</b> r/DigitalMarketing — 「レビュー依頼のメールは2-3%しか反応ない。テキストだと35%来るが、タイミング・文面・送信元まで正解を知らないと効かない」</div>
+
+<div class="card">
+  <div class="row2">
+    <div>
+      <label>店舗名</label>
+      <input id="biz" value="みどり整体院">
+    </div>
+    <div>
+      <label>オーナー名 (送信元)</label>
+      <input id="owner" value="鈴木">
+    </div>
+  </div>
+  <label>お客さま名</label>
+  <input id="cust" value="田中">
+  <div class="row2">
+    <div>
+      <label>施術/サービス</label>
+      <input id="svc" value="肩こり整体">
+    </div>
+    <div>
+      <label>完了時刻</label>
+      <input id="done" type="time" value="15:00">
+    </div>
+  </div>
+  <label>Google ビジネス URL</label>
+  <input id="url" value="https://g.page/r/midori-seitai/review" placeholder="https://g.page/r/...">
+  <label>トーン</label>
+  <select id="tone">
+    <option value="warm">🤝 親しみ (35%+反応率)</option>
+    <option value="pro">💼 フォーマル</option>
+    <option value="casual">😊 カジュアル</option>
+  </select>
+</div>
+
+<div id="out"></div>
+
+<div class="vp"><b>価値:</b> Reddit投稿の「35%反応率」パターンを文面/タイミング/送信元まで再現。手動作成10分 → 0秒。平均26レビュー/月増、星評価+0.3想定。</div>
+
+<div class="ft">
+  <b>本番版で追加される機能:</b><br>
+  ・POSシステムから顧客情報と施術完了時刻を自動取得<br>
+  ・2時間後に自動送信（オーナー携帯から見える番号で）<br>
+  ・返信が来た場合にオーナー携帯へ通知<br>
+  ・★4以下の見込み客は個別フォロー画面へ分岐
+</div>
+
+<div class="src">Source: <a href="https://reddit.com/r/DigitalMarketing/comments/1smf6vb/helped_a_local_client_go_from_23_google_reviews/" target="_blank">r/DigitalMarketing — 23 → 147 reviews in 4 months</a></div>
+
+<script src="../_shared/capture.js"></script>
+<script>renderCapture({demoId:'demo-1',title:'Review Text Composer',priceYen:1280,earlyFeatures:'POS自動連携 + 2時間後自動送信 + ★4以下フォロー画面分岐'});</script>
+
+<script>
+const tones = {
+  warm: (b,o,c,s)=>`${c}さん、今日は${s}にお越しいただきありがとうございました。\nもしよかったら30秒だけ、Googleレビューでご感想を教えてください。励みになります。\n${o} (${b})`,
+  pro: (b,o,c,s)=>`${c}様\n\n本日は${b}にご来店いただき誠にありがとうございました。\nサービス向上のため、Google口コミへのご感想をいただけますと幸いです。\n\n${b}\n${o}`,
+  casual: (b,o,c,s)=>`${c}さん、今日お疲れさまでした🙏\n30秒で終わるので、Googleレビューもしよかったらお願いします！\n${o}`
+};
+
+function calcSendTime(doneTime){
+  const [h,m] = doneTime.split(':').map(Number);
+  const t = new Date();
+  t.setHours(h,m,0,0);
+  t.setHours(t.getHours()+2);
+  return t.toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit'});
+}
+
+function score(text, url){
+  let s = 0, tips = [];
+  const chars = [...text].length;
+  if(chars <= 90) { s += 30; tips.push({ok:true,t:`短い (${chars}字) — 既読で読み切られる`}); }
+  else if(chars <= 140) { s += 18; tips.push({ok:true,t:`適度な長さ (${chars}字)`}); }
+  else { s += 5; tips.push({ok:false,t:`長すぎる (${chars}字) — 90字以下推奨`}); }
+  if(url && url.includes('http')) { s += 25; tips.push({ok:true,t:'リンクがワンタップで開ける'}); }
+  else { s += 0; tips.push({ok:false,t:'直リンク必須 — 検索させるとCVR3%以下'}); }
+  if(/さん|様|name|_name_/.test(text)) { s += 15; tips.push({ok:true,t:'顧客名で呼びかけ'}); }
+  if(/30秒|すぐ|少し/.test(text)) { s += 15; tips.push({ok:true,t:'「所要時間」が明示されている'}); }
+  if(/\n.+$/.test(text.split('\n').slice(-1)[0]) && /[a-zぁ-んァ-ン一-龯]/.test(text.split('\n').slice(-1)[0])) { s += 15; tips.push({ok:true,t:'送信者名で締め (個人感)'}); }
+  return {score: Math.min(100,s), tips};
+}
+
+function render(){
+  const b = biz.value, o = owner.value, c = cust.value, s = svc.value, d = done.value, u = url.value, tn = tone.value;
+  const text = tones[tn](b,o,c,s);
+  const sendAt = calcSendTime(d);
+  const {score:sc, tips} = score(text, u);
+  const scColor = sc>=75 ? 'ok' : sc>=50 ? '' : 'warn';
+  document.getElementById('out').innerHTML = `
+  <div class="card">
+    <div class="phone-hd"><span>📱 SMS プレビュー — 送信先: ${c}さん</span><span>送信時刻: ${sendAt}</span></div>
+    <div class="preview">${text.replace(/</g,'&lt;').replace(/(https?:\/\/\S+)/,'<b>$1</b>')}</div>
+    <div class="stats">
+      <div class="stat"><div class="stat-v ${scColor}">${sc}</div><div class="stat-l">CVRスコア</div></div>
+      <div class="stat"><div class="stat-v">${[...text].length}</div><div class="stat-l">文字数</div></div>
+      <div class="stat"><div class="stat-v">~${Math.round(sc*0.35)}%</div><div class="stat-l">期待反応率</div></div>
+    </div>
+    ${tips.map(t=>`<div class="tip ${t.ok?'ok':'warn'}">${t.ok?'✓':'⚠'} ${t.t}</div>`).join('')}
+    <div style="display:flex;gap:.4rem;margin-top:.8rem">
+      <button onclick="copy()">📋 テキストをコピー</button>
+      <button class="sec" onclick="openSms()">📱 SMSアプリで開く</button>
+    </div>
+    <div id="copied" style="font-size:.7rem;color:var(--grn);margin-top:.4rem;min-height:1rem"></div>
+  </div>`;
+}
+
+function copy(){
+  const b = biz.value, o = owner.value, c = cust.value, s = svc.value, tn = tone.value, u = url.value;
+  const txt = tones[tn](b,o,c,s) + '\n' + u;
+  navigator.clipboard.writeText(txt).then(()=>{
+    document.getElementById('copied').textContent = '✓ コピーしました';
+    setTimeout(()=>document.getElementById('copied').textContent='',2000);
+  });
+}
+function openSms(){
+  const b = biz.value, o = owner.value, c = cust.value, s = svc.value, tn = tone.value, u = url.value;
+  const txt = tones[tn](b,o,c,s) + '\n' + u;
+  location.href = 'sms:?body=' + encodeURIComponent(txt);
+}
+
+['biz','owner','cust','svc','done','url','tone'].forEach(id=>document.getElementById(id).addEventListener('input',render));
+render();
+</script>
+</body></html>

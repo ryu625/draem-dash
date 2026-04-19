@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="ja"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Cold Opener Writer — Demo</title>
+<style>
+:root{--bg:#0D0906;--s1:rgba(255,255,255,.04);--s2:rgba(255,255,255,.08);--gold:#C4A059;--gl:#DFC07A;--t1:#E8DDD0;--t2:#A89585;--t3:#6D5A4A;--grn:#5CB870;--red:#C45B5B}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--t1);font-family:-apple-system,'Hiragino Sans',sans-serif;padding:1rem;max-width:680px;margin:0 auto;font-size:14px;line-height:1.5}
+h1{font-size:1.3rem;color:var(--gold);margin-bottom:.4rem}
+.sub{color:var(--t2);font-size:.8rem;margin-bottom:1rem}
+.card{background:var(--s1);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:1rem;margin-bottom:.8rem}
+.prob{background:rgba(196,91,91,.08);border-left:3px solid var(--red);padding:.6rem .8rem;border-radius:6px;margin-bottom:1rem;font-size:.85rem}
+.prob b{color:var(--red)}
+label{display:block;font-size:.7rem;color:var(--t3);margin-bottom:.25rem;text-transform:uppercase;letter-spacing:.05em}
+input,textarea,select{width:100%;background:var(--s2);border:1px solid rgba(255,255,255,.1);border-radius:6px;padding:.5rem;color:var(--t1);font-family:inherit;font-size:.85rem;margin-bottom:.5rem}
+button{background:var(--gold);color:var(--bg);border:0;padding:.55rem 1rem;border-radius:6px;font-weight:700;cursor:pointer;font-size:.85rem}
+button.sec{background:var(--s2);color:var(--t1);border:1px solid rgba(255,255,255,.1)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:.5rem}
+.vp{background:rgba(92,184,112,.08);border-left:3px solid var(--grn);padding:.6rem .8rem;border-radius:6px;margin:1rem 0;font-size:.82rem}
+.ft{color:var(--t3);font-size:.7rem;margin-top:1rem;line-height:1.6}
+.ft b{color:var(--gold)}
+.src{color:var(--t3);font-size:.65rem;margin-top:.5rem}
+.src a{color:var(--t3)}
+.mail{background:var(--s2);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:.8rem;margin-bottom:.6rem;font-size:.82rem;line-height:1.55}
+.mail-hd{display:flex;justify-content:space-between;font-size:.7rem;color:var(--t3);margin-bottom:.5rem;padding-bottom:.4rem;border-bottom:1px dashed rgba(255,255,255,.08)}
+.mail-hd .tag{background:rgba(196,160,89,.15);color:var(--gold);padding:.1rem .4rem;border-radius:3px;font-weight:600}
+.mail-body{white-space:pre-wrap;color:var(--t1)}
+.mail-sub{font-weight:700;color:var(--gl);margin-bottom:.3rem;font-size:.85rem}
+.score{display:flex;gap:.4rem;margin-top:.5rem;font-size:.68rem;color:var(--t3);flex-wrap:wrap}
+.score span{background:rgba(255,255,255,.04);padding:.15rem .4rem;border-radius:3px}
+.score .good{color:var(--grn);background:rgba(92,184,112,.08)}
+.cpy{background:transparent;color:var(--gold);border:1px solid rgba(196,160,89,.3);padding:.3rem .5rem;font-size:.7rem;border-radius:4px;cursor:pointer;margin-top:.4rem}
+.tabs{display:flex;gap:.3rem;margin-bottom:.5rem;overflow-x:auto}
+.tab{background:var(--s2);color:var(--t2);border:1px solid rgba(255,255,255,.08);padding:.35rem .65rem;border-radius:5px;font-size:.72rem;cursor:pointer;white-space:nowrap}
+.tab.active{background:var(--gold);color:var(--bg);border-color:var(--gold);font-weight:700}
+</style></head>
+<body>
+<h1>✉️ Cold Opener Writer</h1>
+<div class="sub">ソロコンサル/フリーランス向け・最初の3案件の口火を切るコールド文面</div>
+
+<div class="prob"><b>痛み:</b> HN — 「ソロコンサル始めたけど最初の案件が取れない。ネットワーク? コールド? コンテンツ? 何が効くか分からず時間が消える」</div>
+
+<div class="card">
+  <label>あなたの専門</label>
+  <input id="spec" value="バックエンド / スプシ地獄の自動化">
+  <label>ターゲット企業のタイプ</label>
+  <input id="target" value="社員30-80人の受託開発会社">
+  <label>想定する痛み / 観察した兆候</label>
+  <input id="pain" value="採用サイトに「Excelの数値集計を自動化」という求人が出ている">
+  <div class="row2">
+    <div>
+      <label>オファー</label>
+      <select id="offer">
+        <option value="free10">🎁 最初10時間無料で問題特定</option>
+        <option value="audit">🔍 1ページ診断書 (無料)</option>
+        <option value="poc">🧪 2週間のPOC 定額</option>
+        <option value="retainer">🤝 月次リテイナー</option>
+      </select>
+    </div>
+    <div>
+      <label>あなたの名前</label>
+      <input id="me" value="山田">
+    </div>
+  </div>
+  <button onclick="gen()">3パターン生成</button>
+</div>
+
+<div id="out"></div>
+
+<div class="vp"><b>価値:</b> HN でバズった「最初の5社に10時間無料」の型を、観察ベースの具体シグナル + 短さ + CTA最小化でフォーマット。各パターンで返信率スコアも提示。</div>
+
+<div class="ft">
+  <b>本番版で追加される機能:</b><br>
+  ・LinkedIn / 採用サイト / 求人からターゲットの「痛みシグナル」を自動検出<br>
+  ・送信後のA/Bトラッキング (返信率/開封率)<br>
+  ・相手企業のTechスタックから刺さる事例を差込<br>
+  ・5社単位で自動パーソナライズ（同じ型で量産しない）
+</div>
+
+<div class="src">Source: <a href="https://news.ycombinator.com/item?id=47822940" target="_blank">HN — Ask HN: How did you land your first projects as a solo engineer/consultant?</a></div>
+
+<script src="../_shared/capture.js"></script>
+<script>renderCapture({demoId:'demo-3',title:'Cold Opener Writer',priceYen:1480,earlyFeatures:'求人サイトからの痛みシグナル自動抽出 + 返信率A/Bトラッキング + 事例自動差込'});</script>
+
+<script>
+const offers = {
+  free10: { label:'最初10時間無料', cta:'15分だけカレンダーを貰えますか？最初の10時間は完全無料で、課題の切り分けまでやります。' },
+  audit:  { label:'1ページ診断書',   cta:'無料で1ページの診断書を出します。内容見て不要ならそのままで結構です。' },
+  poc:    { label:'2週間POC',        cta:'2週間の固定見積でPOCを作れます。刺さらなければ延長しません。' },
+  retainer:{label:'月次リテイナー',   cta:'月12時間のリテイナー枠が1つ空きました。現状把握の30分だけ貰えますか？' },
+};
+
+const patterns = [
+  {
+    name: '🧭 観察型 (短い)',
+    subj: s=>`${s.target.split(' ')[0] || '御社'} の ${s.pain.slice(0,18)}... について`,
+    body: s=>`突然のご連絡失礼します。${s.me}と申します。
+
+${s.target}の方を中心に「${s.spec}」をやっています。
+${s.pain} — これを見て連絡しました。同じ痛みを3社で解いたところです。
+
+${offers[s.offer].cta}
+
+${s.me}`
+  },
+  {
+    name: '💡 結果先出し型',
+    subj: s=>`${s.pain.slice(0,12)}... を3週間で片付けた話`,
+    body: s=>`${s.me}です。${s.spec}専門で動いています。
+
+最近、${s.target}と同じ規模の会社で「${s.pain}」とほぼ同じ状況を3週間で片付けました。月40時間分の手作業が消えました。
+
+御社でも似た絵が描けるか、${offers[s.offer].label}という形でお試しできます。
+
+${offers[s.offer].cta}
+
+ご興味なければ返信不要です。
+
+${s.me}`
+  },
+  {
+    name: '🪝 質問型 (低圧)',
+    subj: s=>`1つだけ質問させてください`,
+    body: s=>`${s.me}と申します。${s.spec}を専門にしています。
+
+御社が「${s.pain}」という状態だと外から見えました。
+1つだけ質問です — これ、社内で片付ける予定ですか？それとも外注を探している段階ですか？
+
+もし後者なら、${offers[s.offer].label}でまず無料で提案書を出せます。前者ならこのメールは無視してください。
+
+${s.me}`
+  },
+];
+
+function gen(){
+  const s = {
+    spec: document.getElementById('spec').value || '(専門)',
+    target: document.getElementById('target').value || '(ターゲット)',
+    pain: document.getElementById('pain').value || '(観察した痛み)',
+    offer: document.getElementById('offer').value,
+    me: document.getElementById('me').value || '(あなた)',
+  };
+  const out = document.getElementById('out');
+  out.innerHTML = patterns.map((p,i)=>{
+    const subj = p.subj(s), body = p.body(s);
+    const words = body.replace(/\s+/g,'').length;
+    const shortOK = words <= 260;
+    const hasObs = /という求人|と見えました|を見て|という状況|と出てい/.test(body);
+    const hasEscape = /無視/.test(body) || /返信不要/.test(body);
+    return `<div class="mail">
+      <div class="mail-hd"><span>パターン ${i+1}</span><span class="tag">${p.name}</span></div>
+      <div class="mail-sub">件名: ${subj}</div>
+      <div class="mail-body">${body}</div>
+      <div class="score">
+        <span class="${shortOK?'good':''}">${shortOK?'✓':'⚠'} ${words}字</span>
+        <span class="${hasObs?'good':''}">${hasObs?'✓':'⚠'} 観察ベース</span>
+        <span class="${hasEscape?'good':''}">${hasEscape?'✓':'⚠'} 低圧CTA</span>
+        <span>期待返信率 ~${6 + (shortOK?3:0) + (hasObs?4:0) + (hasEscape?2:0)}%</span>
+      </div>
+      <button class="cpy" onclick="cp(${i})">📋 この文面をコピー</button>
+    </div>`;
+  }).join('');
+  window.__gen = patterns.map(p=>({subj:p.subj(s),body:p.body(s)}));
+}
+function cp(i){
+  const g = window.__gen[i];
+  navigator.clipboard.writeText(`件名: ${g.subj}\n\n${g.body}`);
+}
+gen();
+</script>
+</body></html>

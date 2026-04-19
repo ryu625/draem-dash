@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="ja"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Skill Compile Detector — Demo</title>
+<style>
+:root{--bg:#0D0906;--s1:rgba(255,255,255,.04);--s2:rgba(255,255,255,.08);--gold:#C4A059;--gl:#DFC07A;--t1:#E8DDD0;--t2:#A89585;--t3:#6D5A4A;--grn:#5CB870;--red:#C45B5B;--amb:#D4954A;--blu:#6D9DC5}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--t1);font-family:-apple-system,'Hiragino Sans',sans-serif;padding:1rem;max-width:680px;margin:0 auto;font-size:14px;line-height:1.5}
+h1{font-size:1.3rem;color:var(--gold);margin-bottom:.4rem}
+.sub{color:var(--t2);font-size:.8rem;margin-bottom:1rem}
+.card{background:var(--s1);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:1rem;margin-bottom:.8rem}
+.prob{background:rgba(196,91,91,.08);border-left:3px solid var(--red);padding:.6rem .8rem;border-radius:6px;margin-bottom:1rem;font-size:.85rem}
+.prob b{color:var(--red)}
+label{display:block;font-size:.7rem;color:var(--t3);margin-bottom:.25rem;text-transform:uppercase;letter-spacing:.05em}
+input,textarea{width:100%;background:var(--s2);border:1px solid rgba(255,255,255,.1);border-radius:6px;padding:.5rem;color:var(--t1);font-family:inherit;font-size:.85rem;margin-bottom:.5rem}
+button{background:var(--gold);color:var(--bg);border:0;padding:.55rem 1rem;border-radius:6px;font-weight:700;cursor:pointer;font-size:.85rem}
+button.sec{background:var(--s2);color:var(--t1);border:1px solid rgba(255,255,255,.1)}
+.task{padding:.55rem .7rem;background:var(--s2);border-radius:7px;margin-bottom:.35rem;font-size:.82rem;display:flex;gap:.5rem;align-items:center}
+.task-i{color:var(--t3);font-family:ui-monospace,monospace;font-size:.7rem;min-width:3.5rem}
+.task-t{flex:1}
+.task-ts{font-size:.65rem;color:var(--t3)}
+.vp{background:rgba(92,184,112,.08);border-left:3px solid var(--grn);padding:.6rem .8rem;border-radius:6px;margin:1rem 0;font-size:.82rem}
+.ft{color:var(--t3);font-size:.7rem;margin-top:1rem;line-height:1.6}
+.ft b{color:var(--gold)}
+.src{color:var(--t3);font-size:.65rem;margin-top:.5rem}
+.src a{color:var(--t3)}
+.skill{background:linear-gradient(135deg,rgba(196,160,89,.1),rgba(196,160,89,.02));border:1px solid rgba(196,160,89,.3);border-radius:10px;padding:.8rem;margin-bottom:.6rem;position:relative}
+.skill-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:.4rem}
+.skill-n{color:var(--gl);font-weight:700;font-size:.95rem}
+.skill-c{background:rgba(196,160,89,.2);color:var(--gold);padding:.15rem .45rem;border-radius:4px;font-size:.68rem;font-weight:600}
+.skill-tpl{background:var(--s2);padding:.5rem .6rem;border-radius:6px;font-size:.74rem;font-family:ui-monospace,monospace;color:var(--t2);line-height:1.5;white-space:pre-wrap;margin-bottom:.4rem}
+.slot{color:var(--gl);background:rgba(196,160,89,.12);padding:0 .2rem;border-radius:2px}
+.skill-m{display:flex;gap:.8rem;font-size:.68rem;color:var(--t3);margin-top:.4rem}
+.skill-m b{color:var(--t1)}
+.nothing{color:var(--t3);font-size:.78rem;text-align:center;padding:.8rem}
+.row2{display:grid;grid-template-columns:2fr 1fr;gap:.5rem}
+.hint{display:flex;flex-wrap:wrap;gap:.3rem;margin-bottom:.5rem}
+.hint button{padding:.25rem .5rem;font-size:.7rem;background:var(--s2);color:var(--t2);font-weight:400;border:1px solid rgba(255,255,255,.08)}
+</style></head>
+<body>
+<h1>🧬 Skill Compile Detector</h1>
+<div class="sub">繰り返す作業を自動検出 → 再利用可能な「スキル」にコンパイル</div>
+
+<div class="prob"><b>痛み (研究発想):</b> LLMエージェントは昨日うまくいったタスクを今日もゼロから推論。人間も同じ — 同じ作業を毎回思い出しながらやり、学習が積み上がらない。</div>
+
+<div class="card">
+  <label>今やったタスクを記録</label>
+  <div class="hint">
+    <button onclick="quick('Notionで週報テンプレをコピー → 今週日付に置換 → 共有リンク発行')">+ 週報</button>
+    <button onclick="quick('Gmailで問合せメールをAirtableに転記 → Slackに通知')">+ 問合せ転記</button>
+    <button onclick="quick('Figmaでアイコン書き出し → SVG最適化 → /public/icons/ に配置')">+ アイコン書出</button>
+    <button onclick="quick('Stripeで返金 → 顧客にお詫びメール → Notionで記録')">+ 返金対応</button>
+  </div>
+  <div class="row2">
+    <textarea id="desc" rows="2" placeholder="例: Notionで週報テンプレをコピー → 今週日付に置換 → 共有リンク発行"></textarea>
+    <button onclick="addTask()">記録</button>
+  </div>
+</div>
+
+<div class="card">
+  <label>直近タスク</label>
+  <div id="tasks"></div>
+</div>
+
+<div class="card">
+  <label>🧬 検出されたスキル (3回以上繰り返されたパターン)</label>
+  <div id="skills"></div>
+</div>
+
+<div class="vp"><b>価値:</b> 論文「SkillDroid」の中核（成功した手順をテンプレート化して再利用）を日常業務に適用。3回繰り返した瞬間に「これ、テンプレ化すれば次は1タップ」を自動通知。</div>
+
+<div class="ft">
+  <b>本番版で追加される機能:</b><br>
+  ・ブラウザ拡張で実際の操作を記録 (URL / クリック / 入力)<br>
+  ・Claude API でテンプレートのスロット (日付 / 顧客名など) を自動検出<br>
+  ・ワンクリック実行 (次回は完全自動で同じ手順を再生)<br>
+  ・チームで共有 — メンバー全員の「暗黙知」がスキル化
+</div>
+
+<div class="src">Source: <a href="http://arxiv.org/abs/2604.14872v1" target="_blank">arxiv 2604.14872 — SkillDroid: Compile Once, Reuse Forever</a></div>
+
+<script src="../_shared/capture.js"></script>
+<script>renderCapture({demoId:'demo-5',title:'Skill Compile Detector',priceYen:1480,earlyFeatures:'ブラウザ拡張で自動記録 + Claudeでスロット検出 + ワンクリック再実行 + チーム共有'});</script>
+
+<script>
+let tasks = JSON.parse(localStorage.getItem('skill_tasks')||'[]');
+const STOP = new Set(['を','に','で','と','から','まで','の','は','が','そして','次に','→','->','、','。','する','した','やる','って']);
+
+function tokenize(s){
+  return s.replace(/[\.,。、→\-_/\\]+/g,' ').split(/\s+/).map(w=>w.trim()).filter(w=>w && w.length>1 && !STOP.has(w));
+}
+
+function quick(t){ document.getElementById('desc').value=t; addTask(); }
+
+function addTask(){
+  const d = document.getElementById('desc').value.trim();
+  if(!d) return;
+  tasks.unshift({desc:d, tokens:tokenize(d), ts:Date.now()});
+  tasks = tasks.slice(0,40);
+  localStorage.setItem('skill_tasks', JSON.stringify(tasks));
+  document.getElementById('desc').value='';
+  render();
+}
+
+function detectSkills(){
+  if(tasks.length < 2) return [];
+  const groups = [];
+  const used = new Set();
+  for(let i=0;i<tasks.length;i++){
+    if(used.has(i)) continue;
+    const group = [i];
+    const baseTokens = new Set(tasks[i].tokens);
+    for(let j=i+1;j<tasks.length;j++){
+      if(used.has(j)) continue;
+      const other = tasks[j].tokens;
+      const overlap = other.filter(t=>baseTokens.has(t)).length;
+      const denom = Math.max(baseTokens.size, other.length);
+      const sim = denom ? overlap / denom : 0;
+      if(sim >= 0.4) group.push(j);
+    }
+    if(group.length >= 2){
+      group.forEach(g=>used.add(g));
+      groups.push(group);
+    }
+  }
+  return groups.map(g=>{
+    const members = g.map(i=>tasks[i]);
+    const tokCount = {};
+    members.forEach(m=>m.tokens.forEach(t=>{tokCount[t]=(tokCount[t]||0)+1;}));
+    const common = Object.entries(tokCount).filter(([_,c])=>c===members.length).map(([t])=>t);
+    const example = members[0].desc;
+    const slotted = slotify(example, members);
+    const ready = members.length >= 3;
+    return {members, common, example, slotted, ready};
+  });
+}
+
+function slotify(text, members){
+  const allTokens = members.map(m=>new Set(m.tokens));
+  const base = members[0].tokens;
+  let result = text;
+  base.forEach(t=>{
+    const inAll = allTokens.every(s=>s.has(t));
+    if(!inAll && t.length >= 2 && /[a-zA-Z0-9ぁ-んァ-ン一-龯]/.test(t)){
+      result = result.split(t).join(`<span class="slot">{${inferSlot(t)}}</span>`);
+    }
+  });
+  return result;
+}
+
+function inferSlot(tok){
+  if(/\d/.test(tok)) return '数値';
+  if(/[a-zA-Z]{3,}/.test(tok)) return 'ID';
+  if(tok.length<=2) return '値';
+  return '対象';
+}
+
+function render(){
+  const t = document.getElementById('tasks');
+  if(tasks.length===0){
+    t.innerHTML = '<div class="nothing">まだタスクがありません。上の「+ボタン」で試し記録してみてください。</div>';
+  } else {
+    t.innerHTML = tasks.slice(0,8).map((x,i)=>`<div class="task"><span class="task-i">#${tasks.length-i}</span><span class="task-t">${x.desc.replace(/</g,'&lt;')}</span><span class="task-ts">${new Date(x.ts).toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit'})}</span></div>`).join('');
+  }
+  const skills = detectSkills();
+  const s = document.getElementById('skills');
+  if(skills.length===0){
+    s.innerHTML = '<div class="nothing">類似タスクを2件以上記録すると、ここに候補が現れます。</div>';
+  } else {
+    s.innerHTML = skills.map((sk,i)=>{
+      const name = sk.common.slice(0,3).join(' ') || `スキル${i+1}`;
+      return `<div class="skill">
+        <div class="skill-hd">
+          <div class="skill-n">🧬 ${name}</div>
+          <div class="skill-c">${sk.members.length}回 ${sk.ready?'<span style="color:var(--grn)">✓ コンパイル準備OK</span>':'<span style="color:var(--amb)">あと'+(3-sk.members.length)+'回</span>'}</div>
+        </div>
+        <div class="skill-tpl">${sk.slotted}</div>
+        <div class="skill-m"><span>共通トークン <b>${sk.common.length}</b></span><span>最新 <b>${new Date(Math.max(...sk.members.map(m=>m.ts))).toLocaleDateString('ja-JP')}</b></span><span>節約見込 <b>~${sk.members.length*3}分/月</b></span></div>
+      </div>`;
+    }).join('');
+  }
+}
+render();
+</script>
+</body></html>

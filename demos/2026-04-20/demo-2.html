@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="ja"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Workflow Complexity Scorer — Demo</title>
+<style>
+:root{--bg:#0D0906;--s1:rgba(255,255,255,.04);--s2:rgba(255,255,255,.08);--gold:#C4A059;--gl:#DFC07A;--t1:#E8DDD0;--t2:#A89585;--t3:#6D5A4A;--grn:#5CB870;--red:#C45B5B;--amb:#D4954A}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--t1);font-family:-apple-system,'Hiragino Sans',sans-serif;padding:1rem;max-width:680px;margin:0 auto;font-size:14px;line-height:1.5}
+h1{font-size:1.3rem;color:var(--gold);margin-bottom:.4rem}
+.sub{color:var(--t2);font-size:.8rem;margin-bottom:1rem}
+.card{background:var(--s1);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:1rem;margin-bottom:.8rem}
+.prob{background:rgba(196,91,91,.08);border-left:3px solid var(--red);padding:.6rem .8rem;border-radius:6px;margin-bottom:1rem;font-size:.85rem}
+.prob b{color:var(--red)}
+label{display:block;font-size:.7rem;color:var(--t3);margin-bottom:.25rem;text-transform:uppercase;letter-spacing:.05em}
+input,textarea{width:100%;background:var(--s2);border:1px solid rgba(255,255,255,.1);border-radius:6px;padding:.5rem;color:var(--t1);font-family:inherit;font-size:.85rem;margin-bottom:.5rem}
+button{background:var(--gold);color:var(--bg);border:0;padding:.55rem 1rem;border-radius:6px;font-weight:700;cursor:pointer;font-size:.85rem}
+button.sec{background:var(--s2);color:var(--t1);border:1px solid rgba(255,255,255,.1)}
+.step{display:flex;align-items:center;gap:.5rem;padding:.5rem .6rem;background:var(--s2);border-radius:6px;margin-bottom:.35rem;font-size:.82rem}
+.step-n{background:rgba(196,160,89,.2);color:var(--gold);font-weight:700;min-width:1.6rem;height:1.6rem;border-radius:4px;display:inline-flex;align-items:center;justify-content:center;font-size:.72rem}
+.step-t{flex:1}
+.step .x{color:var(--t3);cursor:pointer;font-size:.75rem;padding:.2rem .4rem}
+.step.risk{border-left:3px solid var(--red)}
+.step.risk .step-n{background:rgba(196,91,91,.2);color:var(--red)}
+.gauge{height:10px;background:rgba(255,255,255,.06);border-radius:5px;overflow:hidden;margin:.5rem 0 .3rem}
+.gauge-f{height:100%;transition:width .4s,background .3s}
+.verdict{text-align:center;padding:.9rem;border-radius:10px;margin:.6rem 0;font-size:1.1rem;font-weight:700;font-family:Georgia,serif}
+.verdict.good{background:rgba(92,184,112,.1);color:var(--grn);border:1px solid rgba(92,184,112,.3)}
+.verdict.warn{background:rgba(212,149,74,.1);color:var(--amb);border:1px solid rgba(212,149,74,.3)}
+.verdict.bad{background:rgba(196,91,91,.1);color:var(--red);border:1px solid rgba(196,91,91,.3)}
+.met{display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;margin:.6rem 0}
+.m{background:var(--s2);padding:.5rem;border-radius:8px;text-align:center}
+.m-v{color:var(--gl);font-weight:700;font-size:1.2rem;font-family:Georgia,serif}
+.m-l{font-size:.62rem;color:var(--t3);text-transform:uppercase;letter-spacing:.05em;margin-top:.2rem}
+.sig{font-size:.75rem;color:var(--t2);padding:.4rem .5rem;border-left:2px solid rgba(196,91,91,.3);margin-bottom:.3rem}
+.sig.ok{border-left-color:rgba(92,184,112,.3)}
+.sig b{color:var(--red)}
+.sig.ok b{color:var(--grn)}
+.vp{background:rgba(92,184,112,.08);border-left:3px solid var(--grn);padding:.6rem .8rem;border-radius:6px;margin:1rem 0;font-size:.82rem}
+.ft{color:var(--t3);font-size:.7rem;margin-top:1rem;line-height:1.6}
+.ft b{color:var(--gold)}
+.src{color:var(--t3);font-size:.65rem;margin-top:.5rem}
+.src a{color:var(--t3)}
+</style></head>
+<body>
+<h1>🛑 Workflow Complexity Scorer</h1>
+<div class="sub">No-Code自動化の「これ以上ビルドするな」シグナルを可視化</div>
+
+<div class="prob"><b>痛み:</b> r/NoCode — 「簡単なワークフローが気づけば20ノードの壊れやすいシステムに。改善するほど脆くなる。どこで止めるかが分からない」</div>
+
+<div class="card">
+  <label>ワークフローのステップ（1行1ステップで入力）</label>
+  <textarea id="steps" rows="6" placeholder="例:
+新規問い合わせをSlackで受け取る
+顧客名をSpreadsheetに保存
+Airtableにコピー
+Gmailで確認メール送信
+3日後にフォローアップ">新規問い合わせをSlackで受け取る
+メールアドレスで既存顧客か判定 (if分岐)
+新規ならAirtableに登録
+既存ならHubSpotを更新
+Gmailで確認メール送信 (条件分岐あり)
+Spreadsheetに記録
+3日後にフォローアップ判定 (API連携)
+未応答なら別テンプレ送信</textarea>
+  <div style="display:flex;gap:.5rem">
+    <button onclick="analyze()">複雑度を分析</button>
+    <button class="sec" onclick="addStep()">＋1ステップ追加してみる</button>
+  </div>
+</div>
+
+<div id="out"></div>
+
+<div class="vp"><b>価値:</b> Redditで話題の「Good enough原則」を定量化。12ノード超 / 分岐率 30%超 / 外部API 4つ超 のどれかで「止めろ」警告。壊れる前に分かる。</div>
+
+<div class="ft">
+  <b>本番版で追加される機能:</b><br>
+  ・Zapier / Make / n8n の実ワークフローJSONを読み込んで自動分析<br>
+  ・過去の自分の「壊れたワークフロー」と比較して警告<br>
+  ・分割リファクタリング提案（1ワークフロー → 2〜3の粒度へ）<br>
+  ・チームで共有できるレビュー用リンク
+</div>
+
+<div class="src">Source: <a href="https://reddit.com/r/nocode/comments/1sn4jww/the_hardest_part_of_nocode_isnt_building_its/" target="_blank">r/NoCode — knowing when to stop</a></div>
+
+<script src="../_shared/capture.js"></script>
+<script>renderCapture({demoId:'demo-2',title:'Workflow Complexity Scorer',priceYen:980,earlyFeatures:'Zapier/Make/n8n JSON直読込 + 分割リファクタ提案 + 過去との比較'});</script>
+
+<script>
+const demoSteps = ['APIからデータ取得','エラー時にリトライ','Spreadsheetに書き込み','チームに通知','CRM更新','請求書発行','顧客マスタ同期','BIダッシュボード更新','Slack通知','監査ログ','バックアップ'];
+
+function addStep(){
+  const t = document.getElementById('steps');
+  const next = demoSteps[(t.value.split(/\n+/).filter(Boolean).length - 1) % demoSteps.length];
+  t.value = t.value + '\n' + next;
+  analyze();
+}
+
+function analyze(){
+  const steps = document.getElementById('steps').value.split(/\n+/).map(s=>s.trim()).filter(Boolean);
+  const n = steps.length;
+  const branches = steps.filter(s=>/if|条件|判定|分岐|場合|なら/.test(s)).length;
+  const apis = steps.filter(s=>/API|連携|フェッチ|Spreadsheet|Airtable|Hubspot|HubSpot|Slack|Gmail|Notion|webhook/i.test(s)).length;
+  const transforms = steps.filter(s=>/登録|更新|保存|書き込|記録|変換|コピー/.test(s)).length;
+  const fanOut = Math.max(0, apis - 3);
+  const branchRate = n ? Math.round(branches/n*100) : 0;
+
+  let score = 0;
+  score += Math.min(40, n * 4);
+  score += branches * 8;
+  score += fanOut * 10;
+  score += Math.max(0, n - 8) * 3;
+  score = Math.min(100, score);
+
+  let verdict = 'good', vText = '👍 シンプルで保守しやすい。ここで止めてOK';
+  if(score >= 70){ verdict = 'bad'; vText = '🛑 止まれ — 壊れやすい複雑度。分割を強く推奨'; }
+  else if(score >= 45){ verdict = 'warn'; vText = '⚠️ 注意ライン — これ以上追加すると壊れ始めます'; }
+
+  const sigs = [];
+  if(n >= 12) sigs.push({bad:true, t:`ステップ数 ${n} ≥ 12`, w:'1ワークフローで12超は確実にバグる閾値'});
+  else if(n >= 8) sigs.push({bad:true, t:`ステップ数 ${n} (8超)`, w:'そろそろ分割検討の頃合い'});
+  else sigs.push({bad:false, t:`ステップ数 ${n}`, w:'認知的に追える範囲 (8以下)'});
+
+  if(branchRate >= 30) sigs.push({bad:true, t:`分岐率 ${branchRate}%`, w:'分岐30%超は「ワークフロー」ではなくアプリ。コード化を'});
+  else if(branches > 0) sigs.push({bad:false, t:`分岐 ${branches}個 / ${branchRate}%`, w:'分岐はOKな範囲'});
+
+  if(apis >= 5) sigs.push({bad:true, t:`外部API ${apis}つ`, w:'5つ以上はどこか必ず落ちる — 境界で分割を'});
+  else if(apis >= 3) sigs.push({bad:true, t:`外部API ${apis}つ`, w:'4つ超でエラー率が跳ね上がる (NoCode界隈の経験則)'});
+  else sigs.push({bad:false, t:`外部API ${apis}つ`, w:'失敗しても追える範囲'});
+
+  const gColor = verdict==='bad' ? 'var(--red)' : verdict==='warn' ? 'var(--amb)' : 'var(--grn)';
+
+  document.getElementById('out').innerHTML = `
+  <div class="card">
+    <label>現在のワークフロー</label>
+    ${steps.map((s,i)=>`<div class="step ${/if|条件|判定|分岐|場合|なら/.test(s)?'risk':''}"><span class="step-n">${i+1}</span><span class="step-t">${s.replace(/</g,'&lt;')}</span></div>`).join('')}
+    <div class="gauge"><div class="gauge-f" style="width:${score}%;background:${gColor}"></div></div>
+    <div style="font-size:.7rem;color:var(--t3);text-align:right">複雑度 ${score} / 100</div>
+    <div class="verdict ${verdict}">${vText}</div>
+    <div class="met">
+      <div class="m"><div class="m-v">${n}</div><div class="m-l">ステップ</div></div>
+      <div class="m"><div class="m-v">${branchRate}%</div><div class="m-l">分岐率</div></div>
+      <div class="m"><div class="m-v">${apis}</div><div class="m-l">外部依存</div></div>
+    </div>
+    <div style="margin-top:.6rem">
+      ${sigs.map(s=>`<div class="sig ${s.bad?'':'ok'}"><b>${s.t}</b> — ${s.w}</div>`).join('')}
+    </div>
+  </div>`;
+}
+analyze();
+</script>
+</body></html>
