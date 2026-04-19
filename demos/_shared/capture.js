@@ -160,10 +160,81 @@
   };
 
   // ---- Page-view tracking ----
+  const CURRENT_DEMO_ID = (location.pathname.match(/demo-\d+/) || ['unknown'])[0];
   (function trackView(){
     const views = JSON.parse(localStorage.getItem('draem_capture_views') || '{}');
-    const demoId = (location.pathname.match(/demo-\d+/) || ['unknown'])[0];
-    views[demoId] = (views[demoId] || 0) + 1;
+    views[CURRENT_DEMO_ID] = (views[CURRENT_DEMO_ID] || 0) + 1;
     localStorage.setItem('draem_capture_views', JSON.stringify(views));
   })();
+
+  // ---- 👍👎 micro-feedback widget ----
+  // Mount automatically at the very bottom of every demo.
+  // Posts to ENDPOINT if set, else localStorage only.
+  window.renderReact = function(){
+    const mount = document.createElement('div');
+    mount.style.cssText = 'margin:1rem 0 .5rem;padding:.7rem .9rem;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:10px;font-size:.72rem;color:#A89585;text-align:center';
+    mount.innerHTML = `
+      <div style="margin-bottom:.4rem">このデモ、あなたの痛みを解決しそう？</div>
+      <div style="display:flex;gap:.4rem;justify-content:center;margin-bottom:.4rem">
+        <button data-r="up" style="background:rgba(92,184,112,.1);border:1px solid rgba(92,184,112,.3);color:#5CB870;padding:.35rem .9rem;border-radius:20px;font-size:.85rem;cursor:pointer;font-family:inherit">👍 解決しそう</button>
+        <button data-r="meh" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);color:#A89585;padding:.35rem .9rem;border-radius:20px;font-size:.85rem;cursor:pointer;font-family:inherit">😐 微妙</button>
+        <button data-r="down" style="background:rgba(196,91,91,.1);border:1px solid rgba(196,91,91,.3);color:#C45B5B;padding:.35rem .9rem;border-radius:20px;font-size:.85rem;cursor:pointer;font-family:inherit">👎 違う</button>
+      </div>
+      <textarea placeholder="（任意）何があれば使いますか？" style="width:100%;background:rgba(0,0,0,.2);border:1px solid rgba(255,255,255,.08);border-radius:6px;padding:.4rem;color:#E8DDD0;font-family:inherit;font-size:.7rem;min-height:50px;display:none" class="_rx-note"></textarea>
+      <div class="_rx-ok" style="display:none;color:#5CB870;margin-top:.3rem">ありがとう — 明朝のアップデートに反映されます</div>
+    `;
+    document.body.appendChild(mount);
+    const note = mount.querySelector('._rx-note');
+    const ok = mount.querySelector('._rx-ok');
+    let chosen = null;
+    mount.querySelectorAll('button[data-r]').forEach(b => {
+      b.addEventListener('click', async () => {
+        chosen = b.dataset.r;
+        mount.querySelectorAll('button[data-r]').forEach(x => {
+          x.style.opacity = x === b ? '1' : '.35';
+        });
+        note.style.display = 'block';
+        note.focus();
+        const payload = {
+          kind: 'reaction',
+          demo_id: CURRENT_DEMO_ID,
+          reaction: chosen,
+          submitted_at: new Date().toISOString(),
+          ua: navigator.userAgent.slice(0, 120),
+          ...getReferral(),
+        };
+        await submit(payload);
+        // aggregate locally
+        const agg = JSON.parse(localStorage.getItem('draem_reactions') || '{}');
+        agg[CURRENT_DEMO_ID] = agg[CURRENT_DEMO_ID] || { up: 0, meh: 0, down: 0, notes: [] };
+        agg[CURRENT_DEMO_ID][chosen] = (agg[CURRENT_DEMO_ID][chosen] || 0) + 1;
+        localStorage.setItem('draem_reactions', JSON.stringify(agg));
+      });
+    });
+    note.addEventListener('blur', async () => {
+      if(!note.value.trim()) return;
+      const payload = {
+        kind: 'reaction_note',
+        demo_id: CURRENT_DEMO_ID,
+        reaction: chosen,
+        note: note.value.trim(),
+        submitted_at: new Date().toISOString(),
+        ...getReferral(),
+      };
+      await submit(payload);
+      const agg = JSON.parse(localStorage.getItem('draem_reactions') || '{}');
+      agg[CURRENT_DEMO_ID] = agg[CURRENT_DEMO_ID] || { up: 0, meh: 0, down: 0, notes: [] };
+      agg[CURRENT_DEMO_ID].notes.push({ reaction: chosen, note: note.value.trim(), at: new Date().toISOString() });
+      localStorage.setItem('draem_reactions', JSON.stringify(agg));
+      ok.style.display = 'block';
+      note.style.display = 'none';
+    });
+  };
+
+  // Auto-mount reaction widget on DOM ready
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', () => setTimeout(()=>window.renderReact(), 500));
+  } else {
+    setTimeout(()=>window.renderReact(), 500);
+  }
 })();
