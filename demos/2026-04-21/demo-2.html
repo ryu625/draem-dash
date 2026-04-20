@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="ja"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Vibe Coding Flow Tracker — Demo</title>
+<style>
+:root{--cyan:#6FE8D8;--t1:#EAF6F4;--t2:#9CC5C0;--t3:#5E807C;--red:#FF8B8B;--ok:#8AF0B0;--warn:#FFD27F}
+*{margin:0;padding:0;box-sizing:border-box}
+body{min-height:100vh;background:radial-gradient(circle at 20% 0%,#1B3A40 0%,#0A1418 50%,#050A0E 100%);color:var(--t1);font-family:-apple-system,'Hiragino Sans',sans-serif;padding:1rem;font-size:14px;line-height:1.5}
+.wrap{max-width:680px;margin:0 auto}
+h1{font-size:1.4rem;color:var(--cyan);margin-bottom:.3rem;letter-spacing:.01em}
+.sub{color:var(--t2);font-size:.78rem;margin-bottom:1rem}
+.glass{backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:1rem;margin-bottom:.8rem;box-shadow:0 8px 32px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.08)}
+.glass.prob{background:rgba(255,139,139,.06);border-color:rgba(255,139,139,.18)}
+.glass.prob b{color:var(--red)}
+.agent-row{display:flex;align-items:center;gap:.6rem;padding:.5rem;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);border-radius:10px;margin-bottom:.4rem}
+.agent-row .dot{width:10px;height:10px;border-radius:50%;background:var(--t3);flex-shrink:0;transition:all .3s}
+.agent-row.active .dot{background:var(--ok);box-shadow:0 0 12px var(--ok)}
+.agent-row .name{flex:1;font-size:.82rem}
+.agent-row .stat{font-size:.7rem;color:var(--t2);font-variant-numeric:tabular-nums}
+.agent-row button{background:rgba(111,232,216,.15);color:var(--cyan);border:1px solid rgba(111,232,216,.3);padding:.3rem .7rem;border-radius:6px;font-size:.7rem;cursor:pointer;font-family:inherit}
+.agent-row button:hover{background:rgba(111,232,216,.25)}
+.add-row{display:flex;gap:.4rem;margin-top:.5rem}
+.add-row input{flex:1;background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.5rem .7rem;color:var(--t1);font-family:inherit;font-size:.8rem}
+.add-row button{background:var(--cyan);color:#0A1418;border:0;padding:.5rem 1rem;border-radius:8px;font-weight:700;cursor:pointer;font-size:.78rem;font-family:inherit}
+.metric{display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem}
+.m{padding:.7rem;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);border-radius:10px;text-align:center}
+.m b{display:block;font-size:1.4rem;color:var(--cyan);font-weight:700;font-family:Georgia,serif}
+.m span{font-size:.65rem;color:var(--t2);text-transform:uppercase;letter-spacing:.06em}
+.flow-bar{margin-top:.6rem;height:32px;background:rgba(0,0,0,.25);border-radius:8px;display:flex;overflow:hidden;border:1px solid rgba(255,255,255,.06)}
+.flow-bar div{height:100%;font-size:.6rem;color:#0A1418;font-weight:700;display:flex;align-items:center;justify-content:center;transition:width .4s}
+.advice{font-size:.78rem;color:var(--warn);margin-top:.6rem;line-height:1.5}
+.advice.good{color:var(--ok)}
+.vp{background:rgba(138,240,176,.08);border-left:3px solid var(--ok);padding:.6rem .8rem;border-radius:6px;margin:1rem 0;font-size:.82rem;backdrop-filter:blur(8px)}
+.ft{color:var(--t3);font-size:.7rem;margin-top:1rem;line-height:1.6}
+.ft b{color:var(--cyan)}
+.src{color:var(--t3);font-size:.65rem;margin-top:.5rem}
+.src a{color:var(--t3)}
+.log{max-height:120px;overflow-y:auto;font-size:.7rem;color:var(--t2);font-family:'SF Mono',Menlo,monospace;background:rgba(0,0,0,.25);border-radius:8px;padding:.5rem;margin-top:.5rem}
+.log div{padding:.15rem 0;border-bottom:1px solid rgba(255,255,255,.04)}
+.log div:last-child{border:0}
+.log .sw{color:var(--warn)}
+</style></head>
+<body><div class="wrap">
+<h1>◐ Vibe Coding Flow Tracker</h1>
+<div class="sub">Claude Code × 複数エージェント運用者向け・コンテキストスイッチを計測してフローを守る</div>
+
+<div class="glass prob"><b>痛み:</b> HN投稿 — 「Claude Code を1年使ってるが、2-3エージェント同時管理のコンテキストスイッチで疲弊。spinner凝視時間が増え、放任すると微妙なバグが累積する」</div>
+
+<div class="glass">
+  <div style="font-size:.7rem;color:var(--t3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.5rem">Active agents — クリックでフォーカス切替</div>
+  <div id="agents"></div>
+  <div class="add-row">
+    <input id="newAgent" placeholder="エージェント名 (例: refactor-auth)" autocomplete="off">
+    <button onclick="addAgent()">+ Spawn</button>
+  </div>
+</div>
+
+<div class="glass">
+  <div style="font-size:.7rem;color:var(--t3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.5rem">この30分のセッション</div>
+  <div class="metric">
+    <div class="m"><b id="mFocus">0:00</b><span>Focus</span></div>
+    <div class="m"><b id="mSwitch">0</b><span>Switches</span></div>
+    <div class="m"><b id="mFlow">—</b><span>Flow Score</span></div>
+  </div>
+  <div class="flow-bar" id="flowBar"></div>
+  <div class="advice" id="advice">エージェントを spawn して計測開始</div>
+  <div class="log" id="log"></div>
+</div>
+
+<div class="vp"><b>価値:</b> どのエージェントに何分張り付いたか・何回切り替えたかを自動記録。3スイッチ/分超えで「フロー断裂中」を可視化、放任バグ蓄積も alerts で先回り警告。</div>
+
+<div class="ft">
+<b>本番版で追加される機能:</b><br>
+・tmux/iTerm/VS Code に接続、ターミナルから自動で agent 状態を取得<br>
+・「フロー喪失」を検出したら他のエージェントを一時停止<br>
+・「最終 Claude review コミット」が古いブランチを点滅警告<br>
+・週次で「最も効率良かった agent数」をレポート (1.8 が黄金比率)
+</div>
+
+<div class="src">Source: <a href="https://news.ycombinator.com/item?id=47797632" target="_blank">Ask HN: How do you maintain flow when vibe coding?</a></div>
+
+<script src="../_shared/capture.js"></script>
+<script>renderCapture({demoId:'demo-2',title:'Vibe Coding Flow Tracker',priceYen:1480,earlyFeatures:'tmux/VS Code 接続 + 放任ブランチ警告 + 週次フロー解析'});</script>
+
+<script>
+const $ = id => document.getElementById(id);
+let agents = [];
+let activeId = null;
+let switches = 0;
+let activeStart = Date.now();
+let sessionStart = Date.now();
+const logs = [];
+
+function uid(){return Math.random().toString(36).slice(2,7)}
+function addAgent(){
+  const n = $('newAgent').value.trim();
+  if(!n) return;
+  const a = {id:uid(), name:n, focusMs:0, lastTouched:Date.now()};
+  agents.push(a);
+  $('newAgent').value='';
+  if(!activeId){ activate(a.id); }
+  renderAgents();
+  log('+ spawn ' + n);
+}
+function activate(id){
+  if(activeId === id) return;
+  if(activeId){
+    const prev = agents.find(a=>a.id===activeId);
+    if(prev){
+      const dt = Date.now() - activeStart;
+      prev.focusMs += dt;
+      switches++;
+      log('switch → ' + (agents.find(a=>a.id===id)?.name||'?') + ' (' + Math.round(dt/1000) + 's focus)','sw');
+    }
+  } else {
+    log('focus → ' + agents.find(a=>a.id===id).name);
+  }
+  activeId = id;
+  activeStart = Date.now();
+  renderAgents();
+  updateMetrics();
+}
+function renderAgents(){
+  $('agents').innerHTML = agents.map(a=>`
+    <div class="agent-row ${a.id===activeId?'active':''}">
+      <div class="dot"></div>
+      <div class="name">${a.name}</div>
+      <div class="stat">${Math.round((a.focusMs + (a.id===activeId?Date.now()-activeStart:0))/1000)}s</div>
+      <button onclick="activate('${a.id}')">${a.id===activeId?'focused':'switch'}</button>
+    </div>
+  `).join('') || '<div style="color:var(--t3);font-size:.75rem;text-align:center;padding:.5rem">まだ何もspawnしていない</div>';
+}
+function log(t, cls=''){
+  logs.unshift({t, cls, at:new Date().toLocaleTimeString().slice(0,8)});
+  if(logs.length > 30) logs.pop();
+  $('log').innerHTML = logs.map(l=>`<div class="${l.cls}">${l.at}  ${l.t}</div>`).join('');
+}
+function fmt(ms){
+  const s = Math.floor(ms/1000);
+  return Math.floor(s/60) + ':' + String(s%60).padStart(2,'0');
+}
+function updateMetrics(){
+  const sessMin = (Date.now() - sessionStart) / 60000;
+  const total = agents.reduce((s,a)=>s+a.focusMs,0) + (activeId?Date.now()-activeStart:0);
+  const longest = agents.length ? Math.max(...agents.map(a=>a.focusMs + (a.id===activeId?Date.now()-activeStart:0))) : 0;
+  $('mFocus').textContent = fmt(longest);
+  $('mSwitch').textContent = switches;
+  // flow score: penalize high switch rate, reward sustained focus
+  let flow = 0;
+  if(sessMin > 0.1){
+    const rate = switches / sessMin;
+    flow = Math.max(0, Math.min(100, 100 - rate*25 + (longest/60000)*8));
+  }
+  $('mFlow').textContent = sessMin > 0.1 ? Math.round(flow) : '—';
+  // bar
+  const colors = ['#6FE8D8','#A89FE8','#FFD27F','#8AF0B0','#FF8B8B'];
+  const tot = agents.reduce((s,a)=>s+a.focusMs+(a.id===activeId?Date.now()-activeStart:0),0);
+  $('flowBar').innerHTML = tot ? agents.map((a,i)=>{
+    const ms = a.focusMs+(a.id===activeId?Date.now()-activeStart:0);
+    const w = ms/tot*100;
+    return w > 0 ? `<div style="width:${w}%;background:${colors[i%colors.length]}" title="${a.name}">${w>15?a.name.slice(0,8):''}</div>` : '';
+  }).join('') : '';
+  // advice
+  const ad = $('advice');
+  if(sessMin < 0.2){ ad.textContent = '計測中... 数十秒様子を見ます'; ad.classList.remove('good'); }
+  else if(switches/sessMin > 3){ ad.textContent = '🚨 切替が多すぎ ('+(switches/sessMin).toFixed(1)+'回/分)。1つにフォーカス10分試してみる'; ad.classList.remove('good'); }
+  else if(agents.length > 3){ ad.textContent = '⚠ '+agents.length+'体は人間の限界超え。研究では2エージェントが上限'; ad.classList.remove('good'); }
+  else if(longest > 5*60000){ ad.textContent = '✓ 5分超のフォーカス継続中。良いフロー'; ad.classList.add('good'); }
+  else { ad.textContent = 'OK — このまま様子を見る'; ad.classList.remove('good'); }
+  renderAgents();
+}
+setInterval(updateMetrics, 1000);
+// seed
+addAgent.call(null, $('newAgent').value = 'refactor-payments');
+addAgent();
+$('newAgent').value = 'fix-tests';
+addAgent();
+</script>
+</body></html>

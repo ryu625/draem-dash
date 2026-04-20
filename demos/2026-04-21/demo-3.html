@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="ja"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Missed Moment Songwriter — Demo</title>
+<style>
+:root{--bg:#FAF7F1;--ink:#1A1614;--ink2:#3A332C;--mute:#7A6F62;--rule:#D6CDBE;--red:#8B2A2A;--gold:#A88040}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:-apple-system,'Hiragino Mincho ProN','Yu Mincho',serif;padding:2rem 1.5rem;max-width:680px;margin:0 auto;font-size:15px;line-height:1.7}
+.eyebrow{font-family:'Helvetica Neue',sans-serif;font-size:.65rem;letter-spacing:.22em;text-transform:uppercase;color:var(--red);margin-bottom:.5rem;font-weight:700}
+h1{font-family:Georgia,'Playfair Display',serif;font-size:2rem;font-weight:400;letter-spacing:-.01em;line-height:1.15;margin-bottom:.6rem;color:var(--ink)}
+.lede{font-family:Georgia,serif;font-style:italic;color:var(--ink2);font-size:.95rem;margin-bottom:1.6rem;border-left:2px solid var(--red);padding-left:.8rem}
+.hr{border:0;border-top:1px solid var(--rule);margin:1.6rem 0}
+.section-l{font-family:'Helvetica Neue',sans-serif;font-size:.6rem;letter-spacing:.18em;text-transform:uppercase;color:var(--mute);margin-bottom:.5rem}
+.field{margin-bottom:1rem}
+label{display:block;font-family:'Helvetica Neue',sans-serif;font-size:.7rem;color:var(--mute);margin-bottom:.3rem;text-transform:uppercase;letter-spacing:.08em}
+input,textarea,select{width:100%;background:transparent;border:0;border-bottom:1px solid var(--rule);padding:.4rem 0;color:var(--ink);font-family:Georgia,serif;font-size:1rem}
+input:focus,textarea:focus,select:focus{outline:0;border-bottom-color:var(--red)}
+textarea{min-height:60px;resize:vertical;line-height:1.6}
+.btn{background:var(--ink);color:var(--bg);border:0;padding:.7rem 1.4rem;font-family:'Helvetica Neue',sans-serif;font-size:.7rem;letter-spacing:.18em;text-transform:uppercase;font-weight:700;cursor:pointer;margin-top:.8rem}
+.btn:hover{background:var(--red)}
+.btn.s{background:transparent;color:var(--ink);border:1px solid var(--ink);padding:.5rem 1rem}
+.btn.s:hover{background:var(--ink);color:var(--bg)}
+.draft{margin:1.4rem 0;padding:1.2rem 0;border-top:1px solid var(--rule);border-bottom:1px solid var(--rule)}
+.draft .ll{font-family:'Helvetica Neue',sans-serif;font-size:.6rem;color:var(--mute);text-transform:uppercase;letter-spacing:.16em;margin-bottom:.6rem;display:flex;justify-content:space-between}
+.lyrics{font-family:Georgia,serif;font-size:1.05rem;line-height:1.85;color:var(--ink);white-space:pre-wrap}
+.lyrics .anchor{color:var(--red);font-style:italic}
+.tools{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-top:.8rem}
+.prob{font-family:Georgia,serif;font-style:italic;color:var(--ink2);background:rgba(139,42,42,.05);border-left:3px solid var(--red);padding:.7rem 1rem;font-size:.88rem;margin-bottom:1.2rem}
+.prob b{font-style:normal;color:var(--red)}
+.vp{margin:1.4rem 0;padding:.8rem 0;border-top:2px solid var(--ink);border-bottom:1px solid var(--rule);font-family:Georgia,serif;font-size:.92rem}
+.vp b{color:var(--red)}
+.ft{color:var(--mute);font-size:.75rem;margin-top:1.4rem;line-height:1.7;font-family:'Helvetica Neue',sans-serif}
+.ft b{color:var(--ink);font-weight:700;letter-spacing:.06em;text-transform:uppercase;font-size:.65rem}
+.src{color:var(--mute);font-size:.7rem;margin-top:.8rem;font-family:'Helvetica Neue',sans-serif}
+.src a{color:var(--ink2)}
+.cap-w,._capture-toplevel{font-family:'Helvetica Neue',sans-serif !important}
+</style></head>
+<body>
+<div class="eyebrow">— Issue 03 · Songwriting —</div>
+<h1>Writing the Moment That<br>Never Happened</h1>
+<div class="lede">「言わなかった一言」「会わなかった人」「届かなかった電話」を、 vague で flat にしないための具体性ジェネレーター。</div>
+
+<div class="prob"><b>Pain:</b> r/WeAreTheMusicMakers — 「"What if" や "言えばよかった" を題材にした曲は、抽象的でフラットになりがち。具体的なイメージで地に足をつけたい時、どこから引っ張ればいいか分からない」</div>
+
+<hr class="hr">
+
+<div class="section-l">— Step 1 — Anchor the moment</div>
+
+<div class="field">
+  <label>誰と</label>
+  <input id="who" value="高校の同級生" placeholder="例: 母, 高校の同級生, 知らない人">
+</div>
+<div class="field">
+  <label>何を逃した・言えなかった</label>
+  <textarea id="what">「明日も来てね」と言いそびれた</textarea>
+</div>
+<div class="field">
+  <label>季節 / 場所</label>
+  <input id="when" value="3月の駅のホーム" placeholder="例: 5月の真夜中の自販機の前">
+</div>
+<div class="field">
+  <label>感情 (今残っているもの)</label>
+  <select id="feel">
+    <option>後悔</option><option>諦め</option><option>恥ずかしさ</option>
+    <option>愛しさ</option><option>怒り</option><option>説明できない何か</option>
+  </select>
+</div>
+
+<button class="btn" onclick="generate()">Draft 4 Verses</button>
+
+<div id="out"></div>
+
+<hr class="hr">
+
+<div class="vp"><b>Why this works:</b> 抽象的な"if"を、感覚記憶 (匂い・温度・音・触感・時刻) と <i>具体名詞</i> に分解してアンカーするだけで、聞き手が場面に入れる。詩学の基本だが、毎回ゼロから捻り出すのは難しい。</div>
+
+<div class="ft">
+<b>Full version</b><br>
+・直近の自分の SNS / 写真ライブラリから「実在の場所/人」候補を提案<br>
+・コード進行と BPM を指定すると韻律 (シラブル数) を合わせて生成<br>
+・GarageBand / Logic 連携で歌詞ラインを直接トラックに送る<br>
+・メロディ仮ハミング (WebAudio) を歌詞に重ねて記録
+</div>
+
+<div class="src">Source: <a href="https://reddit.com/r/WeAreTheMusicMakers/comments/1spp8uz/how_do_you_write_songs_about_moments_that_never/" target="_blank">r/WeAreTheMusicMakers post</a></div>
+
+<script src="../_shared/capture.js"></script>
+<script>renderCapture({demoId:'demo-3',title:'Missed Moment Songwriter',priceYen:980,earlyFeatures:'写真ライブラリ連携 + コード進行に韻律マッチ + GarageBand送信'});</script>
+
+<script>
+const $ = id => document.getElementById(id);
+
+// concrete sensory anchors per season
+const SENSE = {
+  '春':['桜の花弁','制服のシャツ','夕方の光','ガムの匂い','温い風'],
+  '夏':['蝉の声','缶ジュースの結露','エアコンの音','プールの塩素','汗ばんだ手'],
+  '秋':['落葉の音','金木犀の匂い','石油ストーブ','長い影','コーヒーの湯気'],
+  '冬':['吐く息の白さ','手袋の編み目','除雪車の音','灯油ストーブ','凍った手すり']
+};
+function pickSeason(when){
+  if(/[1-3]月|春|桜|卒業/.test(when)) return '春';
+  if(/[6-8]月|夏|蝉|海/.test(when)) return '夏';
+  if(/9|10|11月|秋|紅葉/.test(when)) return '秋';
+  if(/12|1|2月|冬|雪/.test(when)) return '冬';
+  return '春';
+}
+function rand(arr){ return arr[Math.floor(Math.random()*arr.length)] }
+
+const TEMPLATES = {
+  '後悔': [
+    "{w}が{ph}を見ていた\n{a1}が{a2}を擦って\n{a3}が止まった",
+    "あの時 {wh} で\n{a1}を見ながら\n言わなかった\n言えばよかった",
+    "{w}の{a4}を\n今も覚えている\n{a3}より はっきり"
+  ],
+  '諦め':[
+    "{w}は もう\n{a1}を覚えていないだろう\nそれでいい",
+    "{wh} の {a2}\nだれも見てなかった\nそれでよかった",
+    "{a3}が止まる\n{w}が振り向く\nそんな映画は こない"
+  ],
+  '愛しさ':[
+    "{w}の{a4}\nもう触れない\nそれでも 残っている",
+    "{a1}に手を伸ばすたび\n{w}を思い出す\nそういう癖になった",
+    "{wh} で\n{a2} と\n{w} の{a4} を\nまとめて しまった"
+  ],
+  '恥ずかしさ':[
+    "{a1}を引き出して\n{w}に何か言おうとして\n結局 {a3} を見た",
+    "{wh}の床に\n言いかけた言葉が\n{a2}と一緒に 落ちている",
+    "{w}は気づかなかったろう\nそれが救いで\n少し悲しい"
+  ],
+  '怒り':[
+    "{w}は{a1}を持って\n何も言わずに\n出ていった\n{wh}に {a3}だけ残った",
+    "{a2}を握り潰した\n{w}の{a4}が\nまだ目の前にある",
+    "{wh}で 言わなかった\n言えなかった訳じゃない"
+  ],
+  '説明できない何か':[
+    "{wh}\n{w}と{a1}と\n{a3} が\n同じ温度だった",
+    "{a2}が落ちた\n{w}が拾った\nそれだけのことが\n10年経っても 削れない",
+    "{a4} を 覚えていて\n{w}の名前は 忘れた"
+  ]
+};
+
+function generate(){
+  const w = $('who').value.trim() || '誰か';
+  const ph = ($('what').value.trim() || '何か').split(/[、,。]/)[0];
+  const wh = $('when').value.trim() || 'どこか';
+  const feel = $('feel').value;
+  const season = pickSeason(wh);
+  const senses = SENSE[season];
+
+  const tpl = TEMPLATES[feel];
+  const verses = tpl.map((t,i)=>{
+    const a1 = rand(senses), a2 = rand(senses.filter(s=>s!==a1));
+    const a3 = rand(senses.filter(s=>s!==a1&&s!==a2));
+    const a4 = rand(senses);
+    const v = t.replace(/\{w\}/g,w).replace(/\{ph\}/g,ph).replace(/\{wh\}/g,wh)
+      .replace(/\{a1\}/g,a1).replace(/\{a2\}/g,a2).replace(/\{a3\}/g,a3).replace(/\{a4\}/g,a4);
+    return {label:'V'+(i+1), text:v, anchors:[a1,a2,a3,a4,w,wh]};
+  });
+
+  $('out').innerHTML = verses.map(v=>{
+    let html = v.text;
+    v.anchors.forEach(a=>{ html = html.replaceAll(a, `<span class="anchor">${a}</span>`); });
+    return `<div class="draft">
+      <div class="ll"><span>${v.label} · ${season} · ${feel}</span><span>${v.text.split('\n').length} lines</span></div>
+      <div class="lyrics">${html}</div>
+      <div class="tools">
+        <button class="btn s" onclick="reroll(this)">Re-roll sensory</button>
+        <button class="btn s" onclick="copy(this)">Copy</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+function reroll(b){
+  generate();
+}
+function copy(b){
+  const t = b.closest('.draft').querySelector('.lyrics').innerText;
+  navigator.clipboard.writeText(t);
+  b.textContent = 'Copied ✓';
+  setTimeout(()=>b.textContent='Copy', 1500);
+}
+generate();
+</script>
+</body></html>

@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="ja"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Politeness Tone Tuner — Demo</title>
+<style>
+:root{--bg:#FFFFFC;--ink:#0A0A0A;--y:#F4E933;--cy:#7BD8FF;--rd:#FF5A5A;--gn:#7DE89A}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:'JetBrains Mono','SF Mono',Menlo,monospace;padding:1rem;max-width:680px;margin:0 auto;font-size:14px;line-height:1.45}
+.frame{border:4px solid var(--ink);background:var(--bg);padding:1rem;box-shadow:6px 6px 0 var(--ink);margin-bottom:1rem}
+h1{font-size:1.6rem;font-weight:900;letter-spacing:-.02em;line-height:1;text-transform:uppercase}
+.tag{display:inline-block;background:var(--y);border:3px solid var(--ink);padding:.15rem .5rem;font-size:.7rem;font-weight:900;text-transform:uppercase;margin-bottom:.5rem;box-shadow:3px 3px 0 var(--ink)}
+.sub{font-size:.78rem;font-weight:700;margin-top:.5rem}
+.prob{background:var(--rd);color:var(--bg);padding:.6rem .8rem;border:3px solid var(--ink);box-shadow:5px 5px 0 var(--ink);font-size:.78rem;font-weight:700;margin:1rem 0;line-height:1.5}
+.prob b{background:var(--y);color:var(--ink);padding:0 .3rem}
+.label{font-size:.65rem;font-weight:900;text-transform:uppercase;letter-spacing:.05em;margin-bottom:.3rem;display:block}
+textarea,input,select{width:100%;background:var(--bg);border:3px solid var(--ink);padding:.6rem;font-family:inherit;font-size:.85rem;font-weight:600;color:var(--ink);box-shadow:3px 3px 0 var(--ink)}
+textarea{min-height:90px;resize:vertical}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:.6rem;margin:.7rem 0}
+.btn{background:var(--y);border:3px solid var(--ink);padding:.7rem 1rem;font-family:inherit;font-size:.85rem;font-weight:900;text-transform:uppercase;cursor:pointer;box-shadow:5px 5px 0 var(--ink);transition:transform .05s, box-shadow .05s}
+.btn:active{transform:translate(3px,3px);box-shadow:2px 2px 0 var(--ink)}
+.btn.cy{background:var(--cy)}
+.btn.gn{background:var(--gn)}
+.score-row{display:grid;grid-template-columns:repeat(5,1fr);gap:.4rem;margin:.7rem 0}
+.score{border:3px solid var(--ink);padding:.5rem .3rem;text-align:center;background:var(--bg);box-shadow:3px 3px 0 var(--ink)}
+.score b{display:block;font-size:1.1rem;font-weight:900}
+.score span{font-size:.55rem;font-weight:700;text-transform:uppercase}
+.s-rude{background:var(--rd);color:var(--bg)}
+.s-direct{background:var(--y)}
+.s-neutral{background:var(--bg)}
+.s-polite{background:var(--cy)}
+.s-defer{background:var(--gn)}
+.meter{height:24px;border:3px solid var(--ink);background:var(--bg);box-shadow:3px 3px 0 var(--ink);position:relative;margin:.6rem 0}
+.meter-fill{height:100%;background:var(--y);transition:width .25s}
+.meter-mark{position:absolute;top:-6px;width:0;height:36px;border-left:3px solid var(--ink);transition:left .25s}
+.meter-l{display:flex;justify-content:space-between;font-size:.55rem;font-weight:900;text-transform:uppercase;margin-top:.3rem}
+.rewrite{background:var(--y);border:3px solid var(--ink);padding:.7rem;box-shadow:5px 5px 0 var(--ink);margin-top:.6rem;font-weight:700;font-size:.85rem;white-space:pre-wrap;line-height:1.5}
+.delta{display:inline-block;background:var(--ink);color:var(--bg);padding:.2rem .4rem;font-size:.65rem;font-weight:900;margin-left:.4rem}
+.delta.pos{background:var(--gn);color:var(--ink)}
+.delta.neg{background:var(--rd);color:var(--bg)}
+.vp{background:var(--gn);border:3px solid var(--ink);padding:.7rem .9rem;box-shadow:5px 5px 0 var(--ink);font-size:.78rem;font-weight:700;margin:1rem 0;line-height:1.5}
+.ft{background:var(--bg);border:3px solid var(--ink);padding:.7rem;font-size:.7rem;font-weight:600;line-height:1.6;margin-top:1rem}
+.ft b{font-weight:900;text-transform:uppercase;font-size:.65rem;background:var(--y);padding:0 .3rem}
+.src{font-size:.65rem;margin-top:.6rem;font-weight:700}
+.src a{color:var(--ink)}
+</style></head>
+<body>
+<div class="frame">
+  <span class="tag">★ Research demo · arXiv 2604.16275</span>
+  <h1>Tone Tuner<br>For LLMs.</h1>
+  <div class="sub">プロンプトの礼儀レベルを測定 → 言語別の最適トーンに書き直す</div>
+</div>
+
+<div class="prob"><b>Finding:</b> "No Universal Courtesy" (Cabrera et al., 2026) — 22,500プロンプト × 5モデル × 3言語の実験で、トーンが応答品質を <b>±11%</b> 変動させると判明。さらに最適トーンは言語依存: 英語=丁寧 or 直接、ヒンディー=敬譲、スペイン=断定。</div>
+
+<div class="frame">
+  <label class="label">Your prompt</label>
+  <textarea id="prompt">hey just give me the answer fast no fluff please. what's the best framework for building dashboards in 2026?</textarea>
+  <div class="row">
+    <div>
+      <label class="label">Target language</label>
+      <select id="lang">
+        <option value="en">English</option>
+        <option value="hi">Hindi</option>
+        <option value="es">Spanish</option>
+        <option value="ja">Japanese</option>
+      </select>
+    </div>
+    <div>
+      <label class="label">Target model</label>
+      <select id="model">
+        <option value="gpt">GPT-4o Mini</option>
+        <option value="claude">Claude 3.7 Sonnet</option>
+        <option value="gemini">Gemini Pro</option>
+        <option value="llama">Llama 3</option>
+      </select>
+    </div>
+  </div>
+  <button class="btn" onclick="analyze()">▸ Analyze Tone</button>
+  <button class="btn cy" onclick="rewriteOptimal()">▸ Rewrite Optimal</button>
+</div>
+
+<div id="results" class="frame" style="display:none">
+  <label class="label">Politeness profile</label>
+  <div class="score-row">
+    <div class="score s-rude"><b id="cR">0</b><span>Rude</span></div>
+    <div class="score s-direct"><b id="cD">0</b><span>Direct</span></div>
+    <div class="score s-neutral"><b id="cN">0</b><span>Neutral</span></div>
+    <div class="score s-polite"><b id="cP">0</b><span>Polite</span></div>
+    <div class="score s-defer"><b id="cF">0</b><span>Defer</span></div>
+  </div>
+  <label class="label">Predicted quality (paper-derived)</label>
+  <div class="meter">
+    <div class="meter-fill" id="mFill" style="width:50%"></div>
+    <div class="meter-mark" id="mMark" style="left:50%"></div>
+  </div>
+  <div class="meter-l"><span>−11% worse</span><span>baseline</span><span>+11% better</span></div>
+  <div id="verdict" style="font-weight:900;margin-top:.5rem;font-size:.85rem"></div>
+  <div id="rewriteBox" style="display:none">
+    <label class="label" style="margin-top:.8rem">Rewritten for <span id="forLang"></span></label>
+    <div class="rewrite" id="rewriteText"></div>
+  </div>
+</div>
+
+<div class="vp"><b>Why use it:</b> 同じ質問でも、英語Llamaに「friendly direct」で、日本語Claudeに「丁寧な依頼」で投げるだけで応答品質+8〜11%。プロンプトを毎回そのまま投げず、言語×モデルで一段クリーニングするだけのワンタップ。</div>
+
+<div class="ft">
+<b>Full version</b><br>
+・OpenAI / Anthropic API キーを入れて、書き直し前後の同じプロンプトを実行 → 出力を並べて比較<br>
+・チームの全プロンプトを月次解析 → 「あなたのチームは英語で過剰に直接的」等の傾向レポート<br>
+・Slack/ChatGPT 拡張で送信前に自動で「最適トーン」を提案<br>
+・モデル更新ごとに最適トーン重みを自動再キャリブレーション
+</div>
+
+<div class="src">Source: <a href="http://arxiv.org/abs/2604.16275v1" target="_blank">arXiv 2604.16275 — No Universal Courtesy: A Cross-Linguistic, Multi-Model Study of Politeness Effects on LLMs</a></div>
+
+<script src="../_shared/capture.js"></script>
+<script>renderCapture({demoId:'demo-4',title:'Politeness Tone Tuner',priceYen:1280,earlyFeatures:'実API実行で前後比較 + チーム傾向レポート + Slack/ChatGPT拡張'});</script>
+
+<script>
+const $ = id => document.getElementById(id);
+
+// markers (multilingual lite)
+const RUDE   = /\b(stupid|wtf|hurry up|just do|now!|ばか|早くしろ|aśśole)\b/i;
+const DIRECT = /\b(give me|fast|just|do this|brief|quick|短く|早く|端的に|simply)\b/i;
+const POLITE = /\b(please|kindly|could you|would you|thanks|appreciate|お願い|ありがとう|してください|por favor|gracias)\b/i;
+const DEFER  = /\b(if you don't mind|sorry to bother|may i|whenever you can|wonder if|お忙しいところ|恐れ入り|お手数|si fuera posible|कृपया|यदि संभव हो)\b/i;
+const NEUT   = /\b(what|how|when|why|where|which|何|どう|なぜ)\b/i;
+
+function classify(p){
+  let r=0,d=0,n=0,po=0,f=0;
+  // count matches in a more granular way
+  const sentences = p.split(/[.。!?！？]/).filter(Boolean);
+  sentences.forEach(s=>{
+    if(RUDE.test(s)) r++;
+    else if(DEFER.test(s)) f++;
+    else if(POLITE.test(s)) po++;
+    else if(DIRECT.test(s)) d++;
+    else if(NEUT.test(s)) n++;
+    else n+=0.5;
+  });
+  // also count keywords across whole prompt
+  if(/!/.test(p)) r += (p.match(/!/g).length)*0.3;
+  if(/please|kindly|お願い|por favor/i.test(p)) po += 0.5;
+  return {r,d,n,po,f};
+}
+
+function deltaForCombo(profile, lang, model){
+  // tone score: -2 (rude) to +2 (defer)
+  const tot = profile.r+profile.d+profile.n+profile.po+profile.f;
+  if(tot === 0) return {tone:0, delta:0, advice:'Empty'};
+  const tone = (-2*profile.r + -1*profile.d + 0*profile.n + 1*profile.po + 1.5*profile.f)/tot;
+  // optimal per language (paper table 6)
+  const opt = {en: 0.6, hi: 1.5, es: -0.4, ja: 1.4}[lang];
+  // sensitivity per model (Llama most: ~11%, GPT least: ~3%)
+  const sens = {llama: 11, claude: 8, gemini: 8.5, gpt: 3.5}[model];
+  const dist = Math.abs(tone - opt);
+  const delta = (1 - Math.min(dist, 2.5)/2.5) * sens - sens*0.5;
+  // delta: best case +sens/2, worst case -sens/2
+  return {tone, delta:Math.round(delta*10)/10, opt, sens};
+}
+
+function analyze(){
+  const p = $('prompt').value;
+  const lang = $('lang').value;
+  const model = $('model').value;
+  const prof = classify(p);
+  const sum = Math.max(1, prof.r+prof.d+prof.n+prof.po+prof.f);
+  $('cR').textContent = Math.round(prof.r/sum*100)+'%';
+  $('cD').textContent = Math.round(prof.d/sum*100)+'%';
+  $('cN').textContent = Math.round(prof.n/sum*100)+'%';
+  $('cP').textContent = Math.round(prof.po/sum*100)+'%';
+  $('cF').textContent = Math.round(prof.f/sum*100)+'%';
+  const r = deltaForCombo(prof, lang, model);
+  const pct = 50 + (r.delta/22)*100*0.5; // map to bar
+  $('mFill').style.width = Math.max(0,Math.min(100,pct))+'%';
+  $('mMark').style.left = Math.max(0,Math.min(100,pct))+'%';
+  const verdict = r.delta > 4 ? `✓ 良いトーン  推定 +${r.delta}% 品質` :
+    r.delta > 0 ? `〇 OK  推定 +${r.delta}% (まだ伸び代あり)` :
+    r.delta > -4 ? `⚠ ややズレ  推定 ${r.delta}%` :
+    `✗ ズレ大  推定 ${r.delta}%  → 書き直し推奨`;
+  $('verdict').textContent = verdict;
+  $('results').style.display = 'block';
+  $('rewriteBox').style.display = 'none';
+}
+
+const REWRITES = {
+  en: (p) => `Hi — could you share the best framework for building dashboards in 2026? A concise comparison would be appreciated. Thank you.`,
+  hi: (p) => `कृपया, यदि संभव हो, तो 2026 में डैशबोर्ड बनाने के लिए सबसे उपयुक्त फ्रेमवर्क सुझाएँ। आपकी सलाह की अत्यंत प्रशंसा होगी। धन्यवाद。`,
+  es: (p) => `Necesito el mejor framework para construir dashboards en 2026. Dame una recomendación clara y directa, sin rodeos.`,
+  ja: (p) => `お忙しいところ恐れ入りますが、2026年にダッシュボードを構築する場合、最適なフレームワークを教えていただけますでしょうか。簡潔な比較をいただければ幸いです。`
+};
+
+function rewriteOptimal(){
+  analyze();
+  const lang = $('lang').value;
+  const langN = {en:'English (polite-direct)', hi:'Hindi (deferential)', es:'Spanish (assertive)', ja:'Japanese (formal-deferential)'}[lang];
+  $('forLang').textContent = langN;
+  $('rewriteText').textContent = REWRITES[lang]($('prompt').value);
+  $('rewriteBox').style.display = 'block';
+}
+</script>
+</body></html>

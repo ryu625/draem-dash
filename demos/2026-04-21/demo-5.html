@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="ja"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Goal-First Writer — Demo</title>
+<style>
+:root{--bg:#ECEEF5;--card:#F2F4FA;--ink:#3A3F55;--ink2:#62687E;--mute:#8C92A8;--lav:#A89FE8;--lav2:#8C82E0;--mint:#9FE8C9;--peach:#F4C8A8;--rose:#E8A8B8}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:-apple-system,'Hiragino Sans',sans-serif;padding:1.2rem 1rem;max-width:680px;margin:0 auto;font-size:14px;line-height:1.6}
+.soft{background:var(--card);border-radius:22px;padding:1.1rem;margin-bottom:1rem;box-shadow: -7px -7px 14px #FFFFFF, 7px 7px 14px #C9CCDB}
+.soft-in{background:var(--bg);border-radius:18px;padding:.8rem;box-shadow: inset 5px 5px 10px #C9CCDB, inset -5px -5px 10px #FFFFFF}
+h1{font-size:1.5rem;color:var(--ink);font-weight:700;margin-bottom:.3rem;letter-spacing:-.01em}
+.sub{color:var(--ink2);font-size:.78rem;margin-bottom:1rem}
+.tag{display:inline-block;background:var(--lav);color:#FFF;font-size:.65rem;padding:.2rem .6rem;border-radius:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.6rem;box-shadow:3px 3px 8px rgba(168,159,232,.4)}
+.prob{background:linear-gradient(135deg,#FCE0E8,#FFF1E8);border-radius:18px;padding:.8rem 1rem;font-size:.82rem;color:var(--ink);margin:.8rem 0;box-shadow: -4px -4px 8px #FFFFFF, 4px 4px 8px #DCDFEC}
+.prob b{color:#C77890}
+label{display:block;font-size:.7rem;color:var(--ink2);margin-bottom:.4rem;font-weight:700}
+input,textarea,select{width:100%;background:var(--bg);border:0;border-radius:14px;padding:.65rem .9rem;color:var(--ink);font-family:inherit;font-size:.85rem;box-shadow: inset 4px 4px 8px #C9CCDB, inset -4px -4px 8px #FFFFFF}
+input:focus,textarea:focus{outline:0}
+textarea{min-height:80px;resize:vertical;line-height:1.6}
+.btn{background:var(--lav);color:#FFF;border:0;padding:.7rem 1.3rem;border-radius:18px;font-weight:700;cursor:pointer;font-size:.82rem;font-family:inherit;box-shadow:5px 5px 12px rgba(168,159,232,.45), -3px -3px 8px rgba(255,255,255,.7);transition:transform .1s}
+.btn:active{transform:translateY(2px)}
+.btn:hover{background:var(--lav2)}
+.btn.s{background:var(--card);color:var(--ink);box-shadow: -4px -4px 8px #FFFFFF, 4px 4px 8px #C9CCDB}
+.step{display:flex;align-items:center;gap:.5rem;margin:.4rem 0;font-size:.8rem;color:var(--ink2)}
+.step .n{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:var(--card);box-shadow:inset 2px 2px 4px #C9CCDB, inset -2px -2px 4px #FFFFFF;font-size:.7rem;font-weight:700;color:var(--mute);flex-shrink:0}
+.step.active .n{background:var(--lav);color:#FFF;box-shadow:3px 3px 6px rgba(168,159,232,.4)}
+.step.done .n{background:var(--mint);color:var(--ink);box-shadow:3px 3px 6px rgba(159,232,201,.4)}
+.step.done{color:var(--ink)}
+.bubble{padding:.7rem .9rem;border-radius:16px;margin:.5rem 0;font-size:.82rem;line-height:1.6;max-width:88%;box-shadow: -3px -3px 6px #FFFFFF, 3px 3px 6px #DCDFEC}
+.bubble.ai{background:linear-gradient(135deg,#E8E4FA,#D8D3F5);color:var(--ink);border-bottom-left-radius:6px}
+.bubble.you{background:var(--card);color:var(--ink);margin-left:auto;border-bottom-right-radius:6px}
+.bubble.you small{color:var(--mute);font-size:.65rem;display:block;margin-top:.25rem}
+.draft-box{background:linear-gradient(135deg,#E8F5EE,#D8F0E0);border-radius:18px;padding:1rem;margin-top:.7rem;font-size:.85rem;line-height:1.7;color:var(--ink);box-shadow: -4px -4px 8px #FFFFFF, 4px 4px 8px #C8DCD0}
+.draft-box .lab{font-size:.65rem;color:#5C8A75;font-weight:700;text-transform:uppercase;margin-bottom:.4rem;letter-spacing:.06em}
+.align{display:flex;align-items:center;gap:.5rem;font-size:.72rem;color:var(--ink2);margin-top:.4rem}
+.align-bar{flex:1;height:8px;background:var(--bg);border-radius:4px;box-shadow:inset 2px 2px 4px #C9CCDB, inset -2px -2px 4px #FFFFFF;overflow:hidden}
+.align-bar div{height:100%;background:linear-gradient(90deg,var(--rose),var(--peach),var(--mint));border-radius:4px;transition:width .4s}
+.vp{background:linear-gradient(135deg,#E0EAFF,#E8E4FA);border-radius:18px;padding:.8rem 1rem;font-size:.82rem;color:var(--ink);margin:1rem 0;box-shadow: -4px -4px 8px #FFFFFF, 4px 4px 8px #DCDFEC}
+.vp b{color:var(--lav2)}
+.ft{color:var(--ink2);font-size:.72rem;margin-top:1rem;line-height:1.7;background:var(--card);padding:.8rem 1rem;border-radius:16px;box-shadow:inset 3px 3px 6px #C9CCDB, inset -3px -3px 6px #FFFFFF}
+.ft b{color:var(--lav2);font-weight:700}
+.src{color:var(--mute);font-size:.65rem;margin-top:.7rem;text-align:center}
+.src a{color:var(--ink2)}
+</style></head>
+<body>
+<span class="tag">★ Research Demo · arXiv 2604.15800</span>
+<h1>🌱 Goal-First Writer</h1>
+<div class="sub">「書き始める前にゴールを言語化させる」AIライティング — WriteFlow paper の対話的目標調整を実装</div>
+
+<div class="prob"><b>Finding:</b> WriteFlow (Liu et al., 2026 · 17人形成的調査+12人実験) — 通常の AI ライティングツールは効率重視で metacognition を支援しない。書き手は「自分が何を達成したいか」を articulate しないまま書き始め、書き直しに陥る。対話的なゴール調整 (articulate → monitor → negotiate) の3フェーズで質+主体性が向上した。</div>
+
+<div class="soft">
+  <label>あなたの書きたいもの (1〜2行)</label>
+  <input id="topic" placeholder="例: 卒論 序章 / 採用ピッチ / ブログ記事「失敗から学ぶこと」" value="ブログ記事「失敗を語れない管理職」">
+
+  <label style="margin-top:.7rem">想定読者</label>
+  <input id="reader" value="30代マネージャー / 開発リード">
+
+  <div style="margin-top:.7rem">
+    <label>あなたの状態</label>
+    <select id="mood">
+      <option>書き始めの白紙状態</option>
+      <option>下書きはあるが行き詰まっている</option>
+      <option>書けたが手応えがない</option>
+    </select>
+  </div>
+
+  <button class="btn" onclick="startDialog()" style="margin-top:.8rem">🌱 ゴール調整を始める</button>
+</div>
+
+<div class="soft" id="processBox" style="display:none">
+  <div style="font-size:.7rem;color:var(--ink2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.6rem">Reflective Dialogue (3 phases)</div>
+  <div class="step" id="s1"><span class="n">1</span><span>Articulate (ゴール言語化)</span></div>
+  <div class="step" id="s2"><span class="n">2</span><span>Monitor (進捗チェック)</span></div>
+  <div class="step" id="s3"><span class="n">3</span><span>Negotiate (調整)</span></div>
+
+  <div style="margin-top:.8rem" class="soft-in" id="chat"></div>
+
+  <div id="answerBox" style="margin-top:.7rem;display:none">
+    <textarea id="userAns" placeholder="あなたの答えを書いて..."></textarea>
+    <button class="btn" onclick="nextStep()" style="margin-top:.5rem">次へ →</button>
+  </div>
+
+  <div id="draftBox" style="display:none"></div>
+</div>
+
+<div class="vp"><b>Why use it:</b> WriteFlow が示した通り、ゴールを「articulate → monitor → negotiate」の3フェーズで対話的に調整するだけで、書き手の主体性とテキスト一貫性が同時に上がる。書き始める前の <i>3分の対話</i> が、後で30分の書き直しを節約する。</div>
+
+<div class="ft">
+<b>Full version</b><br>
+・音声入力でゴールを口頭articulation (paper準拠)<br>
+・書きながら textual goal alignment スコアをリアルタイム表示<br>
+・段落ごとに「ゴールから逸れた」と検知したら静かにベル<br>
+・複数perspective fb (peer / 編集者 / 反対意見の架空読者)
+</div>
+
+<div class="src">Source: <a href="http://arxiv.org/abs/2604.15800v1" target="_blank">arXiv 2604.15800 — From Intention to Text: AI-Supported Goal Setting in Academic Writing</a></div>
+
+<script src="../_shared/capture.js"></script>
+<script>renderCapture({demoId:'demo-5',title:'Goal-First Writer',priceYen:1480,earlyFeatures:'音声articulation + リアルタイムalignmentスコア + 多視点フィードバック'});</script>
+
+<script>
+const $ = id => document.getElementById(id);
+let phase = 0;
+let answers = {topic:'', reader:'', goal:'', success:'', risk:''};
+
+const Q = [
+  {key:'goal',    ask:t => `「${t}」を書くとき、読み終えた読者に <b>1つだけ</b> 持って帰ってほしいことは？ (一文で)`},
+  {key:'success', ask:t => `<b>monitor</b> phase: もし最高の結果になったら、読者は読み終えてから何をしますか？ (具体的な行動を1つ)`},
+  {key:'risk',    ask:t => `<b>negotiate</b> phase: あなたが最も避けたい誤読・誤解は何ですか？ (これを書くとき出やすい先入観)`},
+];
+
+function bubble(text, who='ai'){
+  const c = document.createElement('div');
+  c.className = 'bubble ' + who;
+  c.innerHTML = text;
+  $('chat').appendChild(c);
+  $('chat').scrollTop = $('chat').scrollHeight;
+}
+
+function startDialog(){
+  answers.topic = $('topic').value.trim();
+  answers.reader = $('reader').value.trim();
+  if(!answers.topic){ $('topic').focus(); return; }
+  $('processBox').style.display = 'block';
+  $('chat').innerHTML = '';
+  phase = 0;
+  $('s1').classList.add('active');
+  bubble(`いいですね。一緒に「${answers.topic}」のゴールを 3 phase で調整していきましょう。`);
+  setTimeout(()=>{
+    bubble(Q[0].ask(answers.topic));
+    $('answerBox').style.display = 'block';
+    $('userAns').focus();
+  }, 600);
+}
+function nextStep(){
+  const v = $('userAns').value.trim();
+  if(!v) return;
+  bubble(v, 'you');
+  answers[Q[phase].key] = v;
+  $('userAns').value = '';
+  // mark step done
+  if(phase === 0){ $('s1').classList.remove('active'); $('s1').classList.add('done'); $('s2').classList.add('active'); }
+  if(phase === 1){ $('s2').classList.remove('active'); $('s2').classList.add('done'); $('s3').classList.add('active'); }
+  if(phase === 2){ $('s3').classList.remove('active'); $('s3').classList.add('done'); }
+  phase++;
+  if(phase < Q.length){
+    setTimeout(()=>bubble(Q[phase].ask(answers.topic)), 500);
+  } else {
+    $('answerBox').style.display = 'none';
+    setTimeout(()=>{
+      bubble('完了 ✓ あなたが articulate したゴールから、起点となる draft skeleton を生成します...');
+      setTimeout(showDraft, 800);
+    }, 400);
+  }
+}
+function showDraft(){
+  const t = answers.topic, r = answers.reader, g = answers.goal, s = answers.success, k = answers.risk;
+  const align = Math.min(100, 70 + (g.length>30?10:0) + (s.length>20?10:0) + (k.length>15?10:0));
+  const html = `
+  <div class="draft-box">
+    <div class="lab">Goal-anchored skeleton</div>
+
+    <b>Hook</b> — ${r}が日常で出会う「${t.slice(0,20)}...」の典型シーンを1段落。
+    <br><br>
+    <b>Promise</b> — この記事を読み終えると、あなたは <span style="background:#FFF1B0;padding:0 .2rem">${g}</span> ということが腑に落ちる。
+    <br><br>
+    <b>Body 1</b> — なぜ今までそう感じられなかったか (${k} を先回りで論破)。
+    <br><br>
+    <b>Body 2</b> — ${g} を支える具体例 / データ / エピソードを2つ。
+    <br><br>
+    <b>CTA</b> — 読者が次に取るべき行動: <span style="background:#FFF1B0;padding:0 .2rem">${s}</span>。
+
+    <div class="align">
+      <span>Goal alignment</span>
+      <div class="align-bar"><div style="width:${align}%"></div></div>
+      <span><b>${align}%</b></span>
+    </div>
+  </div>`;
+  $('draftBox').innerHTML = html;
+  $('draftBox').style.display = 'block';
+}
+</script>
+</body></html>

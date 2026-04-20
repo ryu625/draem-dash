@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="ja"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Day Block Planner — Demo</title>
+<style>
+:root{--bg:#0F0D0B;--card:#1A1614;--card2:#221C18;--gold:#C4A059;--gl:#DFC07A;--t1:#E8DDD0;--t2:#A89585;--t3:#6D5A4A;--grn:#5CB870;--red:#C45B5B;--cyan:#6FE8D8;--pink:#E89FB3}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--t1);font-family:-apple-system,'Hiragino Sans',sans-serif;padding:1rem;max-width:680px;margin:0 auto;font-size:14px;line-height:1.5}
+h1{font-size:1.4rem;color:var(--gold);margin-bottom:.3rem}
+.sub{color:var(--t2);font-size:.78rem;margin-bottom:1rem}
+.prob{background:rgba(196,91,91,.08);border-left:3px solid var(--red);padding:.6rem .8rem;border-radius:6px;margin-bottom:1rem;font-size:.82rem}
+.prob b{color:var(--red)}
+.bento{display:grid;grid-template-columns:repeat(6,1fr);grid-auto-rows:minmax(60px,auto);gap:.5rem;margin-bottom:1rem}
+.cell{background:var(--card);border:1px solid rgba(255,255,255,.06);border-radius:14px;padding:.7rem .8rem;box-shadow:inset 0 1px 0 rgba(255,255,255,.03);position:relative;overflow:hidden}
+.c-wide{grid-column:span 6}
+.c-half{grid-column:span 3}
+.c-third{grid-column:span 2}
+.c-twothird{grid-column:span 4}
+.cell h3{font-size:.65rem;color:var(--t3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.4rem}
+.cell .big{font-size:1.4rem;color:var(--gl);font-weight:700;font-family:Georgia,serif}
+input,select,textarea{background:var(--card2);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:.45rem .6rem;color:var(--t1);font-family:inherit;font-size:.8rem;width:100%}
+button{background:var(--gold);color:var(--bg);border:0;padding:.5rem 1rem;border-radius:8px;font-weight:700;cursor:pointer;font-size:.8rem;font-family:inherit}
+button:hover{background:var(--gl)}
+.ipt-row{display:grid;grid-template-columns:1fr auto auto auto;gap:.4rem;margin-bottom:.4rem;align-items:center}
+.ipt-row select{font-size:.72rem;padding:.4rem .3rem}
+.task-list{display:flex;flex-direction:column;gap:.35rem}
+.task{display:flex;align-items:center;gap:.5rem;padding:.4rem .55rem;background:rgba(255,255,255,.03);border-left:3px solid;border-radius:6px;font-size:.78rem}
+.task .pri{font-size:.6rem;text-transform:uppercase;color:var(--t3);width:50px}
+.task .min{color:var(--t2);font-size:.7rem;margin-left:auto;font-variant-numeric:tabular-nums}
+.task[data-c="work"]{border-color:var(--gold)}
+.task[data-c="study"]{border-color:var(--cyan)}
+.task[data-c="health"]{border-color:var(--grn)}
+.task[data-c="social"]{border-color:var(--pink)}
+.bar{height:8px;background:rgba(255,255,255,.06);border-radius:4px;overflow:hidden;margin-top:.4rem;display:flex}
+.bar div{height:100%}
+.legend{display:flex;flex-wrap:wrap;gap:.5rem;font-size:.65rem;color:var(--t2);margin-top:.4rem}
+.legend span::before{content:'';display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:.3rem;vertical-align:middle}
+.l-work::before{background:var(--gold)}
+.l-study::before{background:var(--cyan)}
+.l-health::before{background:var(--grn)}
+.l-social::before{background:var(--pink)}
+.vp{background:rgba(92,184,112,.08);border-left:3px solid var(--grn);padding:.6rem .8rem;border-radius:6px;margin:1rem 0;font-size:.82rem}
+.ft{color:var(--t3);font-size:.7rem;margin-top:1rem;line-height:1.6}
+.ft b{color:var(--gold)}
+.src{color:var(--t3);font-size:.65rem;margin-top:.5rem}
+.src a{color:var(--t3)}
+.warn{background:rgba(196,91,91,.12);color:var(--red);padding:.4rem .55rem;border-radius:6px;font-size:.72rem;margin-top:.4rem;display:none}
+.empty{color:var(--t3);font-size:.75rem;text-align:center;padding:.8rem}
+</style></head>
+<body>
+<h1>📅 Day Block Planner</h1>
+<div class="sub">忙しすぎて1日の組み立てが崩壊する人向け・ベント形式の時間配分ダッシュボード</div>
+
+<div class="prob"><b>痛み:</b> 22歳学部卒予定の投稿 — 「6科目+CRE業界研究+ジム+社会生活+バイト、自分1人では回らない」。ToDoリストでは収まらず、何時にどれをやるかで詰む。</div>
+
+<div class="bento" id="bento">
+  <div class="cell c-wide">
+    <h3>Today's Available Time</h3>
+    <div class="ipt-row" style="grid-template-columns:1fr 1fr">
+      <div>
+        <label style="font-size:.65rem;color:var(--t3)">起床</label>
+        <input id="wake" type="time" value="07:00">
+      </div>
+      <div>
+        <label style="font-size:.65rem;color:var(--t3)">就寝</label>
+        <input id="sleep" type="time" value="23:30">
+      </div>
+    </div>
+    <div style="margin-top:.5rem;display:flex;gap:.5rem;align-items:baseline">
+      <span class="big" id="totalH">16.5</span>
+      <span style="color:var(--t2);font-size:.75rem">時間 / 食事·移動 等の不可避ブロックを除いた可処分時間: <b style="color:var(--gl)" id="usableH">12.5</b>h</span>
+    </div>
+  </div>
+
+  <div class="cell c-twothird">
+    <h3>Add task</h3>
+    <div class="ipt-row">
+      <input id="tName" placeholder="例: 微積宿題" autocomplete="off">
+      <select id="tCat">
+        <option value="work">仕事</option>
+        <option value="study" selected>学業</option>
+        <option value="health">健康</option>
+        <option value="social">社交</option>
+      </select>
+      <select id="tPri">
+        <option value="must">MUST</option>
+        <option value="should">SHOULD</option>
+        <option value="want">WANT</option>
+      </select>
+      <button onclick="addTask()">+追加</button>
+    </div>
+    <input id="tMin" type="number" placeholder="所要分 (例:90)" min="5" max="480" style="margin-top:.3rem">
+  </div>
+
+  <div class="cell c-third">
+    <h3>合計</h3>
+    <div class="big" id="usedH">0</div>
+    <div style="font-size:.65rem;color:var(--t2)">時間使用</div>
+    <div class="warn" id="overflowWarn">⚠ 可処分時間オーバー</div>
+  </div>
+
+  <div class="cell c-wide">
+    <h3>Today's Plan</h3>
+    <div class="task-list" id="taskList">
+      <div class="empty">タスクを追加すると優先順 + カテゴリで並びます</div>
+    </div>
+    <div class="bar" id="bar"></div>
+    <div class="legend">
+      <span class="l-work">仕事</span>
+      <span class="l-study">学業</span>
+      <span class="l-health">健康</span>
+      <span class="l-social">社交</span>
+      <span style="color:var(--t3)">空き = 余白</span>
+    </div>
+  </div>
+
+  <div class="cell c-half">
+    <h3>Balance</h3>
+    <div id="balance" style="font-size:.78rem;line-height:1.7"></div>
+  </div>
+  <div class="cell c-half">
+    <h3>Coach Advice</h3>
+    <div id="advice" style="font-size:.78rem;line-height:1.5;color:var(--t2)">タスクを2件以上追加するとアドバイス表示</div>
+  </div>
+</div>
+
+<div class="vp"><b>価値:</b> ToDoリストではなく「使える時間」と「カテゴリ配分」をベントグリッドで一望。MUST入れた瞬間に余裕分が見えるから、無理な詰め込みを物理的に防止。</div>
+
+<div class="ft">
+<b>本番版で追加される機能:</b><br>
+・Google Calendar/Outlook 双方向同期 (空き時間を自動算出)<br>
+・「先週の自分」と比較した健康/社交バランスのドリフト警告<br>
+・MUST が入りきらない時に SHOULD/WANT を翌日に自動移動<br>
+・iOSウィジェット (今やるべき1ブロックだけ表示)
+</div>
+
+<div class="src">Source: <a href="https://reddit.com/r/productivity/comments/1sqfbbw/how_do_you_plan_and_keep_up_with_your_extreme/" target="_blank">r/productivity post</a></div>
+
+<script src="../_shared/capture.js"></script>
+<script>renderCapture({demoId:'demo-1',title:'Day Block Planner',priceYen:680,earlyFeatures:'Googleカレンダー同期 + バランスドリフト警告 + iOSウィジェット'});</script>
+
+<script>
+const tasks = [];
+const $ = id => document.getElementById(id);
+const FIXED = 4; // hours for meals/commute/buffer
+
+function recalc(){
+  const w = $('wake').value, s = $('sleep').value;
+  const wh = +w.split(':')[0] + +w.split(':')[1]/60;
+  let sh = +s.split(':')[0] + +s.split(':')[1]/60;
+  if(sh < wh) sh += 24;
+  const total = sh - wh;
+  const usable = Math.max(0, total - FIXED);
+  $('totalH').textContent = total.toFixed(1);
+  $('usableH').textContent = usable.toFixed(1);
+  return usable;
+}
+function priWeight(p){return p==='must'?3:p==='should'?2:1}
+function render(){
+  const usable = recalc();
+  const list = $('taskList');
+  if(!tasks.length){ list.innerHTML='<div class="empty">タスクを追加すると優先順 + カテゴリで並びます</div>'; $('usedH').textContent='0'; $('bar').innerHTML=''; $('balance').innerHTML=''; $('overflowWarn').style.display='none'; return; }
+  const sorted = [...tasks].sort((a,b)=>priWeight(b.pri)-priWeight(a.pri));
+  list.innerHTML = sorted.map(t=>`<div class="task" data-c="${t.cat}"><span class="pri">${t.pri}</span><span>${t.name}</span><span class="min">${t.min}分</span></div>`).join('');
+  const totalMin = tasks.reduce((s,t)=>s+t.min,0);
+  const usedH = totalMin/60;
+  $('usedH').textContent = usedH.toFixed(1);
+  $('overflowWarn').style.display = usedH > usable ? 'block' : 'none';
+  // category bar
+  const cats = {work:0,study:0,health:0,social:0};
+  tasks.forEach(t=>cats[t.cat]+=t.min);
+  const usableMin = usable*60;
+  const colors = {work:'#C4A059',study:'#6FE8D8',health:'#5CB870',social:'#E89FB3'};
+  $('bar').innerHTML = Object.entries(cats).map(([c,m])=>`<div style="background:${colors[c]};width:${(m/usableMin*100).toFixed(1)}%"></div>`).join('');
+  // balance
+  $('balance').innerHTML = Object.entries(cats).filter(([,m])=>m>0).map(([c,m])=>{
+    const pct = Math.round(m/totalMin*100);
+    const label = {work:'仕事',study:'学業',health:'健康',social:'社交'}[c];
+    return `<div>${label} <b style="color:var(--gl)">${pct}%</b> <span style="color:var(--t3);font-size:.7rem">(${(m/60).toFixed(1)}h)</span></div>`;
+  }).join('') || '<span style="color:var(--t3);font-size:.7rem">—</span>';
+  // advice
+  let tips = [];
+  if(cats.health === 0) tips.push('💡 健康ブロックがゼロ。15-30分の散歩を1つ追加すると気分の崩れが減る (運動科学の合意点)');
+  if(cats.social === 0 && tasks.length >= 3) tips.push('💡 社交ブロックがゼロ。週で見て3日連続ゼロが続くと燃え尽きやすい');
+  if(usedH > usable) tips.push('🚨 可処分時間 ' + usable.toFixed(1) + 'h を ' + (usedH-usable).toFixed(1) + 'h オーバー。WANT を1つ翌日へ');
+  const mustH = tasks.filter(t=>t.pri==='must').reduce((s,t)=>s+t.min,0)/60;
+  if(mustH > usable*0.7) tips.push('⚠ MUSTだけで可処分の70%超。差し込みが入ったら即破綻');
+  if(!tips.length && tasks.length >= 2) tips.push('✓ バランス良好。今日この通りに動ければ理想配分');
+  $('advice').innerHTML = tasks.length < 2 ? 'タスクを2件以上追加するとアドバイス表示' : tips.join('<br><br>');
+}
+function addTask(){
+  const name = $('tName').value.trim();
+  const min = +$('tMin').value;
+  if(!name || !min) return;
+  tasks.push({name, cat:$('tCat').value, pri:$('tPri').value, min});
+  $('tName').value=''; $('tMin').value='';
+  render();
+}
+$('wake').addEventListener('change', render);
+$('sleep').addEventListener('change', render);
+// seed sample
+tasks.push({name:'Finance期末予習', cat:'study', pri:'must', min:180});
+tasks.push({name:'CREネットワーキング', cat:'work', pri:'should', min:120});
+tasks.push({name:'ジム', cat:'health', pri:'should', min:60});
+render();
+</script>
+</body></html>
