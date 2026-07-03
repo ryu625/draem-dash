@@ -2512,11 +2512,15 @@ async function fetchNN(){
     if(!u)return;
     let changed=false;
     if(DB.kpi.nnFollowers!==u.followerCount){DB.kpi.nnFollowers=u.followerCount||0;changed=true;}
-    // v2 videos API からの再生数・動画数は niconico_sync.py が Gist に書き込む
-    // niconico.json にはユーザー情報のみ入っているため、ここでは followerCount のみ更新
+    // 再生数・動画数は niconico-fetch.yml が v3 videos API から集計して videoStats に書き込む
+    const vs=d?.videoStats;
+    if(vs){
+      if(DB.kpi.nnPlays!==vs.totalViews){DB.kpi.nnPlays=vs.totalViews||0;changed=true;}
+      if(DB.kpi.nnVideos!==vs.videoCount){DB.kpi.nnVideos=vs.videoCount||0;changed=true;}
+    }
     if(changed){
       const today_entry=DB.kpiLog.find(e=>e.date===todayStr);
-      if(today_entry)today_entry.nnFollowers=DB.kpi.nnFollowers;
+      if(today_entry){today_entry.nnFollowers=DB.kpi.nnFollowers;today_entry.nnPlays=DB.kpi.nnPlays;today_entry.nnVideos=DB.kpi.nnVideos;}
       save();render();
     }
   }catch{}

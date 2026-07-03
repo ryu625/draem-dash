@@ -19,6 +19,18 @@ jobs:
             'https://nvapi.nicovideo.jp/v1/users/143339828' \
             -o data/niconico.json
 
+      - name: Fetch Niconico video stats (再生数・動画数)
+        run: |
+          curl -s -H 'X-Frontend-Id: 6' \
+            'https://nvapi.nicovideo.jp/v3/users/143339828/videos?sortKey=registeredAt&sortOrder=desc&pageSize=100&page=1' \
+            -o /tmp/nn_videos.json
+          totalCount=$(jq '.data.totalCount // 0' /tmp/nn_videos.json)
+          totalViews=$(jq '[.data.items[]?.essential.count.view] | add // 0' /tmp/nn_videos.json)
+          jq --argjson videoCount "$totalCount" --argjson totalViews "$totalViews" \
+            '.videoStats = {videoCount: $videoCount, totalViews: $totalViews}' \
+            data/niconico.json > /tmp/niconico_merged.json
+          mv /tmp/niconico_merged.json data/niconico.json
+
       - name: Commit and push
         run: |
           git config user.name 'github-actions[bot]'
