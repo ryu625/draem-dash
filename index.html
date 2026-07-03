@@ -96,6 +96,21 @@ body{min-height:100dvh}
 .pace-num.on-track{color:var(--grn)}.pace-num.behind{color:var(--red)}.pace-num.neutral{color:var(--gl)}
 .pace-label{font-size:.45rem;color:var(--t3);text-transform:uppercase;letter-spacing:.08em;margin-top:.1rem}
 
+/* Score */
+.score-card{background:var(--s1);border:1px solid rgba(255,255,255,.05);border-radius:9px;padding:.55rem .65rem;margin-bottom:.4rem}
+.score-card:last-child{margin-bottom:0}
+.score-hd{display:flex;justify-content:space-between;align-items:baseline}
+.score-song{font-size:.62rem;font-weight:700;color:var(--t1)}
+.score-latest{font-family:Georgia,serif;font-size:1.15rem;font-weight:700;color:var(--gl)}
+.score-latest span{font-size:.5rem;color:var(--t3);font-weight:400;font-family:inherit}
+.score-delta{font-size:.45rem;margin-left:.3rem}
+.score-delta.up{color:var(--grn)}.score-delta.down{color:var(--red)}
+.score-chart{margin:.4rem 0 .3rem}
+.score-axes{display:flex;flex-wrap:wrap;gap:.25rem .5rem;font-size:.4rem;color:var(--t3)}
+.score-axes b{color:var(--t2);font-weight:600}
+.score-comment{font-size:.42rem;color:var(--t3);margin-top:.3rem;line-height:1.5;font-style:italic}
+.score-empty{font-size:.5rem;color:var(--t3);text-align:center;padding:.6rem 0}
+
 /* Streak */
 .streak{display:flex;align-items:center;gap:.6rem;padding:.5rem .8rem;background:var(--s1);border:1px solid rgba(255,255,255,.06);border-radius:10px;margin-bottom:.6rem}
 .sk-fire{font-size:1.1rem}.sk-num{font-family:Georgia,serif;font-size:1.2rem;font-weight:700;color:var(--gl)}.sk-label{font-size:.55rem;color:var(--t2)}
@@ -377,6 +392,9 @@ body{min-height:100dvh}
 
   <div class="sec">Journey</div>
   <div class="phase-ring" id="phaseRing"></div>
+
+  <div class="sec">📊 楽曲スコア</div>
+  <div id="scoreSection"></div>
 
   <div class="sec">Growth <span style="font-size:.45rem;color:var(--t3);font-weight:400;letter-spacing:0;text-transform:none">(tap to edit)</span></div>
   <div id="kpiGrid"></div>
@@ -1740,9 +1758,64 @@ function render(){
   $('#mission').style.cursor='pointer';
   $('#mission').onclick=()=>openModal('mission');
 
+  // Score
+  renderScores();
+
   // Asset
   renderAsset();
   renderCommitments();
+}
+
+// ── Score Section ──
+let SCORES=[];
+async function fetchScores(){
+  try{
+    const r=await fetch(`./data/scores.json?t=${Date.now()}`);
+    if(!r.ok)return;
+    SCORES=await r.json()||[];
+    renderScores();
+  }catch{}
+}
+function scoreTrendSVG(entries,w=240,h=48){
+  if(entries.length<2){
+    return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"><circle cx="${w-6}" cy="${h/2}" r="3" fill="var(--gl)"/></svg>`;
+  }
+  const min=Math.min(...entries.map(e=>e.total),50),max=Math.max(...entries.map(e=>e.total),100);
+  const pad=6;
+  const x=i=>pad+(w-pad*2)*(i/(entries.length-1));
+  const y=v=>h-pad-(h-pad*2)*((v-min)/Math.max(1,max-min));
+  const pts=entries.map((e,i)=>`${x(i)},${y(e.total)}`).join(' ');
+  const area=`${pad},${h-pad} ${pts} ${w-pad},${h-pad}`;
+  const dots=entries.map((e,i)=>`<circle cx="${x(i)}" cy="${y(e.total)}" r="2.4" fill="var(--gl)"/>`).join('');
+  return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">
+    <polygon points="${area}" fill="var(--gdim)"/>
+    <polyline points="${pts}" fill="none" stroke="var(--gl)" stroke-width="1.6" stroke-linejoin="round"/>
+    ${dots}
+  </svg>`;
+}
+const SCORE_AXES=[['ref','リファレンス'],['chord','コード'],['melody','メロ'],['orig','独自性'],['structure','構成'],['principle','原則']];
+function renderScores(){
+  const el=$('#scoreSection');
+  if(!el)return;
+  if(!SCORES.length){el.innerHTML='<div class="score-empty">まだスコア記録なし</div>';return;}
+  const bySong={};
+  SCORES.forEach(e=>{(bySong[e.song]=bySong[e.song]||[]).push(e);});
+  Object.values(bySong).forEach(list=>list.sort((a,b)=>(a.date||'').localeCompare(b.date||'')||String(a.version).localeCompare(String(b.version))));
+  el.innerHTML=Object.entries(bySong).map(([song,list])=>{
+    const latest=list[list.length-1],prev=list.length>1?list[list.length-2]:null;
+    const delta=prev?latest.total-prev.total:null;
+    const deltaHtml=delta==null?'':`<span class="score-delta ${delta>0?'up':delta<0?'down':''}">${delta>0?'▲+':delta<0?'▼':'＝'}${delta!==0?Math.abs(delta):''}</span>`;
+    const axesHtml=SCORE_AXES.map(([k,l])=>{
+      const v=latest.axes?.[k];
+      return v==null?'':`<span><b>${l}</b> ${v}</span>`;
+    }).filter(Boolean).join('');
+    return `<div class="score-card">
+      <div class="score-hd"><div class="score-song">${esc(song)} <span style="color:var(--t3);font-weight:400">${esc(String(latest.version))}</span></div><div class="score-latest">${latest.total}<span>/100</span>${deltaHtml}</div></div>
+      <div class="score-chart">${scoreTrendSVG(list)}</div>
+      <div class="score-axes">${axesHtml}</div>
+      ${latest.comment?`<div class="score-comment">${esc(latest.comment)}</div>`:''}
+    </div>`;
+  }).join('');
 }
 
 // ── Asset Section ──
@@ -2618,6 +2691,7 @@ render();
 syncPull();
 fetchYT();
 fetchNN();
+fetchScores();
 
 // ── Demo Lab ──
 async function renderDemoLab(){

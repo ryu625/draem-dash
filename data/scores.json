@@ -1,0 +1,62 @@
+[
+  {
+    "date": "2026-06-09",
+    "song": "ムービングフラワー",
+    "version": "_1",
+    "total": 65,
+    "axes": {
+      "ref": 16,
+      "chord": 13,
+      "melody": null,
+      "orig": 10,
+      "structure": 11,
+      "principle": 8
+    },
+    "comment": "きらり吸収・A-B-サビ構成あり。但しkey誤り/D7宙吊り/イントロ空"
+  },
+  {
+    "date": "2026-06-09",
+    "song": "ムービングフラワー",
+    "version": "_2",
+    "total": 68,
+    "axes": {
+      "ref": 16,
+      "chord": 14,
+      "melody": null,
+      "orig": 10,
+      "structure": 10,
+      "principle": 9
+    },
+    "comment": "イントロ補完・key修正。但しAメロまでで構成不完全"
+  },
+  {
+    "date": "2026-06-10",
+    "song": "ムービングフラワー",
+    "version": "_11",
+    "total": 75,
+    "axes": {
+      "ref": 17,
+      "chord": 16,
+      "melody": null,
+      "orig": 11,
+      "structure": 13,
+      "principle": 9
+    },
+    "comment": "構成揃う・待たせるG7・D7→ii-V改善。メロが本丸(未)"
+  },
+  {
+    "date": "2026-07-03",
+    "song": "ムービングフラワー",
+    "version": "_14",
+    "total": 80,
+    "axes": {
+      "ref": 17,
+      "chord": 16,
+      "melody": 14,
+      "orig": 11,
+      "structure": 13,
+      "principle": 9
+    },
+    "comment": "メロ乗せ。噛み合わせ良好(コードトーン中心)だがコードなぞりがちで自立弱め"
+  }
+]
