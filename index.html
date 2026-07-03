@@ -1381,7 +1381,7 @@ function renderWeeklyReview(){
 }
 
 function recordDay(){if(!DB.days.includes(todayStr))DB.days.push(todayStr);}
-function streak(){const d=new Set(DB.days);let s=0,dt=new Date(today);while(true){const k=dt.toISOString().slice(0,10);if(d.has(k)){s++;dt.setDate(dt.getDate()-1);}else if(s===0){dt.setDate(dt.getDate()-1);}else break;}return s;}
+function streak(){const d=new Set(DB.days);let s=0,dt=new Date(today),skippedToday=false;for(let i=0;i<3650;i++){const k=dt.toISOString().slice(0,10);if(d.has(k)){s++;dt.setDate(dt.getDate()-1);}else if(s===0&&!skippedToday){skippedToday=true;dt.setDate(dt.getDate()-1);}else break;}return s;}
 function days30(){const c=new Date(today);c.setDate(c.getDate()-30);return DB.days.filter(x=>new Date(x)>=c).length;}
 function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
 
