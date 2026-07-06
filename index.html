@@ -204,6 +204,34 @@ body{min-height:100dvh}
 .asset-salary-inp{flex:1;background:var(--s1);border:1px solid rgba(255,255,255,.08);border-radius:6px;padding:.3rem .45rem;color:var(--t1);font-size:.65rem;font-family:inherit;outline:none}
 .asset-salary-inp:focus{border-color:var(--gold)}
 .asset-empty{text-align:center;padding:1rem;color:var(--t3);font-size:.65rem;background:var(--s1);border-radius:8px;border:1px dashed rgba(255,255,255,.08);line-height:1.8}
+.finance-roadmap{background:linear-gradient(135deg,rgba(196,160,89,.14),rgba(255,255,255,.035));border:1px solid rgba(196,160,89,.22);border-radius:12px;padding:.65rem .75rem;margin:.35rem 0 .5rem;position:relative;overflow:hidden}
+.finance-roadmap::before{content:'';position:absolute;right:-34px;top:-42px;width:115px;height:115px;border-radius:50%;background:radial-gradient(circle,rgba(223,192,122,.18),transparent 68%);pointer-events:none}
+.finance-head{display:flex;justify-content:space-between;gap:.5rem;align-items:flex-start;position:relative}
+.finance-kicker{font-size:.43rem;color:var(--gold);letter-spacing:.12em;text-transform:uppercase;font-weight:700;margin-bottom:.15rem}
+.finance-title{font-size:.8rem;font-weight:700;color:var(--t1);line-height:1.35}
+.finance-sub{font-size:.48rem;color:var(--t3);line-height:1.6;margin-top:.16rem}
+.finance-edit{font-size:.48rem;padding:.18rem .45rem;border-radius:6px;border:1px solid rgba(196,160,89,.35);background:rgba(196,160,89,.08);color:var(--gold);cursor:pointer;font-family:inherit;white-space:nowrap;position:relative}
+.finance-now{display:grid;grid-template-columns:repeat(4,1fr);gap:.25rem;margin:.55rem 0 .45rem;position:relative}
+.finance-metric{background:rgba(13,9,6,.28);border:1px solid rgba(255,255,255,.06);border-radius:8px;padding:.4rem .35rem;text-align:center}
+.finance-metric-l{font-size:.39rem;color:var(--t3);letter-spacing:.06em;text-transform:uppercase;white-space:nowrap}
+.finance-metric-v{font-family:Georgia,serif;font-size:.82rem;font-weight:700;color:var(--t1);margin-top:.08rem}
+.finance-metric-v.gold{color:var(--gold)}.finance-metric-v.good{color:#6abf8a}.finance-metric-v.warn{color:#D47A6A}
+.finance-progress{margin:.45rem 0 .5rem;position:relative}
+.finance-progress-top{display:flex;justify-content:space-between;font-size:.48rem;color:var(--t3);margin-bottom:.18rem}
+.finance-track{height:7px;border-radius:5px;background:rgba(255,255,255,.07);overflow:hidden;position:relative}
+.finance-fill{height:100%;border-radius:5px;background:linear-gradient(90deg,#D47A6A,var(--gold),#6abf8a);transition:width .6s ease}
+.finance-marks{display:flex;justify-content:space-between;font-size:.38rem;color:rgba(255,255,255,.32);margin-top:.15rem}
+.finance-steps{display:flex;flex-direction:column;gap:.25rem;position:relative}
+.finance-step{display:grid;grid-template-columns:auto 1fr auto;gap:.38rem;align-items:center;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.055);border-radius:8px;padding:.38rem .45rem}
+.finance-step.done{border-color:rgba(106,191,138,.24);background:rgba(106,191,138,.055)}
+.finance-step.active{border-color:rgba(196,160,89,.35);background:rgba(196,160,89,.08)}
+.finance-dot{width:14px;height:14px;border-radius:50%;border:1.5px solid var(--t3);display:flex;align-items:center;justify-content:center;font-size:.42rem;color:var(--bg);font-weight:800}
+.finance-step.done .finance-dot{background:#6abf8a;border-color:#6abf8a}.finance-step.active .finance-dot{background:var(--gold);border-color:var(--gold)}
+.finance-step-t{font-size:.56rem;font-weight:700;color:var(--t1);line-height:1.35}
+.finance-step-s{font-size:.43rem;color:var(--t3);line-height:1.45;margin-top:.05rem}
+.finance-badge{font-size:.42rem;color:var(--t3);border:1px solid rgba(255,255,255,.08);border-radius:999px;padding:.08rem .34rem;white-space:nowrap}
+.finance-step.active .finance-badge{color:var(--gold);border-color:rgba(196,160,89,.35);background:rgba(196,160,89,.08)}
+.finance-note{font-size:.45rem;color:var(--t3);line-height:1.6;margin-top:.45rem;padding-top:.38rem;border-top:1px solid rgba(255,255,255,.06);position:relative}
 /* Mission */
 .mission{text-align:center;margin:1.2rem 0 .5rem;padding:.8rem .5rem;border-top:1px solid rgba(255,255,255,.04);border-bottom:1px solid rgba(255,255,255,.04)}
 .mission-text{font-family:Georgia,serif;font-size:.95rem;font-weight:600;color:var(--t1);line-height:1.7}
@@ -584,6 +612,16 @@ if(!DB.snsLog)DB.snsLog=[];           // [{weekStart,x,nn}] X/ニコニコ投稿
 if(!DB.assetPortfolio)DB.assetPortfolio=[];  // [{name,cost,value,gain,section,importDate}]
 if(!DB.assetHistory)DB.assetHistory=[];      // [{date,value}]
 if(!DB.assetConfig)DB.assetConfig={salary:9800000};
+if(!DB.financePlan)DB.financePlan={
+  cashMan:35,
+  nisaMonthly:169000,
+  idecoMonthly:20000,
+  vneoAllowance:40000,
+  subReserve:30000,
+  jbgMonthly:75000,
+  vocolabMonthly:26000,
+  updated:todayStr,
+};
 if(!DB.commitments)DB.commitments=[
   {id:'plugin',text:'JBGで使うプラグインのみ購入',freq:'monthly',deadline:'2027-09',history:[]},
   {id:'vending',text:'平日、自動販売機で飲み物を買わない',freq:'weekly',deadline:null,history:[]},
@@ -790,7 +828,7 @@ function formatSleepInput(el){const digits=el.value.replace(/\D/g,'').slice(0,4)
 const CF_STEPS=['リファレンス選定','Logicに落とす','コード進行・展開を決める','ドラム・ベースを仮入れ','歌メロを入れる','ドラム・ベースをブラッシュアップ','音探し（リファレンス参考）','メロディ系仮打ち込み','コード系仮打ち込み','テクスチャ仮入れ','fx仮入れ','宮舞モカに歌わせる','仮入れをブラッシュアップ・アヴォイドノート解消','fx追加','Inter系エフェクト','Outer系エフェクト','通し①：違和感探し→修正','通し②：違和感探し→修正','通し③：違和感探し→修正','通し④：違和感探し→修正','通し⑤：違和感探し→修正'];
 if(!DB.compFlow)DB.compFlow={};
 // 再起・継承は完了済みとして全ステップ初期化
-['再起','継承'].forEach(title=>{if(!DB.compFlow[title]||DB.compFlow[title].done.length===0){DB.compFlow[title]={done:[...Array(CF_STEPS.length).keys()]};save();}});
+['再起','継承'].forEach(title=>{if(!DB.compFlow[title]||DB.compFlow[title].done.length===0){DB.compFlow[title]={done:[...Array(CF_STEPS.length).keys()]};saveDB();}});
 
 // ── Recurring Task Engine ──
 function processRecurring(){
@@ -816,12 +854,12 @@ function processRecurring(){
       }
     }
   });
-  if(created)save();
+  if(created)saveDB();
 }
 // 水泳リピートタスクの初期登録（未登録の場合のみ）
 if(!(DB.recurring||[]).find(r=>r.text==='🏊 水泳（夕食前）')){
   DB.recurring.push({text:'🏊 水泳（夕食前）',cat:'🏃健康',interval:'daily',days:[2,4],lastCreated:''});
-  save();
+  saveDB();
 }
 processRecurring();
 
@@ -835,7 +873,7 @@ processRecurring();
     if(seen.has(key))return false;
     seen.add(key);return true;
   });
-  if(DB.tasks.length<before)save();
+  if(DB.tasks.length<before)saveDB();
 })();
 
 // ── Gist Sync (robust) ──
@@ -914,6 +952,7 @@ function mergeDB(remote){
     if(remote.timerCat&&remote.timerCat!==local.timerCat){local.timerCat=remote.timerCat;changed=true;}
     if(remote.songs&&JSON.stringify(remote.songs)!==JSON.stringify(local.songs)){local.songs=remote.songs;changed=true;}
     if(remote.goals&&JSON.stringify(remote.goals)!==JSON.stringify(local.goals)){local.goals=remote.goals;changed=true;}
+    if(remote.financePlan&&JSON.stringify(remote.financePlan)!==JSON.stringify(local.financePlan)){local.financePlan={...local.financePlan,...remote.financePlan};changed=true;}
     if(remote.recurring&&JSON.stringify(remote.recurring)!==JSON.stringify(local.recurring)){const localRcMap=new Map((local.recurring||[]).map(r=>[r.text,r]));local.recurring=remote.recurring.map(rr=>{const lr=localRcMap.get(rr.text);return lr?{...rr,lastCreated:rr.lastCreated>lr.lastCreated?rr.lastCreated:lr.lastCreated}:rr;});changed=true;}
     if(remote.bestStreak>(local.bestStreak||0)){local.bestStreak=remote.bestStreak;changed=true;}
     if(remote.apiSettings&&hasApiSettings(remote.apiSettings)){
@@ -1853,6 +1892,67 @@ function calcMonthlyInvest(salary){
   return {monthly,annual};
 }
 
+function financePlan(){
+  const def={cashMan:35,nisaMonthly:169000,idecoMonthly:20000,vneoAllowance:40000,subReserve:30000,jbgMonthly:75000,vocolabMonthly:26000,updated:todayStr};
+  DB.financePlan={...def,...(DB.financePlan||{})};
+  return DB.financePlan;
+}
+function yenShort(n){
+  n=+n||0;
+  if(Math.abs(n)>=10000)return `${Math.round(n/10000).toLocaleString()}万`;
+  return n.toLocaleString();
+}
+function renderFinanceRoadmap(idealMonthly){
+  const fp=financePlan();
+  const cash=+fp.cashMan||0;
+  const nisa=+fp.nisaMonthly||0;
+  const ideco=+fp.idecoMonthly||0;
+  const allowance=+fp.vneoAllowance||0;
+  const firstTarget=50,unlockTarget=80,steadyTarget=100;
+  const investNow=nisa+ideco;
+  const cashPct=Math.min(100,Math.max(0,cash/steadyTarget*100));
+  const missing50=Math.max(0,firstTarget-cash);
+  const missing80=Math.max(0,unlockTarget-cash);
+  const idealGap=Math.max(0,idealMonthly-investNow);
+  const steps=[
+    {done:cash>=firstTarget,title:'現金50万円まで守る',sub:cash>=firstTarget?'第1防衛ライン達成。増額判断に進める':`あと${missing50.toFixed(0)}万円。NISAは16.9万円を維持`,badge:cash>=firstTarget?'達成':'今ここ'},
+    {done:nisa>=200000,title:'NISA 20万円/月へ',sub:'現金50万円を超えたら、NASDAQ100を+3.1万円',badge:nisa>=200000?'完了':'次'},
+    {done:cash>=unlockTarget,title:'現金80〜100万円へ',sub:cash>=unlockTarget?'第2防衛ライン。100万円でかなり安定':`あと${missing80.toFixed(0)}万円で次の増額解禁`,badge:cash>=unlockTarget?'達成':'育成'},
+    {done:nisa>=270000,title:'NISA 27万円/月へ',sub:'80〜100万円の安全域でNASDAQ100を増額',badge:nisa>=270000?'完了':'次'},
+    {done:nisa>=300000,title:'JBG終了後、30万円/月を検討',sub:'本講座代が落ち着いたら再計算。無理に先取りしない',badge:nisa>=300000?'完了':'先'},
+  ];
+  const activeIndex=steps.findIndex(s=>!s.done);
+  const safeAction=cash<firstTarget?'今は増額しない。現金50万円を先に戻す':nisa<200000?'NISAを20万円へ増額する候補':cash<unlockTarget?'次は現金80〜100万円へ':nisa<270000?'NISAを27万円へ増額する候補':'JBG終了後に30万円を検討';
+  const statusClass=cash<firstTarget?'warn':cash>=unlockTarget?'good':'gold';
+  return `<div class="finance-roadmap">
+    <div class="finance-head">
+      <div>
+        <div class="finance-kicker">Asset Roadmap</div>
+        <div class="finance-title">${safeAction}</div>
+        <div class="finance-sub">38歳7,000万円を目指す。ただし、今は現金バッファを優先して手戻りを減らす。</div>
+      </div>
+      <button class="finance-edit" id="financeEditBtn">編集</button>
+    </div>
+    <div class="finance-now">
+      <div class="finance-metric"><div class="finance-metric-l">現金</div><div class="finance-metric-v ${statusClass}">${cash.toFixed(0)}万</div></div>
+      <div class="finance-metric"><div class="finance-metric-l">NISA</div><div class="finance-metric-v gold">${yenShort(nisa)}</div></div>
+      <div class="finance-metric"><div class="finance-metric-l">iDeCo</div><div class="finance-metric-v">${yenShort(ideco)}</div></div>
+      <div class="finance-metric"><div class="finance-metric-l">小遣い</div><div class="finance-metric-v">${yenShort(allowance)}</div></div>
+    </div>
+    <div class="finance-progress">
+      <div class="finance-progress-top"><span>現金バッファ</span><span>${cash.toFixed(0)} / ${steadyTarget}万円</span></div>
+      <div class="finance-track"><div class="finance-fill" style="width:${cashPct}%"></div></div>
+      <div class="finance-marks"><span>0</span><span>50万: 増額候補</span><span>80万</span><span>100万: 安定</span></div>
+    </div>
+    <div class="finance-steps">${steps.map((s,i)=>`<div class="finance-step ${s.done?'done':i===activeIndex?'active':''}">
+      <div class="finance-dot">${s.done?'✓':i+1}</div>
+      <div><div class="finance-step-t">${s.title}</div><div class="finance-step-s">${s.sub}</div></div>
+      <div class="finance-badge">${s.badge}</div>
+    </div>`).join('')}</div>
+    <div class="finance-note">理想積立との差: ${idealGap>0?`あと月${yenShort(idealGap)}`:'理想額以上'}。増額分はNASDAQ100優先、FANG+は月10万円を上限目安。JBG本講座代は別枠。</div>
+  </div>`;
+}
+
 function getWeekKey(d){const dt=new Date(d);const day=dt.getDay();const mon=new Date(dt);mon.setDate(dt.getDate()-(day===0?6:day-1));return localDateStr(mon);}
 function getMonthKey(d){return new Date(d).toISOString().slice(0,7);}
 
@@ -1917,11 +2017,11 @@ function renderAsset(){
   const BIRTH=new Date('1996-06-01');
   const ageNow=(today-BIRTH)/(365.25*86400000);
   const yearsLeft=Math.max(0,38-ageNow);
-  const TARGET=55000000;
+  const TARGET=70000000;
 
   // Portfolio allocation by age
   const PALETTE=['#C4A059','#6abf8a','#7EB8D4','#D4896A','#9B8FD4','#D4C06A','#6ABDB4','#D47A6A'];
-  const portfolio=ageNow<35?[{name:'NASDAQ100',pct:70},{name:'FANG+',pct:30}]:ageNow<38?[{name:'オルカン',pct:50},{name:'NASDAQ100',pct:50}]:[{name:'オルカン',pct:70},{name:'債券',pct:30}];
+  const portfolio=ageNow<38?[{name:'NASDAQ100',pct:70},{name:'FANG+',pct:30}]:[{name:'オルカン',pct:70},{name:'債券',pct:30}];
 
   // Donut chart SVG
   function donutChart(items,size=72){
@@ -1968,6 +2068,7 @@ function renderAsset(){
   const fundNisa=calcFundNisa(fundTargets);
   function nisaTags(n){const t=[];if(n.tsumitate>0)t.push(`<span style="color:rgba(106,191,138,.8)">積立 ¥${n.tsumitate.toLocaleString()}</span>`);if(n.seichi>0)t.push(`<span style="color:rgba(126,184,212,.8)">成長 ¥${n.seichi.toLocaleString()}</span>`);if(n.tokutei>0)t.push(`<span style="color:rgba(255,255,255,.4)">特定 ¥${n.tokutei.toLocaleString()}</span>`);return t.join(' ');};
   let html=`<div class="asset-salary-row"><span style="font-size:.5rem;color:var(--t3);white-space:nowrap">年収</span><input class="asset-salary-inp" id="assetSalaryInp" type="number" value="${salary}" placeholder="9800000"><span style="font-size:.5rem;color:var(--t3);white-space:nowrap">円</span></div>`;
+  html+=renderFinanceRoadmap(inv.monthly);
   html+=`<div class="asset-monthly"><div><div class="asset-monthly-l">月次積立額</div><div class="asset-monthly-v">¥${inv.monthly.toLocaleString()}<span style="font-size:.5rem;font-weight:400;color:var(--t3)">/月</span></div><div style="font-size:.42rem;color:var(--t3);margin-top:.12rem;line-height:1.7"><div>年間 ¥${inv.annual.toLocaleString()} ÷ 12</div><div style="color:rgba(255,255,255,.3)">= (年収×0.72 − 372万) ÷ 12</div><div style="color:rgba(255,255,255,.3)">ボーナス全額を年12分割で均等積立</div></div></div><div style="display:flex;align-items:center;gap:.5rem">${donutChart(portfolio)}<div>${portfolio.map((p,i)=>{
     const amount=Math.round(monthlyInvest*p.pct/100);
     return `<div style="margin-bottom:.35rem"><div style="display:flex;align-items:center;gap:.3rem"><span style="width:7px;height:7px;border-radius:2px;background:${PALETTE[i%PALETTE.length]};flex-shrink:0;display:inline-block"></span><span style="font-size:.48rem;color:var(--t2)">${p.name} ${p.pct}%</span></div><div style="font-size:.42rem;padding-left:1rem;margin-top:.1rem;line-height:1.6"><div><span style="color:var(--gold)">¥${amount.toLocaleString()}/月</span>　${nisaTags(fundNisa[i])}</div></div></div>`;
@@ -2001,10 +2102,10 @@ function renderAsset(){
         const curAge=ageNow;
         const curVal=totalValue;
         const SCENARIOS=[
-          {label:'暴落あり',prob:'20%',r1:0.08,r2:0.06,color:'#D47A6A',final:0},
-          {label:'標準',    prob:'50%',r1:0.12,r2:0.10,color:'#C4A059',final:0},
-          {label:'好調',    prob:'25%',r1:0.14,r2:0.12,color:'#7EB8D4',final:0},
-          {label:'超強気',  prob:'5%', r1:0.16,r2:0.14,color:'#9B8FD4',final:0},
+          {label:'保守',    prob:'25%',r1:0.07,r2:0.07,color:'#D47A6A',final:0},
+          {label:'標準',    prob:'45%',r1:0.09,r2:0.09,color:'#C4A059',final:0},
+          {label:'強気',    prob:'25%',r1:0.11,r2:0.11,color:'#7EB8D4',final:0},
+          {label:'超強気',  prob:'5%', r1:0.13,r2:0.13,color:'#9B8FD4',final:0},
         ];
         const scenarioProjs=SCENARIOS.map(sc=>{
           const pts=[{age:curAge,value:curVal}];
@@ -2036,7 +2137,7 @@ function renderAsset(){
         const nowX=toX(curAge);const nowY=toY(curVal);
         return `<svg width="100%" viewBox="0 0 ${W} ${H+10}" style="overflow:visible;margin-top:.3rem">
           <line x1="${PAD}" y1="${ty.toFixed(1)}" x2="${W-PAD}" y2="${ty.toFixed(1)}" stroke="rgba(196,160,89,.3)" stroke-width="1" stroke-dasharray="4,3"/>
-          <text x="${W-PAD}" y="${(ty-2).toFixed(1)}" font-size="4.5" fill="rgba(196,160,89,.6)" text-anchor="end">目標5,500万</text>
+          <text x="${W-PAD}" y="${(ty-2).toFixed(1)}" font-size="4.5" fill="rgba(196,160,89,.6)" text-anchor="end">目標7,000万</text>
           ${yLabels}${xLabels}
           ${scenarioProjs.map(sc=>`<polyline points="${sc.pts.map(p=>`${toX(p.age).toFixed(1)},${toY(p.value).toFixed(1)}`).join(' ')}" fill="none" stroke="${sc.color}" stroke-width="0.8" stroke-dasharray="5,3" stroke-linejoin="round" opacity=".65"/>`).join('')}
           ${actualPts?`<polyline points="${actualPts}" fill="none" stroke="#6abf8a" stroke-width="2" stroke-linejoin="round"/>`:''}
@@ -2055,8 +2156,8 @@ function renderAsset(){
             <div>昇給 <span style="color:rgba(255,255,255,.7)">+50万/年</span></div>
             <div>投資 <span style="color:rgba(255,255,255,.7)">ボーナス全額を年12分割均等積立</span></div>
             <div>PF <span style="color:rgba(255,255,255,.7)">NASDAQ70%+FANG+30%</span></div>
-            <div>標準利回り <span style="color:rgba(255,255,255,.7)">〜35歳 12% / 以降 10%</span></div>
-            <div>暴落想定 <span style="color:rgba(255,255,255,.7)">〜35歳 8% / 以降 6%</span></div>
+            <div>標準利回り <span style="color:rgba(255,255,255,.7)">年9%</span></div>
+            <div>増額方針 <span style="color:rgba(255,255,255,.7)">NASDAQ優先 / FANG+月10万目安</span></div>
           </div>
         </div>`;
       })()}
@@ -2089,6 +2190,8 @@ function renderAsset(){
   // Salary input handler
   const si=$('#assetSalaryInp');
   if(si)si.addEventListener('change',()=>{DB.assetConfig.salary=parseInt(si.value)||9800000;save();renderAsset();});
+  const fe=$('#financeEditBtn');
+  if(fe)fe.addEventListener('click',()=>openModal('financePlan'));
 }
 
 // ── Confirm helper (replaces native confirm/alert) ──
@@ -2109,7 +2212,37 @@ function showAlert(msg) {
 
 // ── Modals ──
 function openModal(type,extra){
-  if(type==='kpi'){
+  $('#mSave').textContent='保存';
+  if(type==='financePlan'){
+    const fp=financePlan();
+    $('#mTitle').textContent='資産形成ロードマップ';
+    $('#mFields').innerHTML=`
+      <div style="font-size:.5rem;color:var(--t3);line-height:1.7;margin-bottom:.55rem">現金額を更新すると、次にやるべき投資増額ステップが自動で切り替わります。</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.4rem">
+        <div class="mf"><label>現金バッファ（万円）</label><input type="number" step="1" id="fpCash" value="${fp.cashMan}"></div>
+        <div class="mf"><label>NISA 月額（円）</label><input type="number" step="1000" id="fpNisa" value="${fp.nisaMonthly}"></div>
+        <div class="mf"><label>iDeCo 月額（円）</label><input type="number" step="1000" id="fpIdeco" value="${fp.idecoMonthly}"></div>
+        <div class="mf"><label>vneo 小遣い（円）</label><input type="number" step="1000" id="fpAllowance" value="${fp.vneoAllowance}"></div>
+        <div class="mf"><label>サブスク/カード（円）</label><input type="number" step="1000" id="fpSub" value="${fp.subReserve||30000}"></div>
+        <div class="mf"><label>JBG積立（円）</label><input type="number" step="1000" id="fpJbg" value="${fp.jbgMonthly||75000}"></div>
+        <div class="mf"><label>VOCOLAB（円）</label><input type="number" step="1000" id="fpVocolab" value="${fp.vocolabMonthly||26000}"></div>
+      </div>
+      <div style="font-size:.48rem;color:var(--t3);line-height:1.65;margin-top:.35rem">目安: 現金50万円でNISA20万円、80〜100万円でNISA27万円、JBG終了後に30万円を検討。</div>`;
+    $('#mSave').onclick=()=>{
+      DB.financePlan={
+        ...financePlan(),
+        cashMan:+$('#fpCash').value||0,
+        nisaMonthly:+$('#fpNisa').value||0,
+        idecoMonthly:+$('#fpIdeco').value||0,
+        vneoAllowance:+$('#fpAllowance').value||0,
+        subReserve:+$('#fpSub').value||0,
+        jbgMonthly:+$('#fpJbg').value||0,
+        vocolabMonthly:+$('#fpVocolab').value||0,
+        updated:todayStr,
+      };
+      save();render();$('#modalBg').classList.remove('show');
+    };
+  }else if(type==='kpi'){
     const KD=[{k:'subscribers',l:'Subscribers'},{k:'short_plays',l:'Shorts 再生数'},{k:'main_plays',l:'メイン動画 再生数'},{k:'songs',l:'Songs'},{k:'revenue',l:'Revenue (¥)'}];
     $('#mTitle').textContent='KPI 更新';
     $('#mFields').innerHTML=KD.map(d=>`<div class="mf"><label>${d.l}</label><input type="number" data-k="${d.k}" value="${DB.kpi[d.k]||0}"></div>`).join('');
@@ -2828,7 +2961,7 @@ if(_dfbBtn) _dfbBtn.addEventListener('click', () => {
 if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js');
 const _syncDot=$('#syncDot');
 if(_syncDot)_syncDot.addEventListener('click',()=>{const c=gc();if(!c.id||!c.token){openModal('sync');}else{syncPull();}});
-{const c=gc();if(!c.id||!c.token){ss('off');const b=$('#gistWarnBanner');if(b)b.style.display='block';}}
+{const c=gc();if(!c.id||!c.token){ss('off');const b=$('#gistWarnBanner');if(b)b.style.display='none';}}
 </script>
 </body>
 </html>
