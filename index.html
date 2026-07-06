@@ -56,6 +56,30 @@ body{min-height:100dvh}
 .insight{font-size:.5rem;color:var(--t2);background:rgba(196,160,89,.08);border:1px solid rgba(196,160,89,.12);border-radius:6px;padding:.3rem .5rem;margin-bottom:.6rem;line-height:1.5;text-align:center}
 .insight b{color:var(--gold)}
 
+/* Daily Stack */
+.daily-stack{background:linear-gradient(135deg,rgba(255,255,255,.055),rgba(196,160,89,.055));border:1px solid rgba(255,255,255,.075);border-radius:12px;padding:.65rem .75rem;margin-bottom:.8rem}
+.ds-head{display:flex;align-items:flex-start;justify-content:space-between;gap:.6rem;margin-bottom:.45rem}
+.ds-k{font-size:.43rem;color:var(--gold);letter-spacing:.12em;text-transform:uppercase;font-weight:700;margin-bottom:.12rem}
+.ds-title{font-size:.78rem;font-weight:700;color:var(--t1);line-height:1.35}
+.ds-sub{font-size:.45rem;color:var(--t3);line-height:1.55;margin-top:.08rem}
+.ds-score{text-align:right;flex-shrink:0}
+.ds-num{font-family:Georgia,serif;font-size:1.15rem;font-weight:700;color:var(--gl);line-height:1}
+.ds-lbl{font-size:.4rem;color:var(--t3);letter-spacing:.08em;text-transform:uppercase;margin-top:.12rem}
+.ds-track{height:5px;border-radius:4px;background:rgba(255,255,255,.07);overflow:hidden;margin-bottom:.45rem}
+.ds-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--gd),var(--gold),#6abf8a);transition:width .5s ease}
+.ds-grid{display:grid;grid-template-columns:1fr 1fr;gap:.28rem}
+.ds-chip{display:grid;grid-template-columns:auto 1fr;gap:.36rem;align-items:center;background:rgba(13,9,6,.28);border:1px solid rgba(255,255,255,.06);border-radius:8px;padding:.38rem .42rem;cursor:pointer;min-height:46px}
+.ds-chip:active{background:var(--s2)}
+.ds-chip.done{border-color:rgba(106,191,138,.35);background:rgba(106,191,138,.075)}
+.ds-chip.core:not(.done){border-color:rgba(196,160,89,.2)}
+.ds-dot{width:15px;height:15px;border-radius:50%;border:1.5px solid var(--t3);display:flex;align-items:center;justify-content:center;font-size:.42rem;color:var(--bg);font-weight:800}
+.ds-chip.done .ds-dot{background:#6abf8a;border-color:#6abf8a}
+.ds-t{font-size:.55rem;font-weight:700;color:var(--t1);line-height:1.3}
+.ds-s{font-size:.4rem;color:var(--t3);line-height:1.35;margin-top:.03rem}
+.ds-chip.done .ds-s{color:rgba(232,221,208,.55)}
+.ds-foot{display:flex;justify-content:space-between;gap:.5rem;align-items:center;margin-top:.45rem;padding-top:.38rem;border-top:1px solid rgba(255,255,255,.055);font-size:.43rem;color:var(--t3);line-height:1.5}
+.ds-detail{color:var(--gold);border:1px solid rgba(196,160,89,.25);border-radius:999px;padding:.08rem .35rem;cursor:pointer;white-space:nowrap}
+
 /* Focus */
 .focus{padding:.8rem;background:linear-gradient(135deg,rgba(196,160,89,.1),rgba(196,160,89,.03));border:1px solid rgba(196,160,89,.18);border-radius:12px;margin-bottom:1rem}
 .focus-label{font-size:.5rem;color:var(--gold);text-transform:uppercase;letter-spacing:.15em;font-weight:600;margin-bottom:.3rem}
@@ -353,7 +377,7 @@ body{min-height:100dvh}
     </div>
   </div>
 
-  <div id="gistWarnBanner" style="display:none;background:rgba(196,100,60,.18);border:1px solid rgba(196,100,60,.4);border-radius:8px;padding:.4rem .8rem;font-size:.55rem;color:#e08060;margin-bottom:.5rem;cursor:pointer" onclick="window.__openSettings&&window.__openSettings()">⚠️ Gist未設定 — データはこのブラウザにしか保存されません。タップして設定してください。</div>
+  <div id="gistWarnBanner" style="display:none;background:rgba(196,100,60,.18);border:1px solid rgba(196,100,60,.4);border-radius:8px;padding:.4rem .8rem;font-size:.55rem;color:#e08060;margin-bottom:.5rem;cursor:pointer" onclick="window.__openSettings&&window.__openSettings()">⚠️ 同期未設定 — Ryu専用の同期リンクを一度開くと、この端末でも同期できます。</div>
   <div class="dream-bar" id="dreamBar"></div>
 
   <div class="focus" id="focus"></div>
@@ -365,6 +389,8 @@ body{min-height:100dvh}
   <div class="insight" id="goodmotBadge" style="display:none"></div>
 
   <div class="insight" id="insightBadge" style="display:none"></div>
+
+  <div id="dailyStack"></div>
 
   <div class="timer-box" id="timerBox"></div>
 
@@ -461,6 +487,14 @@ const CATS={song:'🎵作曲',mix:'🎛️MIX',mv:'🎬MV',vocal:'🎤ボーカ�
 const DEF_GOALS={weeklyHours:20,yearSongs:10,subTarget:1000,shortPlayTarget:100000,mainPlayTarget:50000,revenueTarget:500000};
 const MUSIC_CATS=['🎵作曲','🎛️MIX','🎬MV','🎤ボーカル','🚀リリース'];
 const DREAM_DATE=new Date('2029-02-11');
+const DAILY_STACK=[
+  {id:'uiro_plank',group:'声',core:true,title:'外郎売プランク',sub:'朝・腹圧+滑舌',detail:'JBG録音演習までの声づくり。プランクしながら外郎売を音読して、腹圧と滑舌を同時に鍛える。'},
+  {id:'melodics',group:'鍵盤',core:false,title:'Melodics 10分',sub:'2-3日に1回→毎日へ',detail:'音楽の自力づくり。毎日10分だけでも触る。完璧な練習より、鍵盤に戻ってくる回数を優先。'},
+  {id:'guitar',group:'ギター',core:false,title:'ギター 10分',sub:'ぼざろコピー再開',detail:'以前止まった曲を再開候補にする。まずは「すらすら弾く」ではなく、毎日10分触るハードルに下げる。'},
+  {id:'stretch_pole',group:'姿勢',core:true,title:'ストレッチポール',sub:'体軸の左右差リセット',detail:'Hayatoさん指摘の左右の歪み対策。上に乗ってころころし、右側の張りと力みを抜く。'},
+  {id:'neck_stretch',group:'首',core:false,title:'首ストレッチ',sub:'右胸鎖乳突筋',detail:'右首から耳裏にかけて硬い部分のケア。良いYouTubeストレッチを見つけたらここに固定する。'},
+  {id:'shakti',group:'自律神経',core:false,title:'シャクティ 15分',sub:'寝る前・背中',detail:'寝る前に背中を15分。自律神経を落ち着かせる夜の終了儀式にする。'},
+];
 const QUOTES=[
   '小さな一歩が、大きな変化を生む',
   '完璧を待つな。今の自分で始めろ',
@@ -605,6 +639,9 @@ if(!DB.reflections)DB.reflections=[];
 if(!DB.bestStreak)DB.bestStreak=0;
 if(!DB.goodmot)DB.goodmot=[];
 if(!DB.swimLog)DB.swimLog=[];          // [{date,dist}]
+if(!DB.dailyStack)DB.dailyStack={targetDate:'2027-05-01',log:{}}; // {targetDate, log:{YYYY-MM-DD:{itemId:true}}}
+if(!DB.dailyStack.log)DB.dailyStack.log={};
+if(!DB.dailyStack.targetDate)DB.dailyStack.targetDate='2027-05-01';
 if(!DB.kpiLog)DB.kpiLog=[];           // [{date,subscribers,total_plays,revenue,songs}]
 if(!DB.weeklyLog)DB.weeklyLog=[];     // [{weekStart,totalSec,byCat,kpi}]
 if(!DB.suggestionLog)DB.suggestionLog=[]; // [{id,date,text,type,context,effective,evaluatedDate}]
@@ -775,6 +812,60 @@ function renderGoodMot(){
   if(!todayEntry)html+=html?'<br>':'';
   if(!html){gb.style.display='none';return;}
   gb.style.display='block';gb.innerHTML=html;
+}
+
+function dailyStackToday(){
+  if(!DB.dailyStack)DB.dailyStack={targetDate:'2027-05-01',log:{}};
+  if(!DB.dailyStack.log)DB.dailyStack.log={};
+  if(!DB.dailyStack.log[todayStr])DB.dailyStack.log[todayStr]={};
+  return DB.dailyStack.log[todayStr];
+}
+
+function dailyStackStreak(itemId){
+  let s=0,dt=new Date(today);
+  for(let i=0;i<365;i++){
+    const k=dt.toISOString().slice(0,10);
+    if(DB.dailyStack?.log?.[k]?.[itemId]){s++;dt.setDate(dt.getDate()-1);}
+    else break;
+  }
+  return s;
+}
+
+function renderDailyStack(){
+  const el=$('#dailyStack');if(!el)return;
+  const done=dailyStackToday();
+  const doneN=DAILY_STACK.filter(i=>done[i.id]).length;
+  const coreN=DAILY_STACK.filter(i=>i.core&&done[i.id]).length;
+  const pct=Math.round(doneN/DAILY_STACK.length*100);
+  const target=new Date(DB.dailyStack?.targetDate||'2027-05-01');
+  const daysLeft=Math.max(0,Math.ceil((target-today)/864e5));
+  const chips=DAILY_STACK.map(item=>{
+    const isDone=!!done[item.id];
+    const streakN=dailyStackStreak(item.id);
+    const streakText=streakN>=2?` · ${streakN}日`:'';
+    return `<div class="ds-chip ${isDone?'done':''} ${item.core?'core':''}" data-dsid="${item.id}">
+      <div class="ds-dot">${isDone?'✓':''}</div>
+      <div><div class="ds-t">${item.title}</div><div class="ds-s">${item.group}${streakText} / ${item.sub}</div></div>
+    </div>`;
+  }).join('');
+  el.innerHTML=`<div class="daily-stack">
+    <div class="ds-head">
+      <div><div class="ds-k">Daily Stack</div><div class="ds-title">声・身体・楽器の長期投資</div><div class="ds-sub">JBG録音演習まであと${daysLeft}日。今日は小さく積む。</div></div>
+      <div class="ds-score"><div class="ds-num">${doneN}/${DAILY_STACK.length}</div><div class="ds-lbl">done</div></div>
+    </div>
+    <div class="ds-track"><div class="ds-fill" style="width:${pct}%"></div></div>
+    <div class="ds-grid">${chips}</div>
+    <div class="ds-foot"><span>Core ${coreN}/2。キツい日はCoreだけで勝ち。</span><span class="ds-detail" id="dailyStackDetail">詳細</span></div>
+  </div>`;
+  el.querySelectorAll('.ds-chip').forEach(chip=>chip.addEventListener('click',()=>{
+    const id=chip.dataset.dsid;
+    const todayDone=dailyStackToday();
+    todayDone[id]=!todayDone[id];
+    if(!todayDone[id])delete todayDone[id];
+    recordDay();save();render();
+  }));
+  const detail=$('#dailyStackDetail');
+  if(detail)detail.addEventListener('click',e=>{e.stopPropagation();openModal('dailyStack');});
 }
 
 // ── Insight Engine ──
@@ -1012,6 +1103,18 @@ function mergeDB(remote){
     if(!local.goodmot)local.goodmot=[];
     const localGMDates=new Set(local.goodmot.map(g=>g.date));
     remote.goodmot.forEach(g=>{if(!localGMDates.has(g.date)){local.goodmot.push(g);changed=true;}});
+  }
+
+  // Merge Daily Stack: per date, union checked items
+  if(remote.dailyStack&&typeof remote.dailyStack==='object'){
+    if(!local.dailyStack)local.dailyStack={targetDate:'2027-05-01',log:{}};
+    if(remote.dailyStack.targetDate&&remote.dailyStack.targetDate!==local.dailyStack.targetDate){local.dailyStack.targetDate=remote.dailyStack.targetDate;changed=true;}
+    if(!local.dailyStack.log)local.dailyStack.log={};
+    Object.entries(remote.dailyStack.log||{}).forEach(([date,items])=>{
+      const before=JSON.stringify(local.dailyStack.log[date]||{});
+      local.dailyStack.log[date]={...(local.dailyStack.log[date]||{}),...(items||{})};
+      if(JSON.stringify(local.dailyStack.log[date])!==before)changed=true;
+    });
   }
 
   // Merge compFlow: per song, keep whichever has more done steps
@@ -1712,6 +1815,8 @@ function render(){
   if(insights.length){ib.style.display='block';ib.innerHTML=insights.slice(0,5).join('<br>');}
   else{ib.style.display='none';}
 
+  renderDailyStack();
+
   // Focus
   const focus=calcFocus();
   const fcls=focus.color==='red'?'border-color:var(--red)':focus.color==='warn'?'border-color:rgba(212,168,58,.4)':'';
@@ -2251,7 +2356,30 @@ function showAlert(msg) {
 // ── Modals ──
 function openModal(type,extra){
   $('#mSave').textContent='保存';
-  if(type==='financePlan'){
+  if(type==='dailyStack'){
+    const done=dailyStackToday();
+    const rows=DAILY_STACK.map(item=>{
+      const isDone=!!done[item.id];
+      const streakN=dailyStackStreak(item.id);
+      return `<div style="border:1px solid rgba(255,255,255,.07);border-radius:8px;padding:.45rem .55rem;margin-bottom:.35rem;background:${isDone?'rgba(106,191,138,.07)':'var(--s1)'}">
+        <div style="display:flex;justify-content:space-between;gap:.4rem;align-items:baseline">
+          <div style="font-size:.65rem;font-weight:700;color:var(--t1)">${isDone?'✓ ':''}${item.title}</div>
+          <div style="font-size:.42rem;color:${item.core?'var(--gold)':'var(--t3)'}">${item.core?'Core':'Long'}${streakN>=2?' · '+streakN+'日':''}</div>
+        </div>
+        <div style="font-size:.48rem;color:var(--t3);line-height:1.6;margin-top:.18rem">${item.detail}</div>
+      </div>`;
+    }).join('');
+    $('#mTitle').textContent='Daily Stack';
+    $('#mFields').innerHTML=`
+      <div style="font-size:.5rem;color:var(--t3);line-height:1.7;margin-bottom:.55rem">10ヶ月後のJBG録音演習で「おっ、うまい」と言われる声と、長期的に効く楽器の土台を作る。キツい日はCoreだけでOK。</div>
+      <div class="mf"><label>JBG録音演習の目標日</label><input type="date" id="dsTarget" value="${DB.dailyStack?.targetDate||'2027-05-01'}"></div>
+      ${rows}`;
+    $('#mSave').onclick=()=>{
+      if(!DB.dailyStack)DB.dailyStack={log:{}};
+      DB.dailyStack.targetDate=$('#dsTarget').value||'2027-05-01';
+      save();render();$('#modalBg').classList.remove('show');
+    };
+  }else if(type==='financePlan'){
     const fp=financePlan();
     $('#mTitle').textContent='資産形成ロードマップ';
     $('#mFields').innerHTML=`
