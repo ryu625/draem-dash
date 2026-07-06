@@ -24,9 +24,10 @@
     <div class="log" id="log">preparing...</div>
   </main>
   <script>
-    const fallback='./?v=ec18eb9';
-    const params=new URLSearchParams(location.hash.startsWith('#')?location.hash.slice(1):'');
-    const target=params.get('go')||fallback;
+    const fallback='./?v=ada7523';
+    const queryParams=new URLSearchParams(location.search);
+    const hashParams=new URLSearchParams(location.hash.startsWith('#')?location.hash.slice(1):'');
+    const target=queryParams.get('go')||hashParams.get('go')||fallback;
     const log=(msg)=>{document.getElementById('log').textContent=msg};
     async function repair(){
       try{
