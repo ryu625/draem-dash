@@ -932,10 +932,12 @@ function milestoneStatusText(left){
 }
 
 function milestones(){
-  const byId=new Map(DEFAULT_MILESTONES.map(m=>[m.id,{...m}]));
+  const byId=new Map(DEFAULT_MILESTONES.map(m=>[m.id,{...m,source:'app'}]));
   (Array.isArray(DB.milestones)?DB.milestones:[]).forEach(m=>{
     if(!m?.id)return;
-    byId.set(m.id,{...(byId.get(m.id)||{}),...m});
+    // Synced DB can be older than the deployed app. Only append user-created
+    // milestones; never let synced data modify app-defined milestones.
+    if(!byId.has(m.id)&&m.user===true)byId.set(m.id,{...m,source:'user'});
   });
   return [...byId.values()]
     .filter(m=>m.hidden!==true)
@@ -1182,6 +1184,8 @@ function dbHash(){return JSON.stringify(DB).length+'_'+(DB.ver||0)+'_'+(DB.updat
 
 function syncPayload(){
   const payload=JSON.parse(JSON.stringify(DB));
+  // Operational plan is shipped with the app; stale synced DB must not override it.
+  delete payload.milestones;
   if(payload.apiSettings?.gist)payload.apiSettings.gist={id:payload.apiSettings.gist.id||'',token:''};
   if(payload.apiSettings?.yt)payload.apiSettings.yt={apiKey:'',channelId:payload.apiSettings.yt.channelId||''};
   return payload;
