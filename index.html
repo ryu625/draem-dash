@@ -1015,6 +1015,21 @@ function b64urlBytes(s){
   return Uint8Array.from(bin,c=>c.charCodeAt(0));
 }
 
+function bootstrapParam(name){
+  const h=(location.hash||'').match(new RegExp('(?:^#|[&#])'+name+'=([^&]+)'));
+  if(h)return decodeURIComponent(h[1]);
+  const q=new URLSearchParams(location.search).get(name);
+  return q?decodeURIComponent(q):'';
+}
+
+function cleanBootstrapUrl(){
+  const url=new URL(location.href);
+  url.hash='';
+  url.searchParams.delete('sync');
+  url.searchParams.delete('pair');
+  history.replaceState(null,document.title,url.pathname+(url.search?url.search:''));
+}
+
 function storeGistSettings(gist){
   if(!gist?.id||!gist?.token)throw new Error('missing gist settings');
   const safeGist={id:String(gist.id).trim(),token:String(gist.token).trim()};
@@ -1027,12 +1042,12 @@ function storeGistSettings(gist){
 }
 
 function consumeSyncBootstrap(){
-  const m=(location.hash||'').match(/(?:^#|[&#])sync=([^&]+)/);
-  if(!m)return false;
+  const sync=bootstrapParam('sync');
+  if(!sync)return false;
   try{
-    const data=JSON.parse(b64urlDecode(decodeURIComponent(m[1])));
+    const data=JSON.parse(b64urlDecode(sync));
     storeGistSettings(data?.gist||{});
-    history.replaceState(null,document.title,location.pathname+location.search);
+    cleanBootstrapUrl();
     return true;
   }catch(e){
     console.warn('sync bootstrap failed');
@@ -1041,10 +1056,10 @@ function consumeSyncBootstrap(){
 }
 
 async function consumePairBootstrap(){
-  const m=(location.hash||'').match(/(?:^#|[&#])pair=([^&]+)/);
-  if(!m)return false;
+  const pairParam=bootstrapParam('pair');
+  if(!pairParam)return false;
   try{
-    const raw=decodeURIComponent(m[1]);
+    const raw=pairParam;
     const [pairId,keyText]=raw.includes('.')?raw.split('.',2):['main',raw];
     const conf=await fetch(`sync-bootstrap.json?t=${Date.now()}`,{cache:'no-store'}).then(r=>r.ok?r.json():null);
     const pair=conf?.pairs?.[pairId];
@@ -1053,7 +1068,7 @@ async function consumePairBootstrap(){
     const plain=await crypto.subtle.decrypt({name:'AES-GCM',iv:b64urlBytes(pair.iv)},key,b64urlBytes(pair.data));
     const data=JSON.parse(new TextDecoder().decode(new Uint8Array(plain)));
     storeGistSettings(data?.gist||{});
-    history.replaceState(null,document.title,location.pathname+location.search);
+    cleanBootstrapUrl();
     const b=$('#gistWarnBanner');if(b)b.style.display='none';
     ss('wait');
     syncPull();
@@ -1185,10 +1200,24 @@ function bootstrapApiSettings(){
     saveDB();
   }
 }
-consumeSyncBootstrap();
-consumePairBootstrap();
-bootstrapApiSettings();
-restoreApiFromDB();
+
+async function initSyncSettings(){
+  consumeSyncBootstrap();
+  await consumePairBootstrap();
+  bootstrapApiSettings();
+  restoreApiFromDB();
+  const c=gc();
+  const b=$('#gistWarnBanner');
+  if(c.id&&c.token){
+    if(b)b.style.display='none';
+    ss('wait');
+    syncPull();
+  }else{
+    ss('off');
+    if(b)b.style.display='block';
+  }
+}
+initSyncSettings();
 
 async function syncPull(){
   const c=gc();if(!c.id||!c.token)return;
@@ -3163,7 +3192,6 @@ if(_dfbBtn) _dfbBtn.addEventListener('click', () => {
 if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js');
 const _syncDot=$('#syncDot');
 if(_syncDot)_syncDot.addEventListener('click',()=>{const c=gc();if(!c.id||!c.token){openModal('sync');}else{syncPull();}});
-{const c=gc();if(!c.id||!c.token){ss('off');const b=$('#gistWarnBanner');if(b)b.style.display='block';}}
 </script>
 </body>
 </html>
