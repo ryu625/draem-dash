@@ -511,6 +511,29 @@ const DEF_SONGS=[
 const STAGES=['作曲','アレンジ','MIX','ボーカル','MV','リリース'];
 const CATS={song:'🎵作曲',mix:'🎛️MIX',mv:'🎬MV',vocal:'🎤ボーカル',sns:'📱SNS',release:'🚀リリース',learn:'📖学習',jbg:'🎓JBG',work:'💼コンサル',invest:'📈資産形成',life:'🏠生活',health:'🏃健康'};
 const DEF_GOALS={weeklyHours:20,yearSongs:10,subTarget:1000,shortPlayTarget:100000,mainPlayTarget:50000,revenueTarget:500000};
+function positiveNum(v,fallback){
+  const n=Number(v);
+  return Number.isFinite(n)&&n>0?n:fallback;
+}
+function normalizeGoals(raw){
+  const g={...DEF_GOALS,...(raw||{})};
+  g.weeklyHours=positiveNum(g.weeklyHours,DEF_GOALS.weeklyHours);
+  g.yearSongs=positiveNum(g.yearSongs,DEF_GOALS.yearSongs);
+  g.subTarget=positiveNum(g.subTarget,DEF_GOALS.subTarget);
+  g.shortPlayTarget=positiveNum(g.shortPlayTarget,DEF_GOALS.shortPlayTarget);
+  g.mainPlayTarget=positiveNum(g.mainPlayTarget,DEF_GOALS.mainPlayTarget);
+  g.playTarget=g.shortPlayTarget+g.mainPlayTarget;
+  g.revenueTarget=positiveNum(g.revenueTarget,DEF_GOALS.revenueTarget);
+  return g;
+}
+function GOALS(){
+  DB.goals=normalizeGoals(DB.goals);
+  return DB.goals;
+}
+function safePct(current,target){
+  const c=Number(current)||0,t=Number(target)||0;
+  return t>0?Math.min(100,Math.max(0,c/t*100)):0;
+}
 const MUSIC_CATS=['🎵作曲','🎛️MIX','🎬MV','🎤ボーカル','🚀リリース'];
 const DREAM_DATE=new Date('2029-02-11');
 const DAILY_STACK=[
@@ -577,7 +600,7 @@ const dreamPct=Math.min(100,Math.round(dayN/dreamTotal*1000)/10);
 let curTab='week';
 
 function calcRealProgress(){
-  const G=DB.goals||DEF_GOALS;
+  const G=GOALS();
   const S=SONGS();
   const released=S.filter(s=>s.status==='released').length;
   const sub=DB.kpi?.subscribers||0;
@@ -585,11 +608,11 @@ function calcRealProgress(){
   const rev=DB.kpi?.revenue||0;
   const totalSec=(DB.timerLog||[]).reduce((s,l)=>s+l.sec,0);
   const hoursTarget=500;
-  const hoursPct=Math.min(100,(totalSec/3600)/hoursTarget*100);
-  const songsPct=Math.min(100,released/G.yearSongs*100);
-  const subPct=Math.min(100,sub/G.subTarget*100);
-  const playPct=Math.min(100,plays/G.playTarget*100);
-  const revPct=Math.min(100,rev/G.revenueTarget*100);
+  const hoursPct=safePct(totalSec/3600,hoursTarget);
+  const songsPct=safePct(released,G.yearSongs);
+  const subPct=safePct(sub,G.subTarget);
+  const playPct=safePct(plays,G.playTarget);
+  const revPct=safePct(rev,G.revenueTarget);
   const realPct=Math.round((songsPct*0.2+subPct*0.2+playPct*0.2+revPct*0.2+hoursPct*0.2)*10)/10;
   return{realPct,songsPct,subPct,playPct,revPct,hoursPct,released,totalSec:Math.floor(totalSec/3600)};
 }
@@ -669,7 +692,7 @@ if(DB.songStage===undefined)DB.songStage=0;
 if(!DB.songStages)DB.songStages={};
 if(!DB.timerTotal)DB.timerTotal=0;
 if(!DB.songs)DB.songs=JSON.parse(JSON.stringify(DEF_SONGS));
-if(!DB.goals)DB.goals={...DEF_GOALS};
+DB.goals=normalizeGoals(DB.goals);
 if(DB.goals.weeklyHours<10)DB.goals.weeklyHours=20; // 旧デフォルト5hを20hに自動更新
 if(!DB.kpi.short_plays&&!DB.kpi.main_plays){DB.kpi.short_plays=0;DB.kpi.main_plays=DB.kpi.total_plays||0;}
 if(!DB.recurring)DB.recurring=[];
@@ -780,7 +803,7 @@ function showCeleb(){
 
 // ── Prediction Engine ──
 function calcPredictions(){
-  const G=DB.goals||DEF_GOALS;
+  const G=GOALS();
   const sub=DB.kpi?.subscribers||0;
   const plays=DB.kpi?.total_plays||0;
   const rev=DB.kpi?.revenue||0;
@@ -793,6 +816,7 @@ function calcPredictions(){
   const revRate=rev/dn;
 
   function daysToTarget(current,target,rate){
+    current=Number(current)||0;target=Number(target)||0;rate=Number(rate)||0;
     if(current>=target)return 0;
     if(rate<=0)return null;
     return Math.ceil((target-current)/rate);
@@ -1006,7 +1030,8 @@ function calcInsights(){
   const snsLog=DB.snsLog||[];
   const ws=getWeekStart();const thisSns=snsLog.find(s=>s.weekStart===ws);
   if(thisSns&&(thisSns.ig||0)+(thisSns.tt||0)===0)insights.push(`今週のSNS投稿が0件 — 登録者増加に影響する可能性`);
-  if(pred.weeklyAvg>0&&pred.weeklyAvg<(DB.goals||DEF_GOALS).weeklyHours*0.7)insights.push(`直近4週の週平均: <b>${pred.weeklyAvg.toFixed(1)}h</b> — 目標の${Math.round(pred.weeklyAvg/(DB.goals||DEF_GOALS).weeklyHours*100)}%`);
+  const insightGoals=GOALS();
+  if(pred.weeklyAvg>0&&pred.weeklyAvg<insightGoals.weeklyHours*0.7)insights.push(`直近4週の週平均: <b>${pred.weeklyAvg.toFixed(1)}h</b> — 目標の${Math.round(pred.weeklyAvg/insightGoals.weeklyHours*100)}%`);
 
   return insights;
 }
@@ -1231,7 +1256,10 @@ function mergeDB(remote){
     if(remote.mission&&remote.mission!==local.mission){local.mission=remote.mission;changed=true;}
     if(remote.timerCat&&remote.timerCat!==local.timerCat){local.timerCat=remote.timerCat;changed=true;}
     if(remote.songs&&JSON.stringify(remote.songs)!==JSON.stringify(local.songs)){local.songs=remote.songs;changed=true;}
-    if(remote.goals&&JSON.stringify(remote.goals)!==JSON.stringify(local.goals)){local.goals=remote.goals;changed=true;}
+    if(remote.goals){
+      const remoteGoals=normalizeGoals(remote.goals);
+      if(JSON.stringify(remoteGoals)!==JSON.stringify(local.goals)){local.goals=remoteGoals;changed=true;}
+    }
     if(remote.financePlan&&JSON.stringify(remote.financePlan)!==JSON.stringify(local.financePlan)){local.financePlan={...local.financePlan,...remote.financePlan};changed=true;}
     if(remote.recurring&&JSON.stringify(remote.recurring)!==JSON.stringify(local.recurring)){const localRcMap=new Map((local.recurring||[]).map(r=>[r.text,r]));local.recurring=remote.recurring.map(rr=>{const lr=localRcMap.get(rr.text);return lr?{...rr,lastCreated:rr.lastCreated>lr.lastCreated?rr.lastCreated:lr.lastCreated}:rr;});changed=true;}
     if(remote.bestStreak>(local.bestStreak||0)){local.bestStreak=remote.bestStreak;changed=true;}
@@ -1280,6 +1308,8 @@ function mergeDB(remote){
     });
   }
 
+  const normalizedGoals=normalizeGoals(local.goals);
+  if(JSON.stringify(normalizedGoals)!==JSON.stringify(local.goals)){local.goals=normalizedGoals;changed=true;}
   return changed;
 }
 
@@ -1499,7 +1529,7 @@ function setTimerCat(cat){
 function renderTimer(){
   const running=timerRunning();
   const el=timerElapsed(),wt=weekTotal(),mw=musicWeekSec();
-  const goalH=(DB.goals||DEF_GOALS).weeklyHours;const pct=Math.min(100,mw/3600/goalH*100);
+  const goalH=GOALS().weeklyHours;const pct=safePct(mw/3600,goalH);
   const sessionTime=running?el:0;
   const bc=weekByCat();
   const maxSec=Math.max(1,...Object.values(bc));
@@ -1628,7 +1658,7 @@ function renderLog(){
 
 // ── Weekly Review Engine ──
 function renderWeeklyReview(){
-  const S=SONGS(),G=DB.goals||DEF_GOALS;
+  const S=SONGS(),G=GOALS();
   const thisW=weekByCat(),prevW=logsByCat(prevWeekLogs());
   const thisTotal=Object.values(thisW).reduce((a,b)=>a+b,0);
   const prevTotal=Object.values(prevW).reduce((a,b)=>a+b,0);
@@ -1874,7 +1904,7 @@ function openCfDateEdit(el,i,cf){
 function renderMonthlyReview(){
   const el=$('#monthlyReview');
   if(!el)return;
-  const G=DB.goals||DEF_GOALS;
+  const G=GOALS();
   const now=new Date(today);
   const monthStart=new Date(now.getFullYear(),now.getMonth(),1).toISOString().slice(0,10);
   const prevMonthStart=new Date(now.getFullYear(),now.getMonth()-1,1).toISOString().slice(0,10);
@@ -1906,7 +1936,7 @@ function renderMonthlyReview(){
 
 // ── Intelligent Focus Engine ──
 function calcFocus(){
-  const S=SONGS(),G=DB.goals||DEF_GOALS;
+  const S=SONGS(),G=GOALS();
   const cur=S.find(s=>s.status==='in_progress');
   const _curSong=SONGS().find(s=>s.status==='in_progress');
   const stage=STAGES[(_curSong&&DB.songStages&&DB.songStages[_curSong.title])||DB.songStage||0];
@@ -1939,12 +1969,14 @@ function calcFocus(){
 // ── Render ──
 function render(){
   // Dream countdown
+  const G=GOALS();
   const rp=calcRealProgress();
   const pred=calcPredictions();
-  const paceRatio=dreamPct>0?rp.realPct/dreamPct:1;
-  const paceLabel=rp.realPct>=(DB.kpi?.subscribers||0)===0?'—':paceRatio>=0.9?'ON TRACK ✓':paceRatio>=0.5?'CATCHING UP':'BEHIND';
+  const realPct=Number.isFinite(rp.realPct)?rp.realPct:0;
+  const paceRatio=dreamPct>0?realPct/dreamPct:1;
+  const paceLabel=realPct<=0?'—':paceRatio>=0.9?'ON TRACK ✓':paceRatio>=0.5?'CATCHING UP':'BEHIND';
   const paceColor=paceRatio>=0.9?'var(--gl)':paceRatio>=0.5?'var(--gold)':'var(--red)';
-  $('#dreamBar').innerHTML=`<div style="display:flex;justify-content:space-between;align-items:baseline;gap:.5rem"><div><div class="dream-pct">${rp.realPct}%</div><div class="dream-label">実績 — 曲・登録者・再生・収益・作業時間</div></div><div style="text-align:right"><div style="font-size:.6rem;font-weight:700;color:${paceColor}">${paceLabel}</div><div style="font-size:.5rem;color:var(--t3)">${dreamPct}% 経過</div></div></div><div class="dream-track"><div class="dream-fill" style="width:${rp.realPct}%"></div></div><div class="dream-row"><span>曲 <b>${rp.released}</b>/${(DB.goals||DEF_GOALS).yearSongs}</span><span>登録者 <b>${(DB.kpi?.subscribers||0).toLocaleString()}</b></span><span>再生 <b>${(DB.kpi?.total_plays||0).toLocaleString()}</b></span><span>作業 <b>${rp.totalSec}h</b></span></div><div class="dream-track" style="margin-top:.25rem;height:2px;opacity:.5"><div class="dream-fill" style="width:${dreamPct}%"></div></div><div class="dream-label" style="margin-top:.15rem">2029年まで あと <b style="color:var(--gl)">${dreamDaysLeft}</b> 日 — Day ${dayN}（経過）</div>`;
+  $('#dreamBar').innerHTML=`<div style="display:flex;justify-content:space-between;align-items:baseline;gap:.5rem"><div><div class="dream-pct">${realPct}%</div><div class="dream-label">実績 — 曲・登録者・再生・収益・作業時間</div></div><div style="text-align:right"><div style="font-size:.6rem;font-weight:700;color:${paceColor}">${paceLabel}</div><div style="font-size:.5rem;color:var(--t3)">${dreamPct}% 経過</div></div></div><div class="dream-track"><div class="dream-fill" style="width:${realPct}%"></div></div><div class="dream-row"><span>曲 <b>${rp.released}</b>/${G.yearSongs}</span><span>登録者 <b>${(DB.kpi?.subscribers||0).toLocaleString()}</b></span><span>再生 <b>${(DB.kpi?.total_plays||0).toLocaleString()}</b></span><span>作業 <b>${rp.totalSec}h</b></span></div><div class="dream-track" style="margin-top:.25rem;height:2px;opacity:.5"><div class="dream-fill" style="width:${dreamPct}%"></div></div><div class="dream-label" style="margin-top:.15rem">2029年まで あと <b style="color:var(--gl)">${dreamDaysLeft}</b> 日 — Day ${dayN}（経過）</div>`;
 
   // Daily quote (changes daily based on date)
   const qi=dayN%QUOTES.length;
@@ -1996,7 +2028,7 @@ function render(){
   renderTimer();
 
   // Song stage progress
-  const S=SONGS(),G=DB.goals||DEF_GOALS;
+  const S=SONGS();
   const cur=S.find(s=>s.status==='in_progress');
   if(cur){
     if(!DB.songStages)DB.songStages={};
@@ -2610,16 +2642,17 @@ function openModal(type,extra){
       save();render();$('#modalBg').classList.remove('show');
     };
   }else if(type==='goals'){
-    const G=DB.goals||DEF_GOALS;
+    const G=GOALS();
     $('#mTitle').textContent='目標設定';
     $('#mFields').innerHTML=`
       <div class="mf"><label>週間作業目標 (時間)</label><input type="number" id="gWH" value="${G.weeklyHours}" min="1" max="40"></div>
       <div class="mf"><label>年間リリース曲数</label><input type="number" id="gYS" value="${G.yearSongs}" min="1" max="50"></div>
       <div class="mf"><label>登録者数 目標</label><input type="number" id="gSub" value="${G.subTarget}"></div>
-      <div class="mf"><label>再生数 目標</label><input type="number" id="gPlay" value="${G.playTarget}"></div>
+      <div class="mf"><label>Shorts 再生 目標</label><input type="number" id="gShortPlay" value="${G.shortPlayTarget}"></div>
+      <div class="mf"><label>動画再生 目標</label><input type="number" id="gMainPlay" value="${G.mainPlayTarget}"></div>
       <div class="mf"><label>収益 目標 (¥)</label><input type="number" id="gRev" value="${G.revenueTarget}"></div>`;
     $('#mSave').onclick=()=>{
-      DB.goals={weeklyHours:+$('#gWH').value||5,yearSongs:+$('#gYS').value||10,subTarget:+$('#gSub').value||1000,playTarget:+$('#gPlay').value||50000,revenueTarget:+$('#gRev').value||500000};
+      DB.goals=normalizeGoals({weeklyHours:+$('#gWH').value||DEF_GOALS.weeklyHours,yearSongs:+$('#gYS').value||DEF_GOALS.yearSongs,subTarget:+$('#gSub').value||DEF_GOALS.subTarget,shortPlayTarget:+$('#gShortPlay').value||DEF_GOALS.shortPlayTarget,mainPlayTarget:+$('#gMainPlay').value||DEF_GOALS.mainPlayTarget,revenueTarget:+$('#gRev').value||DEF_GOALS.revenueTarget});
       save();render();$('#modalBg').classList.remove('show');
     };
   }else if(type==='taskEdit'){
@@ -3015,7 +3048,7 @@ snapshotIfNeeded();
 evaluateSuggestions();
 // 提案ログ：今週の主要提案を記録
 (function seedSuggestions(){
-  const G=DB.goals||DEF_GOALS;
+  const G=GOALS();
   const sub=DB.kpi?.subscribers||0;
   const plays=DB.kpi?.total_plays||0;
   const wt=weekTotal();
@@ -3032,7 +3065,7 @@ evaluateSuggestions();
 
 // ── Weekly Summary Generator ──
 function buildWeeklySummary(){
-  const G=DB.goals||DEF_GOALS;
+  const G=GOALS();
   const S=SONGS();
   const wl=weekLogs();
   const pw=prevWeekLogs();
