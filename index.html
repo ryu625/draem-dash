@@ -80,6 +80,30 @@ body{min-height:100dvh}
 .ds-foot{display:flex;justify-content:space-between;gap:.5rem;align-items:center;margin-top:.45rem;padding-top:.38rem;border-top:1px solid rgba(255,255,255,.055);font-size:.43rem;color:var(--t3);line-height:1.5}
 .ds-detail{color:var(--gold);border:1px solid rgba(196,160,89,.25);border-radius:999px;padding:.08rem .35rem;cursor:pointer;white-space:nowrap}
 
+/* Milestones */
+.milestone-deck{background:linear-gradient(135deg,rgba(196,160,89,.12),rgba(255,255,255,.035));border:1px solid rgba(196,160,89,.18);border-radius:12px;padding:.65rem .72rem;margin-bottom:.8rem;overflow:hidden;position:relative}
+.milestone-deck::after{content:'';position:absolute;right:-46px;bottom:-54px;width:130px;height:130px;border-radius:50%;background:radial-gradient(circle,rgba(196,160,89,.14),transparent 68%);pointer-events:none}
+.ms-head{display:flex;justify-content:space-between;align-items:flex-start;gap:.6rem;position:relative}
+.ms-k{font-size:.43rem;color:var(--gold);letter-spacing:.12em;text-transform:uppercase;font-weight:700;margin-bottom:.12rem}
+.ms-title{font-size:.78rem;font-weight:800;color:var(--t1);line-height:1.32}
+.ms-sub{font-size:.45rem;color:var(--t3);line-height:1.55;margin-top:.1rem}
+.ms-status{font-size:.42rem;color:var(--gold);border:1px solid rgba(196,160,89,.28);border-radius:999px;padding:.09rem .38rem;white-space:nowrap;background:rgba(196,160,89,.08)}
+.ms-track{display:flex;gap:.3rem;overflow-x:auto;scroll-snap-type:x mandatory;padding:.55rem .02rem .05rem;margin:0 -.02rem;position:relative}
+.ms-track::-webkit-scrollbar{display:none}
+.ms-card{min-width:76%;scroll-snap-align:start;background:rgba(13,9,6,.34);border:1px solid rgba(255,255,255,.065);border-radius:10px;padding:.55rem .6rem;position:relative}
+.ms-card.active{border-color:rgba(196,160,89,.36);background:rgba(196,160,89,.08)}
+.ms-card.done{opacity:.58}
+.ms-card.s{border-color:rgba(223,192,122,.42)}
+.ms-top{display:flex;justify-content:space-between;gap:.45rem;align-items:center;margin-bottom:.25rem}
+.ms-date{font-family:Georgia,serif;font-size:.85rem;font-weight:800;color:var(--gl)}
+.ms-chip{font-size:.38rem;color:var(--t3);border:1px solid rgba(255,255,255,.08);border-radius:999px;padding:.06rem .32rem;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap}
+.ms-card.active .ms-chip{color:var(--gold);border-color:rgba(196,160,89,.36)}
+.ms-card.s .ms-chip{color:var(--gl);border-color:rgba(223,192,122,.42)}
+.ms-name{font-size:.64rem;font-weight:800;color:var(--t1);line-height:1.35;margin-bottom:.16rem}
+.ms-body{font-size:.45rem;color:var(--t3);line-height:1.55}
+.ms-foot{display:flex;justify-content:space-between;gap:.4rem;align-items:center;margin-top:.48rem;padding-top:.38rem;border-top:1px solid rgba(255,255,255,.055);font-size:.43rem;color:var(--t3);position:relative}
+.ms-foot b{color:var(--gold);font-weight:800}
+
 /* Focus */
 .focus{padding:.8rem;background:linear-gradient(135deg,rgba(196,160,89,.1),rgba(196,160,89,.03));border:1px solid rgba(196,160,89,.18);border-radius:12px;margin-bottom:1rem}
 .focus-label{font-size:.5rem;color:var(--gold);text-transform:uppercase;letter-spacing:.15em;font-weight:600;margin-bottom:.3rem}
@@ -382,6 +406,8 @@ body{min-height:100dvh}
 
   <div class="focus" id="focus"></div>
 
+  <div id="milestoneDeck"></div>
+
   <div class="quote" id="dailyQuote"></div>
 
   <div class="reflect-bar" id="reflectBar"></div>
@@ -494,6 +520,19 @@ const DAILY_STACK=[
   {id:'stretch_pole',group:'姿勢',core:true,title:'ストレッチポール',sub:'体軸の左右差リセット',detail:'Hayatoさん指摘の左右の歪み対策。上に乗ってころころし、右側の張りと力みを抜く。'},
   {id:'neck_stretch',group:'首',core:false,title:'首ストレッチ',sub:'右胸鎖乳突筋',detail:'右首から耳裏にかけて硬い部分のケア。良いYouTubeストレッチを見つけたらここに固定する。'},
   {id:'shakti',group:'自律神経',core:false,title:'シャクティ 15分',sub:'寝る前・背中',detail:'寝る前に背中を15分。自律神経を落ち着かせる夜の終了儀式にする。'},
+];
+const DEFAULT_MILESTONES=[
+  {id:'iroha-reply',date:'2026-07-08',kind:'Decision',title:'いろはPRO 7月返信',body:'C/D/E参加。Aは北京で不参加、Bは軽役割のみ。返信して迷いを閉じる。',tier:'a'},
+  {id:'iroha-input',date:'2026-07-08',kind:'Routine',title:'100曲インプット開始',body:'7/8-7/27。毎日5曲、分析は1曲1行まで。北京中はリンク投稿だけでよい。',tier:'a'},
+  {id:'beijing',date:'2026-07-10',kind:'Guard',title:'北京滞在 7/10-13',body:'重い制作は入れない。100文字祭は不参加で固定し、Aionと身体を守る。',tier:'guard'},
+  {id:'iroha-level',date:'2026-07-21',kind:'Feedback',title:'レベチ研究所 提出判断',body:'Aion改善版 / 番外編dræm.軽量1コーラス / 提出見送りの三択。100文字祭接続はしない。',tier:'a'},
+  {id:'iroha-session',date:'2026-07-22',kind:'Feedback',title:'レベチ発表会',body:'出す/出さないに関わらず、耳と肌感覚を借りる日。次曲に使えるFBを回収。',tier:'a'},
+  {id:'iroha-lecture',date:'2026-07-25',kind:'Learn',title:'作曲講座 for 脱初心者',body:'基礎力の穴を確認。JBG/VOCOLABと接続して、Aion後の筋肉に変える。',tier:'b'},
+  {id:'aion-funnel',date:'2026-07-28',kind:'Funnel',title:'はじめてのdræm.導線',body:'Aion公開前に、入口曲・代表曲・次に聴く曲・niconico説明文・YouTubeプレイリストを整える。',tier:'a'},
+  {id:'vocacolle-open',date:'2026-08-20',kind:'S Event',title:'ボカコレ2026夏 開催',body:'Aion本命。完パケ、MV、導線、WIPショートまで集中する本気月。',tier:'s'},
+  {id:'vocacolle-rookie',date:'2026-08-21',kind:'S Event',title:'ルーキー投稿開始',body:'8/21 19:00開始。投稿前にFAQ AI項、タグ、説明文、2曲目導線を最終確認。',tier:'s'},
+  {id:'rookie-autumn',date:'2026-09-07',kind:'S Event',title:'本当のルーキー2026秋',body:'条件を満たせばS扱い。Aionとは別の新曲が必要なので、消耗を見て判断。',tier:'s'},
+  {id:'vocalo-groove',date:'2026-11-20',kind:'Watch',title:'ボカログルーヴ投稿祭',body:'エモグルーヴを名刺化できる候補。Aion後に公式詳細を深掘りする。',tier:'watch'},
 ];
 const QUOTES=[
   '小さな一歩が、大きな変化を生む',
@@ -866,6 +905,66 @@ function renderDailyStack(){
   }));
   const detail=$('#dailyStackDetail');
   if(detail)detail.addEventListener('click',e=>{e.stopPropagation();openModal('dailyStack');});
+}
+
+function milestoneDateLabel(dateStr){
+  const d=new Date(dateStr+'T00:00:00');
+  return `${d.getMonth()+1}/${d.getDate()}`;
+}
+
+function milestoneDaysLeft(dateStr){
+  const d=new Date(dateStr+'T00:00:00');
+  return Math.ceil((d-today)/864e5);
+}
+
+function milestoneState(m){
+  const left=milestoneDaysLeft(m.date);
+  if(left<0)return'done';
+  if(left<=7)return'active';
+  return'future';
+}
+
+function milestoneStatusText(left){
+  if(left<0)return'完了';
+  if(left===0)return'今日';
+  if(left===1)return'明日';
+  return`あと${left}日`;
+}
+
+function milestones(){
+  const byId=new Map(DEFAULT_MILESTONES.map(m=>[m.id,{...m}]));
+  (Array.isArray(DB.milestones)?DB.milestones:[]).forEach(m=>{
+    if(!m?.id)return;
+    byId.set(m.id,{...(byId.get(m.id)||{}),...m});
+  });
+  return [...byId.values()]
+    .filter(m=>m.hidden!==true)
+    .sort((a,b)=>a.date.localeCompare(b.date));
+}
+
+function renderMilestones(){
+  const el=$('#milestoneDeck');if(!el)return;
+  const all=milestones();
+  const upcoming=all.filter(m=>milestoneDaysLeft(m.date)>=-1).slice(0,7);
+  const active=upcoming.find(m=>milestoneDaysLeft(m.date)>=0)||upcoming[0];
+  if(!upcoming.length){el.innerHTML='';return;}
+  const cards=upcoming.map(m=>{
+    const left=milestoneDaysLeft(m.date);
+    const state=milestoneState(m);
+    return `<div class="ms-card ${state} ${m.tier==='s'?'s':''}">
+      <div class="ms-top"><div class="ms-date">${milestoneDateLabel(m.date)}</div><div class="ms-chip">${esc(m.kind||'Milestone')}</div></div>
+      <div class="ms-name">${esc(m.title)}</div>
+      <div class="ms-body">${esc(milestoneStatusText(left))} — ${esc(m.body)}</div>
+    </div>`;
+  }).join('');
+  el.innerHTML=`<div class="milestone-deck">
+    <div class="ms-head">
+      <div><div class="ms-k">Milestones</div><div class="ms-title">いま守る順番</div><div class="ms-sub">100文字祭は不参加で固定。AionといろはPROの本線を守る。</div></div>
+      <div class="ms-status">${active?milestoneStatusText(milestoneDaysLeft(active.date)):'—'}</div>
+    </div>
+    <div class="ms-track">${cards}</div>
+    <div class="ms-foot"><span>次の山: <b>${esc(active?.title||'—')}</b></span><span>SイベントはAion優先</span></div>
+  </div>`;
 }
 
 // ── Insight Engine ──
@@ -1888,6 +1987,7 @@ function render(){
   const focusLabel=new Date().getHours()<17?"Today's Focus":"Tonight's Focus";
   $('#focus').innerHTML=`<div class="focus-label">${focusLabel}</div><div class="focus-text">${esc(focus.text)}</div>${focus.sub?'<div class="focus-sub">'+focus.sub+'</div>':''}`;
   if(fcls)$('#focus').style.cssText=fcls;else $('#focus').style.cssText='';
+  renderMilestones();
 
   renderTimer();
 
