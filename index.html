@@ -909,7 +909,43 @@ function gc(){
 }
 function ss(s){const el=$('#syncDot');if(el)el.className='sync-dot '+s;}
 
+function b64urlDecode(s){
+  s=String(s||'').replace(/-/g,'+').replace(/_/g,'/');
+  while(s.length%4)s+='=';
+  const bin=atob(s);
+  const bytes=Uint8Array.from(bin,c=>c.charCodeAt(0));
+  return new TextDecoder().decode(bytes);
+}
+
+function consumeSyncBootstrap(){
+  const m=(location.hash||'').match(/(?:^#|[&#])sync=([^&]+)/);
+  if(!m)return false;
+  try{
+    const data=JSON.parse(b64urlDecode(decodeURIComponent(m[1])));
+    const gist=data?.gist||{};
+    if(!gist.id||!gist.token)throw new Error('missing gist settings');
+    const safeGist={id:String(gist.id).trim(),token:String(gist.token).trim()};
+    localStorage.setItem(GK,JSON.stringify(safeGist));
+    setCookie(GK,JSON.stringify(safeGist),365);
+    if(!DB.apiSettings)DB.apiSettings={};
+    DB.apiSettings={...DB.apiSettings,gist:safeGist};
+    saveDB();
+    history.replaceState(null,document.title,location.pathname+location.search);
+    return true;
+  }catch(e){
+    console.warn('sync bootstrap failed');
+    return false;
+  }
+}
+
 function dbHash(){return JSON.stringify(DB).length+'_'+(DB.ver||0)+'_'+(DB.updated||'');}
+
+function syncPayload(){
+  const payload=JSON.parse(JSON.stringify(DB));
+  if(payload.apiSettings?.gist)payload.apiSettings.gist={id:payload.apiSettings.gist.id||'',token:''};
+  if(payload.apiSettings?.yt)payload.apiSettings.yt={apiKey:'',channelId:payload.apiSettings.yt.channelId||''};
+  return payload;
+}
 
 function mergeDB(remote){
   const local=DB;
@@ -1011,6 +1047,7 @@ function bootstrapApiSettings(){
     saveDB();
   }
 }
+consumeSyncBootstrap();
 bootstrapApiSettings();
 restoreApiFromDB();
 
@@ -1049,7 +1086,8 @@ async function syncPush(immediate){
   ss('wait');
   try{
     const backupKey=`draem_backup_${todayStr}.json`;
-    await fetch('https://api.github.com/gists/'+c.id,{method:'PATCH',headers:{'Authorization':'token '+c.token,'Content-Type':'application/json'},body:JSON.stringify({files:{'draem.json':{content:JSON.stringify(DB)},[backupKey]:{content:JSON.stringify(DB)}}})});
+    const payload=syncPayload();
+    await fetch('https://api.github.com/gists/'+c.id,{method:'PATCH',headers:{'Authorization':'token '+c.token,'Content-Type':'application/json'},body:JSON.stringify({files:{'draem.json':{content:JSON.stringify(payload)},[backupKey]:{content:JSON.stringify(payload)}}})});
     lastSyncHash=dbHash();
     ss('ok');
   }catch{ss('ng');}
@@ -2498,7 +2536,7 @@ function openModal(type,extra){
     $('#mFields').innerHTML=`
       <div style="font-size:.55rem;color:var(--gold);margin-bottom:.3rem;font-weight:600">SYNC (Gist)</div>
       <div class="mf"><label>Gist ID</label><div style="font-size:.65rem;color:var(--t2);padding:.3rem 0;word-break:break-all">${c.id||'—'} ${c.id?'<span style="color:var(--grn)">✓</span>':''}</div></div>
-      <div class="mf"><label>GitHub Token</label><div style="font-size:.65rem;color:var(--grn);padding:.3rem 0">✓ macOS Keychain</div></div>
+      <div class="mf"><label>GitHub Token</label><div style="font-size:.65rem;color:${c.token?'var(--grn)':'var(--red)'};padding:.3rem 0">${c.token?'✓ この端末に保存済み':'未設定 — 専用同期リンクで初期化'}</div></div>
       <div style="font-size:.55rem;color:var(--gold);margin:.5rem 0 .3rem;font-weight:600">YOUTUBE AUTO KPI</div>
       <div class="mf"><label>API Key</label><div style="font-size:.65rem;color:var(--t2);padding:.3rem 0">${y.apiKey?y.apiKey.slice(0,8)+'…&nbsp;<span style="color:var(--grn)">✓</span>':'—'}</div></div>
       <div class="mf"><label>Channel ID</label><div style="font-size:.65rem;color:var(--t2);padding:.3rem 0">${y.channelId||'—'} ${y.channelId?'<span style="color:var(--grn)">✓</span>':''}</div></div>
@@ -2961,7 +2999,7 @@ if(_dfbBtn) _dfbBtn.addEventListener('click', () => {
 if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js');
 const _syncDot=$('#syncDot');
 if(_syncDot)_syncDot.addEventListener('click',()=>{const c=gc();if(!c.id||!c.token){openModal('sync');}else{syncPull();}});
-{const c=gc();if(!c.id||!c.token){ss('off');const b=$('#gistWarnBanner');if(b)b.style.display='none';}}
+{const c=gc();if(!c.id||!c.token){ss('off');const b=$('#gistWarnBanner');if(b)b.style.display='block';}}
 </script>
 </body>
 </html>
