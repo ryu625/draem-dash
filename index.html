@@ -1008,23 +1008,58 @@ function b64urlDecode(s){
   return new TextDecoder().decode(bytes);
 }
 
+function b64urlBytes(s){
+  s=String(s||'').replace(/-/g,'+').replace(/_/g,'/');
+  while(s.length%4)s+='=';
+  const bin=atob(s);
+  return Uint8Array.from(bin,c=>c.charCodeAt(0));
+}
+
+function storeGistSettings(gist){
+  if(!gist?.id||!gist?.token)throw new Error('missing gist settings');
+  const safeGist={id:String(gist.id).trim(),token:String(gist.token).trim()};
+  localStorage.setItem(GK,JSON.stringify(safeGist));
+  setCookie(GK,JSON.stringify(safeGist),365);
+  if(!DB.apiSettings)DB.apiSettings={};
+  DB.apiSettings={...DB.apiSettings,gist:safeGist};
+  saveDB();
+  return safeGist;
+}
+
 function consumeSyncBootstrap(){
   const m=(location.hash||'').match(/(?:^#|[&#])sync=([^&]+)/);
   if(!m)return false;
   try{
     const data=JSON.parse(b64urlDecode(decodeURIComponent(m[1])));
-    const gist=data?.gist||{};
-    if(!gist.id||!gist.token)throw new Error('missing gist settings');
-    const safeGist={id:String(gist.id).trim(),token:String(gist.token).trim()};
-    localStorage.setItem(GK,JSON.stringify(safeGist));
-    setCookie(GK,JSON.stringify(safeGist),365);
-    if(!DB.apiSettings)DB.apiSettings={};
-    DB.apiSettings={...DB.apiSettings,gist:safeGist};
-    saveDB();
+    storeGistSettings(data?.gist||{});
     history.replaceState(null,document.title,location.pathname+location.search);
     return true;
   }catch(e){
     console.warn('sync bootstrap failed');
+    return false;
+  }
+}
+
+async function consumePairBootstrap(){
+  const m=(location.hash||'').match(/(?:^#|[&#])pair=([^&]+)/);
+  if(!m)return false;
+  try{
+    const raw=decodeURIComponent(m[1]);
+    const [pairId,keyText]=raw.includes('.')?raw.split('.',2):['main',raw];
+    const conf=await fetch(`sync-bootstrap.json?t=${Date.now()}`,{cache:'no-store'}).then(r=>r.ok?r.json():null);
+    const pair=conf?.pairs?.[pairId];
+    if(!pair?.iv||!pair?.data||!keyText)throw new Error('missing pair');
+    const key=await crypto.subtle.importKey('raw',b64urlBytes(keyText),'AES-GCM',false,['decrypt']);
+    const plain=await crypto.subtle.decrypt({name:'AES-GCM',iv:b64urlBytes(pair.iv)},key,b64urlBytes(pair.data));
+    const data=JSON.parse(new TextDecoder().decode(new Uint8Array(plain)));
+    storeGistSettings(data?.gist||{});
+    history.replaceState(null,document.title,location.pathname+location.search);
+    const b=$('#gistWarnBanner');if(b)b.style.display='none';
+    ss('wait');
+    syncPull();
+    return true;
+  }catch(e){
+    console.warn('pair bootstrap failed');
     return false;
   }
 }
@@ -1151,6 +1186,7 @@ function bootstrapApiSettings(){
   }
 }
 consumeSyncBootstrap();
+consumePairBootstrap();
 bootstrapApiSettings();
 restoreApiFromDB();
 
