@@ -111,6 +111,30 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .ms-foot{display:flex;justify-content:space-between;gap:.4rem;align-items:center;margin-top:.48rem;padding-top:.38rem;border-top:1px solid rgba(255,255,255,.055);font-size:.43rem;color:var(--t3);position:relative}
 .ms-foot b{color:var(--gold);font-weight:800}
 
+/* Ops Brief */
+.ops-brief{background:linear-gradient(135deg,rgba(106,191,138,.11),rgba(196,160,89,.055));border:1px solid rgba(106,191,138,.18);border-radius:12px;padding:.68rem .74rem;margin-bottom:.8rem;position:relative;overflow:hidden}
+.ops-brief::after{content:'';position:absolute;left:-52px;top:-54px;width:126px;height:126px;border-radius:50%;background:radial-gradient(circle,rgba(106,191,138,.13),transparent 70%);pointer-events:none}
+.ops-head{display:flex;justify-content:space-between;align-items:flex-start;gap:.6rem;position:relative}
+.ops-k{font-size:.43rem;color:#7ccb8b;letter-spacing:.12em;text-transform:uppercase;font-weight:800;margin-bottom:.12rem}
+.ops-title{font-size:.8rem;font-weight:850;color:var(--t1);line-height:1.32}
+.ops-sub{font-size:.45rem;color:var(--t3);line-height:1.55;margin-top:.1rem}
+.ops-score{text-align:right;flex-shrink:0}
+.ops-num{font-family:Georgia,serif;font-size:1.05rem;font-weight:800;color:#7ccb8b;line-height:1}
+.ops-lbl{font-size:.38rem;color:var(--t3);letter-spacing:.08em;text-transform:uppercase;margin-top:.1rem}
+.ops-list{display:flex;flex-direction:column;gap:.28rem;margin-top:.55rem;position:relative}
+.ops-item{display:grid;grid-template-columns:auto 1fr auto;gap:.38rem;align-items:center;min-height:44px;background:rgba(13,9,6,.3);border:1px solid rgba(255,255,255,.06);border-radius:9px;padding:.4rem .45rem;cursor:pointer}
+.ops-item:active{background:var(--s2)}
+.ops-item.done{border-color:rgba(106,191,138,.35);background:rgba(106,191,138,.075)}
+.ops-dot{width:16px;height:16px;border-radius:50%;border:1.5px solid var(--t3);display:flex;align-items:center;justify-content:center;font-size:.42rem;color:var(--bg);font-weight:800}
+.ops-item.done .ops-dot{background:#6abf8a;border-color:#6abf8a}
+.ops-t{font-size:.56rem;font-weight:800;color:var(--t1);line-height:1.35}
+.ops-s{font-size:.42rem;color:var(--t3);line-height:1.45;margin-top:.03rem}
+.ops-chip{font-size:.39rem;color:var(--t3);border:1px solid rgba(255,255,255,.08);border-radius:999px;padding:.07rem .33rem;white-space:nowrap}
+.ops-item.hot:not(.done){border-color:rgba(196,160,89,.32);background:rgba(196,160,89,.07)}
+.ops-item.hot .ops-chip{color:var(--gold);border-color:rgba(196,160,89,.34)}
+.ops-foot{display:flex;justify-content:space-between;gap:.45rem;align-items:center;margin-top:.46rem;padding-top:.38rem;border-top:1px solid rgba(255,255,255,.055);font-size:.43rem;color:var(--t3);line-height:1.5;position:relative}
+.ops-foot b{color:#7ccb8b;font-weight:800}
+
 /* Focus */
 .focus{padding:.8rem;background:linear-gradient(135deg,rgba(196,160,89,.1),rgba(196,160,89,.03));border:1px solid rgba(196,160,89,.18);border-radius:12px;margin-bottom:1rem}
 .focus-label{font-size:.5rem;color:var(--gold);text-transform:uppercase;letter-spacing:.15em;font-weight:600;margin-bottom:.3rem}
@@ -459,6 +483,8 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 
   <div class="focus" id="focus"></div>
 
+  <div id="opsBrief"></div>
+
   <div id="milestoneDeck"></div>
 
   <div class="quote" id="dailyQuote"></div>
@@ -613,6 +639,17 @@ const DEFAULT_MILESTONES=[
   {id:'rookie-autumn',date:'2026-09-07',kind:'S Event',title:'本当のルーキー2026秋',body:'条件を満たせばS扱い。Aionとは別の新曲が必要なので、消耗を見て判断。',tier:'s'},
   {id:'vocalo-groove',date:'2026-11-20',kind:'Watch',title:'ボカログルーヴ投稿祭',body:'エモグルーヴを名刺化できる候補。Aion後に公式詳細を深掘りする。',tier:'watch'},
 ];
+const OPS_TODAY=[
+  {id:'iroha-reply-check',until:'2026-07-08',hot:true,title:'いろはPRO返信を固める',sub:'C/D/E参加、A不参加、Bは軽役割のみ。送信前の迷いを閉じる。',chip:'7/8〆'},
+  {id:'input-5-start',from:'2026-07-08',until:'2026-07-27',hot:true,title:'100曲インプット 5曲',sub:'リンクを5曲貼る。北京中は分析なしで勝ち。余裕があれば1曲だけ1行メモ。',chip:'daily'},
+  {id:'mobile-field-test',until:'2026-07-13',title:'外出スマホ連携テスト',sub:'通常スリープに近い状態で、外からMac作業が起きるか1回確認する。',chip:'remote'},
+  {id:'aion-sound-scope',until:'2026-07-15',title:'Aion投稿形態と音を1枚にする',sub:'ルーキー第一候補で進めるか、BPM / キー / リファレンス / 楽器数 / ボーカル形態を仮決め。',chip:'7/15'},
+];
+const OPS_THIS_WEEK=[
+  {id:'level-ken-choice',title:'レベチ研究所の提出方針',sub:'Aion改善版 / 軽量1コーラス / 見送りの三択。100文字祭には接続しない。'},
+  {id:'vocacolle-aion-line',title:'ボカコレ夏はAion本線',sub:'大型イベントへ完パケを集中。空白期はWIPショートで露出を増やす。'},
+  {id:'finance-buffer',title:'現金50万円まで守る',sub:'投資増額は焦らない。音楽費用は上限を見ながら地力投資を守る。'},
+];
 const QUOTES=[
   '小さな一歩が、大きな変化を生む',
   '完璧を待つな。今の自分で始めろ',
@@ -757,6 +794,8 @@ if(!DB.reflections)DB.reflections=[];
 if(!DB.bestStreak)DB.bestStreak=0;
 if(!DB.goodmot)DB.goodmot=[];
 if(!DB.swimLog)DB.swimLog=[];          // [{date,dist}]
+if(!DB.opsBrief)DB.opsBrief={log:{}};  // {log:{YYYY-MM-DD:{itemId:true}}}
+if(!DB.opsBrief.log)DB.opsBrief.log={};
 if(!DB.dailyStack)DB.dailyStack={targetDate:'2027-05-01',log:{}}; // {targetDate, log:{YYYY-MM-DD:{itemId:true}}}
 if(!DB.dailyStack.log)DB.dailyStack.log={};
 if(!DB.dailyStack.targetDate)DB.dailyStack.targetDate='2027-05-01';
@@ -1047,6 +1086,51 @@ function renderMilestones(){
     <div class="ms-track">${cards}</div>
     <div class="ms-foot"><span>次の山: <b>${esc(active?.title||'—')}</b></span><span>SイベントはAion優先</span></div>
   </div>`;
+}
+
+function opsBriefToday(){
+  if(!DB.opsBrief)DB.opsBrief={log:{}};
+  if(!DB.opsBrief.log)DB.opsBrief.log={};
+  if(!DB.opsBrief.log[todayStr])DB.opsBrief.log[todayStr]={};
+  return DB.opsBrief.log[todayStr];
+}
+
+function isOpsActive(item){
+  if(item.from&&todayStr<item.from)return false;
+  if(item.until&&todayStr>item.until)return false;
+  return true;
+}
+
+function renderOpsBrief(){
+  const el=$('#opsBrief');if(!el)return;
+  const done=opsBriefToday();
+  const todayItems=OPS_TODAY.filter(isOpsActive);
+  const visibleToday=todayItems.length?todayItems:OPS_TODAY.slice(-2);
+  const doneN=visibleToday.filter(i=>done[i.id]).length;
+  const cards=visibleToday.map(item=>{
+    const isDone=!!done[item.id];
+    return `<div class="ops-item ${isDone?'done':''} ${item.hot?'hot':''}" data-opsid="${item.id}">
+      <div class="ops-dot">${isDone?'✓':''}</div>
+      <div><div class="ops-t">${esc(item.title)}</div><div class="ops-s">${esc(item.sub)}</div></div>
+      <div class="ops-chip">${esc(item.chip||'today')}</div>
+    </div>`;
+  }).join('');
+  const weekLine=OPS_THIS_WEEK.map(i=>`<b>${esc(i.title)}</b>`).join(' / ');
+  el.innerHTML=`<div class="ops-brief">
+    <div class="ops-head">
+      <div><div class="ops-k">Ops Brief</div><div class="ops-title">今日やることを3つ以内に絞る</div><div class="ops-sub">Chatで整理した要件を、Codexで動ける粒度に変換済み。</div></div>
+      <div class="ops-score"><div class="ops-num">${doneN}/${visibleToday.length}</div><div class="ops-lbl">today</div></div>
+    </div>
+    <div class="ops-list">${cards}</div>
+    <div class="ops-foot"><span>今週の山: ${weekLine}</span><span>迷ったらAion本線</span></div>
+  </div>`;
+  el.querySelectorAll('.ops-item').forEach(item=>item.addEventListener('click',()=>{
+    const id=item.dataset.opsid;
+    const todayDone=opsBriefToday();
+    todayDone[id]=!todayDone[id];
+    if(!todayDone[id])delete todayDone[id];
+    recordDay();save();render();
+  }));
 }
 
 // ── Insight Engine ──
@@ -1351,6 +1435,17 @@ function mergeDB(remote){
       const before=JSON.stringify(local.dailyStack.log[date]||{});
       local.dailyStack.log[date]={...(local.dailyStack.log[date]||{}),...(items||{})};
       if(JSON.stringify(local.dailyStack.log[date])!==before)changed=true;
+    });
+  }
+
+  // Merge Ops Brief: per date, union checked items
+  if(remote.opsBrief&&typeof remote.opsBrief==='object'){
+    if(!local.opsBrief)local.opsBrief={log:{}};
+    if(!local.opsBrief.log)local.opsBrief.log={};
+    Object.entries(remote.opsBrief.log||{}).forEach(([date,items])=>{
+      const before=JSON.stringify(local.opsBrief.log[date]||{});
+      local.opsBrief.log[date]={...(local.opsBrief.log[date]||{}),...(items||{})};
+      if(JSON.stringify(local.opsBrief.log[date])!==before)changed=true;
     });
   }
 
@@ -2079,6 +2174,7 @@ function render(){
   const focusLabel=new Date().getHours()<17?"Today's Focus":"Tonight's Focus";
   $('#focus').innerHTML=`<div class="focus-label">${focusLabel}</div><div class="focus-text">${esc(focus.text)}</div>${focus.sub?'<div class="focus-sub">'+focus.sub+'</div>':''}`;
   if(fcls)$('#focus').style.cssText=fcls;else $('#focus').style.cssText='';
+  renderOpsBrief();
   renderMilestones();
 
   renderTimer();
