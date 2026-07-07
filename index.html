@@ -166,6 +166,31 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .score-comment{font-size:.42rem;color:var(--t3);margin-top:.3rem;line-height:1.5;font-style:italic}
 .score-empty{font-size:.5rem;color:var(--t3);text-align:center;padding:.6rem 0}
 
+/* Release Monitor */
+.release-monitor{background:linear-gradient(135deg,rgba(196,160,89,.09),rgba(255,255,255,.035));border:1px solid rgba(196,160,89,.15);border-radius:12px;padding:.62rem .68rem;margin-bottom:.75rem}
+.rm-head{display:flex;justify-content:space-between;gap:.6rem;align-items:flex-start;margin-bottom:.5rem}
+.rm-k{font-size:.42rem;color:var(--gold);letter-spacing:.12em;text-transform:uppercase;font-weight:800;margin-bottom:.1rem}
+.rm-title{font-size:.78rem;font-weight:800;color:var(--t1);line-height:1.32}
+.rm-sub{font-size:.43rem;color:var(--t3);line-height:1.55;margin-top:.08rem}
+.rm-total{text-align:right;flex-shrink:0}
+.rm-total-n{font-family:Georgia,serif;font-size:1.15rem;font-weight:800;color:var(--gl);line-height:1}
+.rm-total-l{font-size:.39rem;color:var(--t3);letter-spacing:.08em;text-transform:uppercase;margin-top:.12rem}
+.rm-grid{display:grid;grid-template-columns:1fr 1fr;gap:.3rem;margin-bottom:.45rem}
+.rm-chip{background:rgba(13,9,6,.28);border:1px solid rgba(255,255,255,.06);border-radius:9px;padding:.42rem .46rem;min-height:54px}
+.rm-chip-l{font-size:.4rem;color:var(--t3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:.08rem}
+.rm-chip-v{font-family:Georgia,serif;font-size:.96rem;font-weight:800;color:var(--gl);line-height:1}
+.rm-chip-s{font-size:.4rem;color:var(--t3);line-height:1.45;margin-top:.1rem}
+.rm-list{display:grid;gap:.25rem}
+.rm-card{display:grid;grid-template-columns:1fr auto;gap:.45rem;align-items:center;background:rgba(13,9,6,.24);border:1px solid rgba(255,255,255,.055);border-radius:9px;padding:.45rem .48rem;min-height:48px;text-decoration:none}
+.rm-card:active{background:var(--s2)}
+.rm-song{font-size:.58rem;font-weight:800;color:var(--t1);line-height:1.35}
+.rm-meta{font-size:.39rem;color:var(--t3);line-height:1.45;margin-top:.05rem}
+.rm-nums{display:flex;gap:.28rem;align-items:center;justify-content:flex-end;flex-wrap:wrap;max-width:150px}
+.rm-pill{font-size:.39rem;color:var(--t2);background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.055);border-radius:999px;padding:.09rem .28rem;white-space:nowrap}
+.rm-pill strong{color:var(--gl);font-weight:800}
+.rm-empty{font-size:.5rem;color:var(--t3);text-align:center;padding:.7rem 0}
+@media(max-width:390px){.rm-grid{grid-template-columns:1fr}.rm-card{grid-template-columns:1fr}.rm-nums{justify-content:flex-start;max-width:none}}
+
 /* Streak */
 .streak{display:flex;align-items:center;gap:.6rem;padding:.5rem .8rem;background:var(--s1);border:1px solid rgba(255,255,255,.06);border-radius:10px;margin-bottom:.6rem}
 .sk-fire{font-size:1.1rem}.sk-num{font-family:Georgia,serif;font-size:1.2rem;font-weight:700;color:var(--gl)}.sk-label{font-size:.55rem;color:var(--t2)}
@@ -504,6 +529,9 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
   <div class="sec">📊 楽曲スコア</div>
   <div id="scoreSection"></div>
 
+  <div class="sec">Release Monitor</div>
+  <div id="releaseMonitor"></div>
+
   <div class="sec">Growth <span style="font-size:.45rem;color:var(--t3);font-weight:400;letter-spacing:0;text-transform:none">(tap to edit)</span></div>
   <div id="kpiGrid"></div>
 
@@ -648,7 +676,7 @@ function calcRealProgress(){
 // ── DB ──
 const DB_KEY='draem_db';
 const DB_BACKUP_KEY='draem_db_backup';
-function defDB(){return{tasks:[],days:[],kpi:{subscribers:4,total_plays:1002,short_plays:0,main_plays:1002,songs:7,revenue:0},songStage:0,songStages:{},timerStart:null,timerTotal:0,timerWeekStart:todayStr,mission:'2029年、音楽で生きる。\nそのために今日も1歩。',songs:null,goals:null,recurring:[],apiSettings:{},ver:0}}
+function defDB(){return{tasks:[],days:[],kpi:{subscribers:4,total_plays:1255,short_plays:0,main_plays:169,songs:3,revenue:0,nnFollowers:25,nnPlays:1086,nnVideos:5},songStage:0,songStages:{},timerStart:null,timerTotal:0,timerWeekStart:todayStr,mission:'2029年、音楽で生きる。\nそのために今日も1歩。',songs:null,goals:null,recurring:[],apiSettings:{},ver:0}}
 function loadDB(){
   try{
     const raw=localStorage.getItem(DB_KEY);
@@ -2171,10 +2199,108 @@ function render(){
 
   // Score
   renderScores();
+  renderReleaseMonitor();
 
   // Asset
   renderAsset();
   renderCommitments();
+}
+
+// ── Release Monitor ──
+let RELEASE_METRICS=null;
+function num(v){return Number.isFinite(+v)?+v:0}
+function metricVideos(platform){
+  const m=RELEASE_METRICS||DB.releaseMetrics||{};
+  return platform==='youtube'?(m.youtube?.videos||{}):(m.niconico_videos||{});
+}
+function sumMetric(videos,key){
+  return Object.values(videos||{}).reduce((s,v)=>s+num(v?.[key]),0);
+}
+function touchKpiLog(){
+  if(!DB.kpiLog)DB.kpiLog=[];
+  let e=DB.kpiLog.find(e=>e.date===todayStr);
+  if(!e){e={date:todayStr};DB.kpiLog.push(e);}
+  Object.assign(e,{
+    subscribers:DB.kpi.subscribers||0,
+    total_plays:DB.kpi.total_plays||0,
+    main_plays:DB.kpi.main_plays||0,
+    short_plays:DB.kpi.short_plays||0,
+    songs:DB.kpi.songs||0,
+    nnPlays:DB.kpi.nnPlays||0,
+    nnVideos:DB.kpi.nnVideos||0,
+    nnFollowers:DB.kpi.nnFollowers||0,
+    releaseUpdated:RELEASE_METRICS?.collected_at||todayStr,
+  });
+}
+function applyReleaseMetrics(m){
+  if(!m||typeof m!=='object')return false;
+  RELEASE_METRICS=m;
+  DB.releaseMetrics=m;
+  if(!DB.kpi)DB.kpi={};
+  const ytVideos=m.youtube?.videos||{};
+  const nnVideos=m.niconico_videos||{};
+  const ytViews=sumMetric(ytVideos,'view_count');
+  const nnViews=sumMetric(nnVideos,'view_count');
+  const ytChannel=m.youtube?.channel||{};
+  const nnUser=m.niconico_user||{};
+  DB.kpi.subscribers=num(ytChannel.subscriber_count||DB.kpi.subscribers);
+  DB.kpi.songs=num(ytChannel.video_count)||Object.keys(ytVideos).length||DB.kpi.songs||0;
+  DB.kpi.main_plays=ytViews;
+  DB.kpi.short_plays=DB.kpi.short_plays||0;
+  DB.kpi.nnPlays=nnViews;
+  DB.kpi.nnVideos=Object.keys(nnVideos).length||DB.kpi.nnVideos||0;
+  if(nnUser.follower_count!=null)DB.kpi.nnFollowers=num(nnUser.follower_count);
+  DB.kpi.total_plays=ytViews+nnViews;
+  touchKpiLog();
+  return true;
+}
+async function fetchReleaseMetrics(){
+  try{
+    const r=await fetch(`./data/release_metrics.json?t=${Date.now()}`,{cache:'no-store'});
+    if(!r.ok)return;
+    const m=await r.json();
+    if(applyReleaseMetrics(m)){save();render();}
+  }catch{}
+}
+function renderReleaseMonitor(){
+  const el=$('#releaseMonitor');
+  if(!el)return;
+  const m=RELEASE_METRICS||DB.releaseMetrics;
+  if(!m){el.innerHTML='<div class="rm-empty">公開メトリクスを読み込み中</div>';return;}
+  const yt=metricVideos('youtube');
+  const nn=metricVideos('niconico');
+  const ytViews=sumMetric(yt,'view_count');
+  const ytLikes=sumMetric(yt,'like_count');
+  const nnViews=sumMetric(nn,'view_count');
+  const nnLikes=sumMetric(nn,'like_count');
+  const nnComments=sumMetric(nn,'comment_count');
+  const names=[...new Set([...Object.keys(nn),...Object.keys(yt)])];
+  names.sort((a,b)=>(num(nn[b]?.view_count)+num(yt[b]?.view_count))-(num(nn[a]?.view_count)+num(yt[a]?.view_count)));
+  const rows=names.map(name=>{
+    const n=nn[name]||{},y=yt[name]||{};
+    const href=y.url||n.url||'#';
+    const meta=[n.title?'niconico':'',y.title?'YouTube':''].filter(Boolean).join(' / ')||'公開状況';
+    return `<a class="rm-card" href="${esc(href)}" target="_blank" rel="noopener">
+      <div><div class="rm-song">${esc(name)}</div><div class="rm-meta">${esc(meta)}</div></div>
+      <div class="rm-nums">
+        ${n.view_count!=null?`<span class="rm-pill">N <strong>${num(n.view_count).toLocaleString()}</strong></span>`:''}
+        ${y.view_count!=null?`<span class="rm-pill">Y <strong>${num(y.view_count).toLocaleString()}</strong></span>`:''}
+        ${n.comment_count!=null?`<span class="rm-pill">C <strong>${num(n.comment_count).toLocaleString()}</strong></span>`:''}
+      </div>
+    </a>`;
+  }).join('');
+  const updated=(m.collected_at||m.date||'').replace('T',' ').slice(0,16);
+  el.innerHTML=`<div class="release-monitor">
+    <div class="rm-head">
+      <div><div class="rm-k">release monitor</div><div class="rm-title">公開反応の現在地</div><div class="rm-sub">${esc(updated||'latest')} 更新。YouTube / niconico を同じ表で見る。</div></div>
+      <div class="rm-total"><div class="rm-total-n">${(ytViews+nnViews).toLocaleString()}</div><div class="rm-total-l">total views</div></div>
+    </div>
+    <div class="rm-grid">
+      <div class="rm-chip"><div class="rm-chip-l">YouTube</div><div class="rm-chip-v">${ytViews.toLocaleString()}</div><div class="rm-chip-s">登録者 ${num(m.youtube?.channel?.subscriber_count).toLocaleString()} / いいね ${ytLikes.toLocaleString()} / ${Object.keys(yt).length}本</div></div>
+      <div class="rm-chip"><div class="rm-chip-l">niconico</div><div class="rm-chip-v">${nnViews.toLocaleString()}</div><div class="rm-chip-s">いいね ${nnLikes.toLocaleString()} / コメント ${nnComments.toLocaleString()} / ${Object.keys(nn).length}本</div></div>
+    </div>
+    <div class="rm-list">${rows||'<div class="rm-empty">動画データなし</div>'}</div>
+  </div>`;
 }
 
 // ── Score Section ──
@@ -3021,6 +3147,7 @@ setInterval(()=>{if(timerRunning())renderTimer();},10000);
 
 // YouTube 30分おき自動更新
 setInterval(()=>{if(!document.hidden)fetchYT();},30*60*1000);
+setInterval(()=>{if(!document.hidden)fetchReleaseMetrics();},30*60*1000);
 
 // ── Niconico Auto KPI ──
 function nnConf(){
@@ -3030,6 +3157,7 @@ function nnConf(){
   }catch{return{}}
 }
 async function fetchNN(){
+  if(RELEASE_METRICS||DB.releaseMetrics){await fetchReleaseMetrics();return;}
   const c=nnConf();
   if(!c.userId)return;
   try{
@@ -3064,7 +3192,7 @@ function applyZoom(){document.documentElement.style.setProperty('--fs',zoomLv+'p
 applyZoom();
 $('#zoomIn').addEventListener('click',()=>{if(zoomLv<22){zoomLv+=1;applyZoom();}});
 $('#zoomOut').addEventListener('click',()=>{if(zoomLv>12){zoomLv-=1;applyZoom();}});
-$('#btnRefresh').addEventListener('click',()=>{syncPull();fetchYT();});
+$('#btnRefresh').addEventListener('click',()=>{syncPull();fetchYT();fetchReleaseMetrics();});
 
 // Init
 const dn=['日','月','火','水','木','金','土'];
@@ -3224,6 +3352,7 @@ render();
 syncPull();
 fetchYT();
 fetchNN();
+fetchReleaseMetrics();
 fetchScores();
 
 // ── Demo Lab ──

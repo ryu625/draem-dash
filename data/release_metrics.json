@@ -1,0 +1,83 @@
+{
+  "collected_at": "2026-07-07T11:32:30",
+  "date": "2026-07-07",
+  "niconico_user": {
+    "follower_count": 25
+  },
+  "niconico_videos": {
+    "結末": {
+      "url": "https://www.nicovideo.jp/watch/sm46400156",
+      "title": "結末 (ketsumatsu) / 宮舞モカ",
+      "view_count": 176,
+      "like_count": 19,
+      "comment_count": 6,
+      "uploader": "dræm. / どれむ"
+    },
+    "再起": {
+      "url": "https://www.nicovideo.jp/watch/sm45980132",
+      "title": "再起 / 宮舞モカ",
+      "view_count": 148,
+      "like_count": 30,
+      "comment_count": 4,
+      "uploader": "dræm. / どれむ"
+    },
+    "再起 (inst)": {
+      "url": "https://www.nicovideo.jp/watch/sm46037753",
+      "title": "再起 -  inst ver.  -",
+      "view_count": 28,
+      "like_count": 2,
+      "comment_count": 1,
+      "uploader": "dræm. / どれむ"
+    },
+    "継承": {
+      "url": "https://www.nicovideo.jp/watch/sm46058945",
+      "title": "継承 (keisho) / 宮舞モカ",
+      "view_count": 136,
+      "like_count": 18,
+      "comment_count": 9,
+      "uploader": "dræm. / どれむ"
+    },
+    "転機": {
+      "url": "https://www.nicovideo.jp/watch/sm46223377",
+      "title": "転機 (tenki) / 宮舞モカ",
+      "view_count": 598,
+      "like_count": 111,
+      "comment_count": 43,
+      "uploader": "dræm. / どれむ"
+    }
+  },
+  "youtube": {
+    "warning": "YOUTUBE_API_KEY 未設定。公開ページから取得。",
+    "channel": {
+      "url": "https://www.youtube.com/@draemdoremu/videos",
+      "title": "dræm. / どれむ",
+      "channel_id": "UCrlaVr7NL13IJ4nZdSCwTUQ",
+      "subscriber_count": 4,
+      "video_count": 3
+    },
+    "videos": {
+      "継承": {
+        "url": "https://www.youtube.com/watch?v=Wov6qv-0Ppg",
+        "title": "継承 (keisho)  |  dræm.",
+        "view_count": 44,
+        "like_count": 0
+      },
+      "再起 (inst)": {
+        "url": "https://www.youtube.com/watch?v=irbnoBZniXk",
+        "title": "再起 - inst ver. -  |  dræm.",
+        "view_count": 6,
+        "like_count": 0
+      },
+      "再起": {
+        "url": "https://www.youtube.com/watch?v=JDjfoKnxHwM",
+        "title": "再起  |  dræm.",
+        "view_count": 119,
+        "like_count": 7
+      }
+    }
+  },
+  "x": {
+    "warning": "X_BEARER_TOKEN 未設定。XはAPI制限が強いため自動取得をスキップ。",
+    "url": "https://x.com/draem_doremu"
+  }
+}
