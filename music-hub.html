@@ -782,6 +782,17 @@ function deepClone(obj){
   return JSON.parse(JSON.stringify(obj));
 }
 
+function syncPayload(){
+  const payload = deepClone(DB);
+  if(payload.apiSettings?.gist){
+    payload.apiSettings.gist = {
+      id: payload.apiSettings.gist.id || "",
+      token: ""
+    };
+  }
+  return payload;
+}
+
 function mergeDB(remote){
   if(!remote || typeof remote !== "object") return DB;
   const merged = deepClone(DB);
@@ -826,7 +837,8 @@ function mergeDB(remote){
     merged.apiSettings = {
       gist: {
         id: incoming?.apiSettings?.gist?.id || merged?.apiSettings?.gist?.id || "",
-        token: incoming?.apiSettings?.gist?.token || merged?.apiSettings?.gist?.token || ""
+        // Authentication stays local even if an older remote payload contains it.
+        token: merged?.apiSettings?.gist?.token || ""
       }
     };
     merged.updated = incoming.updated || merged.updated;
@@ -1089,7 +1101,7 @@ async function pushToRepo(token){
     cache:"no-store",
     body: JSON.stringify({
       message: "chore: sync music hub db",
-      content: toBase64Utf8(JSON.stringify(DB, null, 2)),
+      content: toBase64Utf8(JSON.stringify(syncPayload(), null, 2)),
       branch: REPO_BRANCH,
       ...(sha ? { sha } : {})
     })
@@ -1155,11 +1167,12 @@ async function syncPush(immediate = false){
     }
     let gistId = gist.id;
     if(!usedRepoFallback){
+      const payload = syncPayload();
       const body = {
         description: "dræm. music hub sync",
         public: false,
         files: {
-          [GIST_FILENAME]: { content: JSON.stringify(DB, null, 2) }
+          [GIST_FILENAME]: { content: JSON.stringify(payload, null, 2) }
         }
       };
       if(!gistId){
@@ -2169,7 +2182,7 @@ function addInbox(){
 }
 
 function exportDB(){
-  const blob = new Blob([JSON.stringify(DB, null, 2)], {type:"application/json"});
+  const blob = new Blob([JSON.stringify(syncPayload(), null, 2)], {type:"application/json"});
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
