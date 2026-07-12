@@ -86,6 +86,108 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .ds-chip.done .ds-s{color:rgba(232,221,208,.55)}
 .ds-foot{display:flex;justify-content:space-between;gap:.5rem;align-items:center;margin-top:.45rem;padding-top:.38rem;border-top:1px solid rgba(255,255,255,.055);font-size:.43rem;color:var(--t3);line-height:1.5}
 .ds-detail{color:var(--gold);border:1px solid rgba(196,160,89,.25);border-radius:999px;padding:.08rem .35rem;cursor:pointer;white-space:nowrap}
+.ds-week{display:flex;align-items:center;gap:.28rem;margin-top:.16rem}
+.ds-week-track{height:3px;flex:1;border-radius:3px;background:rgba(255,255,255,.07);overflow:hidden}
+.ds-week-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--gd),var(--gold));transition:width .45s ease}
+.ds-week-n{font-size:.36rem;color:var(--t3);min-width:18px;text-align:right}
+.ns-ladder{display:grid;grid-template-columns:repeat(4,1fr);gap:.25rem;margin-top:.48rem}
+.ns-step{background:rgba(13,9,6,.3);border:1px solid rgba(255,255,255,.055);border-radius:7px;padding:.32rem .25rem;text-align:center;min-width:0}
+.ns-step-k{font-size:.34rem;color:var(--t3);letter-spacing:.06em;margin-bottom:.07rem}
+.ns-step-v{font-family:Georgia,serif;font-size:.66rem;font-weight:700;color:var(--gl);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ns-step-s{font-size:.32rem;color:var(--t3);margin-top:.06rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* Daily Command Home */
+.command-home{background:linear-gradient(145deg,rgba(223,192,122,.14),rgba(196,160,89,.04) 52%,rgba(92,184,112,.055));border:1px solid rgba(223,192,122,.24);border-radius:16px;padding:.82rem;margin-bottom:.72rem;position:relative;overflow:hidden}
+.command-home::after{content:'';position:absolute;right:-55px;top:-65px;width:150px;height:150px;border-radius:50%;background:radial-gradient(circle,rgba(223,192,122,.16),transparent 68%);pointer-events:none}
+.cmd-eyebrow{font-size:.42rem;color:var(--gold);letter-spacing:.14em;text-transform:uppercase;font-weight:800;margin-bottom:.22rem}
+.cmd-title{font-family:Georgia,'Hiragino Mincho ProN',serif;font-size:1.08rem;color:var(--t1);font-weight:700;line-height:1.35;max-width:88%;position:relative}
+.cmd-why{font-size:.48rem;color:var(--t3);line-height:1.55;margin-top:.2rem;position:relative}
+.cmd-exit{margin-top:.65rem;padding:.55rem .58rem;background:rgba(13,9,6,.34);border-left:3px solid var(--gold);border-radius:3px 9px 9px 3px;position:relative}
+.cmd-exit-k{font-size:.38rem;color:var(--gold);font-weight:800;letter-spacing:.08em;margin-bottom:.1rem}
+.cmd-exit-v{font-size:.62rem;color:var(--t1);font-weight:750;line-height:1.45}
+.cmd-meta{display:grid;grid-template-columns:1fr 1fr;gap:.3rem;margin-top:.52rem;position:relative}
+.cmd-meta-card{background:rgba(13,9,6,.28);border:1px solid rgba(255,255,255,.06);border-radius:8px;padding:.42rem .45rem}
+.cmd-meta-k{font-size:.36rem;color:var(--t3);margin-bottom:.08rem}
+.cmd-meta-v{font-size:.5rem;color:var(--t2);font-weight:700;line-height:1.4}
+.cmd-actions{display:flex;gap:.35rem;margin-top:.58rem;position:relative}
+.cmd-btn{min-height:42px;border-radius:9px;border:1px solid rgba(196,160,89,.28);background:rgba(196,160,89,.09);color:var(--gold);font-family:inherit;font-size:.52rem;font-weight:800;padding:.35rem .62rem;cursor:pointer;flex:1}
+.cmd-btn.primary{background:var(--gold);color:var(--bg);border-color:var(--gold)}
+.cmd-btn.done{background:rgba(92,184,112,.16);border-color:rgba(92,184,112,.4);color:#7ccb8b}
+.sprint-block{margin-top:.55rem;position:relative}
+.sprint-label{font-size:.36rem;color:var(--gold);font-weight:850;letter-spacing:.08em;text-transform:uppercase;margin-bottom:.14rem}
+.sprint-list{display:grid;gap:.16rem;font-size:.45rem;color:var(--t2);line-height:1.48}
+.sprint-list span{display:block;padding-left:.72rem;position:relative}
+.sprint-list span::before{content:'·';position:absolute;left:.24rem;color:var(--gold)}
+.sprint-frozen{font-size:.39rem;color:var(--t3);line-height:1.5;margin-top:.52rem;padding-top:.42rem;border-top:1px solid rgba(255,255,255,.06)}
+.sprint-controls{display:grid;grid-template-columns:1fr auto;gap:.35rem;align-items:center;margin-top:.55rem}
+.capacity-select,.pdca-scope{min-height:36px;background:rgba(13,9,6,.42);border:1px solid rgba(255,255,255,.09);border-radius:8px;color:var(--t2);font:inherit;font-size:.43rem;padding:.2rem .38rem}
+.correction-note{font-size:.39rem;color:#e1bb68;line-height:1.45;margin-top:.4rem;padding:.35rem .42rem;background:rgba(196,160,89,.08);border-radius:7px}
+.feedback-agent{margin-top:.5rem;padding:.5rem;background:rgba(13,9,6,.32);border:1px solid rgba(116,181,139,.16);border-radius:10px;position:relative}
+.feedback-agent-head{display:flex;justify-content:space-between;gap:.4rem;align-items:center;margin-bottom:.3rem}
+.feedback-agent-title{font-size:.47rem;font-weight:850;color:#78c28a}
+.feedback-agent-note{font-size:.34rem;color:var(--t3)}
+.feedback-agent-row{display:grid;grid-template-columns:1fr auto;gap:.35rem}
+.feedback-agent-input{width:100%;min-height:48px;resize:vertical;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.09);border-radius:8px;color:var(--t1);font:inherit;font-size:.48rem;line-height:1.5;padding:.42rem .46rem}
+.feedback-agent-btn{min-width:92px;border-radius:8px;border:1px solid rgba(116,181,139,.3);background:rgba(92,184,112,.12);color:#78c28a;font:inherit;font-size:.42rem;font-weight:850;padding:.3rem .42rem;cursor:pointer}
+.feedback-agent-result{margin-top:.35rem;font-size:.4rem;color:var(--t2);line-height:1.5;padding:.35rem .42rem;border-left:2px solid #78c28a;background:rgba(92,184,112,.055)}
+.feedback-agent-result.waiting{border-left-color:#e1bb68;background:rgba(196,160,89,.075)}
+.agent-queue-status{font-size:.36rem;color:#e1bb68;margin-top:.25rem;line-height:1.4}
+.pdca-tools{display:flex;gap:.28rem;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+.secretary-capture{background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.075);border-radius:12px;padding:.62rem .68rem;margin-bottom:.72rem}
+.sc-head{display:flex;align-items:center;justify-content:space-between;gap:.5rem;margin-bottom:.35rem}
+.sc-title{font-size:.64rem;font-weight:800;color:var(--t1)}
+.sc-state{font-size:.38rem;color:var(--t3);border:1px solid rgba(255,255,255,.08);border-radius:999px;padding:.07rem .3rem;white-space:nowrap}
+.sc-input{width:100%;min-height:68px;resize:vertical;background:rgba(13,9,6,.34);border:1px solid rgba(255,255,255,.08);border-radius:9px;padding:.5rem .55rem;color:var(--t1);font:inherit;font-size:.56rem;line-height:1.55}
+.sc-input::placeholder{color:var(--t3)}
+.sc-actions{display:flex;gap:.35rem;margin-top:.38rem}
+.sc-result{display:none;margin-top:.42rem;padding:.48rem .52rem;border-radius:8px;background:rgba(92,184,112,.07);border:1px solid rgba(92,184,112,.16);font-size:.48rem;color:var(--t2);line-height:1.55;white-space:pre-wrap}
+.sc-fields{display:grid;grid-template-columns:1fr 1fr 78px;gap:.32rem;margin-bottom:.38rem}
+.sc-field{width:100%;min-height:38px;background:rgba(13,9,6,.34);border:1px solid rgba(255,255,255,.08);border-radius:8px;color:var(--t2);font:inherit;font-size:.48rem;padding:.35rem .4rem}
+.sc-evidence{min-height:38px;margin-top:.32rem}
+
+/* North Star trajectory */
+.trajectory-board{background:linear-gradient(150deg,rgba(38,64,52,.42),rgba(13,9,6,.38) 48%,rgba(196,160,89,.08));border:1px solid rgba(116,181,139,.22);border-radius:16px;padding:.75rem;margin-bottom:.72rem;position:relative;overflow:hidden}
+.trajectory-board::before{content:'';position:absolute;left:-58px;top:-74px;width:170px;height:170px;border-radius:50%;background:radial-gradient(circle,rgba(92,184,112,.15),transparent 67%);pointer-events:none}
+.tr-head{display:flex;justify-content:space-between;gap:.6rem;align-items:flex-start;position:relative;margin-bottom:.52rem}
+.tr-k{font-size:.41rem;color:#78c28a;letter-spacing:.14em;text-transform:uppercase;font-weight:850;margin-bottom:.13rem}
+.tr-title{font-family:Georgia,'Hiragino Mincho ProN',serif;font-size:.93rem;font-weight:800;line-height:1.35}
+.tr-quality{font-size:.38rem;color:var(--t3);border:1px solid rgba(255,255,255,.08);border-radius:999px;padding:.08rem .34rem;white-space:nowrap}
+.route-grid{display:grid;grid-template-columns:1fr 1fr;gap:.34rem;position:relative}
+.route-card{background:rgba(13,9,6,.4);border:1px solid rgba(255,255,255,.065);border-radius:11px;padding:.52rem .52rem .48rem;min-width:0}
+.route-top{display:flex;justify-content:space-between;gap:.25rem;align-items:center;margin-bottom:.28rem}
+.route-name{font-size:.48rem;color:var(--t2);font-weight:800;line-height:1.3}
+.route-status{font-size:.34rem;font-weight:850;border-radius:999px;padding:.07rem .26rem;white-space:nowrap}
+.route-status.on_track{color:#78c98c;background:rgba(92,184,112,.13);border:1px solid rgba(92,184,112,.28)}
+.route-status.watch{color:#e1bb68;background:rgba(196,160,89,.12);border:1px solid rgba(196,160,89,.3)}
+.route-status.off_track{color:#df7770;background:rgba(196,91,91,.12);border:1px solid rgba(196,91,91,.3)}
+.route-status.data_needed{color:var(--t3);background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09)}
+.route-big{font-family:Georgia,serif;font-size:1.04rem;font-weight:800;color:var(--gl);line-height:1;margin-bottom:.12rem;white-space:nowrap}
+.route-caption{font-size:.36rem;color:var(--t3);line-height:1.45;min-height:2.7em}
+.route-track{height:4px;border-radius:4px;background:rgba(255,255,255,.07);overflow:hidden;margin:.35rem 0}
+.route-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,#4e9470,var(--gold));max-width:100%}
+.route-facts{display:grid;gap:.14rem;font-size:.39rem;color:var(--t3);line-height:1.42}
+.route-facts b{color:var(--t2);font-weight:800}
+.tr-note{font-size:.37rem;color:var(--t3);line-height:1.5;margin-top:.46rem;padding-top:.38rem;border-top:1px solid rgba(255,255,255,.055);position:relative}
+
+.pdca-cycle{background:linear-gradient(135deg,rgba(196,160,89,.09),rgba(255,255,255,.025));border:1px solid rgba(196,160,89,.17);border-radius:13px;padding:.66rem .7rem;margin-bottom:.72rem}
+.pdca-head{display:flex;justify-content:space-between;align-items:flex-start;gap:.55rem;margin-bottom:.38rem}
+.pdca-title{font-size:.68rem;font-weight:850;line-height:1.35}
+.pdca-btn{min-height:34px;border-radius:8px;border:1px solid rgba(196,160,89,.28);background:rgba(196,160,89,.08);color:var(--gold);font:inherit;font-size:.42rem;font-weight:800;padding:.25rem .42rem;cursor:pointer;white-space:nowrap}
+.pdca-bottle{font-size:.46rem;color:var(--t3);line-height:1.5;margin-bottom:.38rem}
+.pdca-bottle b{color:#dc8a7f}
+.pdca-experiment{background:rgba(13,9,6,.32);border-left:3px solid var(--gold);border-radius:4px 9px 9px 4px;padding:.48rem .52rem}
+.pdca-exp-k{font-size:.35rem;color:var(--gold);letter-spacing:.1em;font-weight:850;text-transform:uppercase;margin-bottom:.08rem}
+.pdca-exp-title{font-size:.61rem;font-weight:850;line-height:1.4}
+.pdca-actions{display:grid;gap:.12rem;margin-top:.28rem;font-size:.43rem;color:var(--t2);line-height:1.45}
+.pdca-metric{font-size:.38rem;color:var(--t3);line-height:1.5;margin-top:.32rem}
+.pdca-metric b{color:var(--gl)}
+@media(max-width:390px){.route-grid{grid-template-columns:1fr}.sc-fields{grid-template-columns:1fr 1fr}.sc-fields .sc-field:last-child{grid-column:1/-1}}
+.dashboard-more{margin-top:.25rem;border-top:1px solid rgba(255,255,255,.07);padding-top:.25rem}
+.dashboard-more>summary{list-style:none;cursor:pointer;min-height:44px;display:flex;align-items:center;justify-content:center;color:var(--t3);font-size:.5rem;letter-spacing:.05em;margin-bottom:.55rem}
+.dashboard-more>summary::-webkit-details-marker{display:none}
+.dashboard-more>summary::after{content:'＋';margin-left:.35rem;color:var(--gold)}
+.dashboard-more[open]>summary::after{content:'−'}
+.dashboard-more-inner{animation:celebIn .22s ease}
 
 /* Milestones */
 .milestone-deck{background:linear-gradient(135deg,rgba(196,160,89,.12),rgba(255,255,255,.035));border:1px solid rgba(196,160,89,.18);border-radius:12px;padding:.65rem .72rem;margin-bottom:.8rem;overflow:hidden;position:relative}
@@ -479,6 +581,15 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
   </div>
 
   <div id="gistWarnBanner" class="sync-banner" onclick="window.__openSettings&&window.__openSettings()">⚠️ <b>この端末だけ同期未設定</b> — Ryu専用の同期リンクを一度開くか、ここを押して設定してください。</div>
+  <div id="commandHome"></div>
+  <div id="trajectoryBoard"></div>
+  <div id="pdcaCycle"></div>
+  <div id="secretaryCapture"></div>
+  <div id="dailyStack"></div>
+
+  <details class="dashboard-more" id="dashboardMore">
+  <summary>記録・分析・資産などの詳細</summary>
+  <div class="dashboard-more-inner">
   <div class="dream-bar" id="dreamBar"></div>
 
   <div class="focus" id="focus"></div>
@@ -494,8 +605,6 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
   <div class="insight" id="goodmotBadge" style="display:none"></div>
 
   <div class="insight" id="insightBadge" style="display:none"></div>
-
-  <div id="dailyStack"></div>
 
   <div class="timer-box" id="timerBox"></div>
 
@@ -566,6 +675,8 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 
   <div class="sec">🎯 マイルール</div>
   <div id="commitSection"></div>
+  </div>
+  </details>
 
   <div class="mission" id="mission"></div>
 
@@ -618,15 +729,36 @@ function safePct(current,target){
 }
 const MUSIC_CATS=['🎵作曲','🎛️MIX','🎬MV','🎤ボーカル','🚀リリース'];
 const DREAM_DATE=new Date('2029-02-11');
-const DAILY_STACK=[
-  {id:'uiro_plank',group:'声',core:true,title:'外郎売プランク',sub:'朝・腹圧+滑舌',detail:'JBG録音演習までの声づくり。プランクしながら外郎売を音読して、腹圧と滑舌を同時に鍛える。'},
-  {id:'melodics',group:'鍵盤',core:false,title:'Melodics 10分',sub:'2-3日に1回→毎日へ',detail:'音楽の自力づくり。毎日10分だけでも触る。完璧な練習より、鍵盤に戻ってくる回数を優先。'},
-  {id:'guitar',group:'ギター',core:false,title:'ギター 10分',sub:'ぼざろコピー再開',detail:'以前止まった曲を再開候補にする。まずは「すらすら弾く」ではなく、毎日10分触るハードルに下げる。'},
-  {id:'stretch_pole',group:'姿勢',core:true,title:'ストレッチポール',sub:'体軸の左右差リセット',detail:'Hayatoさん指摘の左右の歪み対策。上に乗ってころころし、右側の張りと力みを抜く。'},
-  {id:'neck_stretch',group:'首',core:false,title:'首ストレッチ',sub:'右胸鎖乳突筋',detail:'右首から耳裏にかけて硬い部分のケア。良いYouTubeストレッチを見つけたらここに固定する。'},
-  {id:'shakti',group:'自律神経',core:false,title:'シャクティ 15分',sub:'寝る前・背中',detail:'寝る前に背中を15分。自律神経を落ち着かせる夜の終了儀式にする。'},
+const COACH_BRIDGE=(location.port==='8791'||location.hostname.endsWith('.ts.net'))
+  ?location.origin
+  :'http://127.0.0.1:8791';
+const COMMAND_FOCUS={
+  id:'aion-flight-mix',
+  title:'Aionの機内MIX環境を30分で確定する',
+  why:'音・アレンジ・ボーカルは実質完了。Abletonが通らなければLogic安全コピーへ切り替え、7/14のJBG完パケを守る。',
+  exit:'Abletonのオフライン再生成功、またはLogic安全コピーへの切替を確定',
+  due:'2026-07-13',
+  source:'company/production/aion_flight_mix_runbook_2026-07-13.md',
+  lastProgress:'2026-07-12'
+};
+const DAILY_STACK_BASE=[
+  {id:'northstar_make',group:'作品',core:true,title:'作品を進める',sub:'最低5分 / 完成物が最優先',detail:'Aionなど今の本線を開き、最低1か所進める。補助練習だけで満点にせず、毎日「作る側」へ1票を入れる。'},
+  {id:'creator_english',group:'英語',core:true,title:'クリエイター英語',sub:'最低5分 / 標準10分',detail:'海外制作者との説明・確認・フィードバック・合意を練習する。一般英語ではなく、共同制作を前へ進める英語を優先。'},
+  {id:'voice_body',group:'声・身体',core:true,title:'声・身体',sub:'最低5分 / 標準10分',detail:'VOCOLABの課題を優先し、外郎売プランク、ストレッチポール、首ケアから今日必要なものを行う。'},
 ];
+const INSTRUMENT_ROTATION={0:'ピアノ',1:'ピアノ',2:'ギター',3:'ピアノ',4:'ギター',5:'ピアノ',6:'ギター'};
+function dailyStackItems(){
+  const instrument=INSTRUMENT_ROTATION[dayOfWeek]||'ピアノ';
+  return [...DAILY_STACK_BASE,{
+    id:'instrument_daily',group:'楽器',core:true,title:`${instrument} 15分`,sub:'最低5分 / 毎日1楽器',
+    detail:instrument==='ピアノ'
+      ?'作曲、音感、コード理解、SST型の鍵盤表現へ接続する。今日はピアノだけでよい。'
+      :'演奏感、リフ、ギターアレンジの理解へ接続する。今日はギターだけでよい。'
+  }];
+}
 const DEFAULT_MILESTONES=[
+  {id:'aion-flight-mix',date:'2026-07-13',kind:'Make',title:'Aion 機内MIX v1',body:'搭乗前にAbletonをオフライン化し、機内でMix v1を書き出す。',tier:'s'},
+  {id:'aion-jbg',date:'2026-07-14',kind:'Gate',title:'Aion音源完パケ → JBG',body:'16:00までに最終バウンス、19:00の音楽院へ持参する。',tier:'s'},
   {id:'iroha-reply',date:'2026-07-08',kind:'Decision',title:'いろはPRO 7月返信',body:'C/D/E参加。Aは北京で不参加、Bは軽役割のみ。返信して迷いを閉じる。',tier:'a'},
   {id:'iroha-input',date:'2026-07-08',kind:'Routine',title:'100曲インプット開始',body:'7/8-7/27。毎日5曲、分析は1曲1行まで。北京中はリンク投稿だけでよい。',tier:'a'},
   {id:'beijing',date:'2026-07-10',kind:'Guard',title:'北京滞在 7/10-13',body:'重い制作は入れない。100文字祭は不参加で固定し、Aionと身体を守る。',tier:'guard'},
@@ -640,15 +772,15 @@ const DEFAULT_MILESTONES=[
   {id:'vocalo-groove',date:'2026-11-20',kind:'Watch',title:'ボカログルーヴ投稿祭',body:'エモグルーヴを名刺化できる候補。Aion後に公式詳細を深掘りする。',tier:'watch'},
 ];
 const OPS_TODAY=[
-  {id:'iroha-reply-check',until:'2026-07-08',hot:true,title:'いろはPRO 7月企画の参加可否を確定し、返信を準備する',sub:'C/D/E参加、A不参加、Bは軽役割のみ。2026-07-08までに迷いを閉じる。',chip:'7/8〆'},
-  {id:'input-5-start',from:'2026-07-08',until:'2026-07-27',hot:true,title:'100曲インプット企画の初日5曲を視聴する',sub:'初日はYouTubeリンク5曲。北京中は分析なしで勝ち、余裕があれば1曲だけ1行メモ。',chip:'7/8開始'},
-  {id:'mobile-field-test',until:'2026-07-13',title:'外出スマホ連携テスト',sub:'通常スリープに近い状態で、外からMac作業が起きるか1回確認する。',chip:'remote'},
-  {id:'aion-sound-scope',until:'2026-07-15',title:'Aionの7/15判断に向けて音のリサーチを開始する',sub:'BPM / キー / 参考曲 / 楽器数 / ボーカル形態の候補を集める。',chip:'7/15'},
+  {id:'aion-ableton-import',until:'2026-07-13',hot:true,title:'Abletonを30分で起動・認証判定',sub:'通ればステム読み込み。通らなければLogic安全コピーへ即切替する。',chip:'搭乗前'},
+  {id:'aion-offline-check',until:'2026-07-13',hot:true,title:'Collect All and Save後にオフライン確認',sub:'Wi-Fiを切ってセットを開き直し、先頭・サビ・末尾が再生できれば完了。',chip:'必須'},
+  {id:'mobile-field-test',until:'2026-07-13',title:'スマホDashboard Coachを確認',sub:'TailscaleをONにし、Feedback Agentまで開けるか1回確認する。',chip:'remote'},
+  {id:'input-5-continue',from:'2026-07-08',until:'2026-07-27',title:'100曲インプット5曲',sub:'Aion準備後。北京・移動日はリンク記録だけでも勝ち。',chip:'軽量'},
 ];
 const OPS_THIS_WEEK=[
-  {id:'iroha-choice',title:'いろはPRO企画への参加可否決定（締切: 7/8）',sub:'C/D/E参加、A不参加、Bは軽役割のみで返信するか確定。'},
-  {id:'level-ken-choice',title:'レベチ研究所提出内容の決定（締切: 7/10）',sub:'Aion改善版 / 軽量1コーラス / 見送りの三択。100文字祭には接続しない。'},
-  {id:'vocacolle-aion-line',title:'Aion投稿形態と音の方針決定（締切: 7/15）',sub:'ルーキー第一候補、BPM、キー、参考曲、楽器数、ボーカル形態を仮決め。'},
+  {id:'aion-flight-v1',title:'7/13 機内でAion MIX v1を書き出す',sub:'Puttiはv1後の休耳時間だけ。DAW研究を本線にしない。'},
+  {id:'aion-jbg-finish',title:'7/14 16:00 Aion音源完パケ',sub:'別プレイヤーで確認し、19:00のJBG音楽院へ持参する。'},
+  {id:'aion-feedback-sync',title:'7/15 JBGフィードバックを正本へ反映',sub:'Sound Briefと制作フローPDCAへ、次回再利用する1点を残す。'},
 ];
 const QUOTES=[
   '小さな一歩が、大きな変化を生む',
@@ -694,8 +826,7 @@ let curTab='week';
 
 function calcRealProgress(){
   const G=GOALS();
-  const S=SONGS();
-  const released=S.filter(s=>s.status==='released').length;
+  const released=originalReleaseCount();
   const sub=DB.kpi?.subscribers||0;
   const plays=DB.kpi?.total_plays||0;
   const rev=DB.kpi?.revenue||0;
@@ -799,6 +930,17 @@ if(!DB.opsBrief.log)DB.opsBrief.log={};
 if(!DB.dailyStack)DB.dailyStack={targetDate:'2027-05-01',log:{}}; // {targetDate, log:{YYYY-MM-DD:{itemId:true}}}
 if(!DB.dailyStack.log)DB.dailyStack.log={};
 if(!DB.dailyStack.targetDate)DB.dailyStack.targetDate='2027-05-01';
+if(!DB.commandLog)DB.commandLog={};
+if(!DB.secretaryInbox)DB.secretaryInbox=[];
+if(!DB.coachState)DB.coachState=null;
+if(!DB.currentSprint)DB.currentSprint=null;
+if(!DB.pdcaScope)DB.pdcaScope='overall';
+if(!DB.capacityLog)DB.capacityLog={};
+if(!DB.sprintCorrections)DB.sprintCorrections=[];
+if(!DB.feedbackAgentLast)DB.feedbackAgentLast=null;
+if(!Array.isArray(DB.agentInbox))DB.agentInbox=[];
+if(!DB.coachAnswerLast)DB.coachAnswerLast=null;
+if(DB.alwaysOnEnabled===undefined)DB.alwaysOnEnabled=false;
 if(!DB.kpiLog)DB.kpiLog=[];           // [{date,subscribers,total_plays,revenue,songs}]
 if(!DB.weeklyLog)DB.weeklyLog=[];     // [{weekStart,totalSec,byCat,kpi}]
 if(!DB.suggestionLog)DB.suggestionLog=[]; // [{id,date,text,type,context,effective,evaluatedDate}]
@@ -979,47 +1121,394 @@ function dailyStackToday(){
   return DB.dailyStack.log[todayStr];
 }
 
+function dailyStackDone(log,itemId){
+  if(!log)return false;
+  if(itemId==='instrument_daily')return !!(log.instrument_daily||log.melodics||log.guitar);
+  if(itemId==='voice_body')return !!(log.voice_body||(log.uiro_plank&&log.stretch_pole));
+  return !!log[itemId];
+}
+
 function dailyStackStreak(itemId){
   let s=0,dt=new Date(today);
   for(let i=0;i<365;i++){
     const k=dt.toISOString().slice(0,10);
-    if(DB.dailyStack?.log?.[k]?.[itemId]){s++;dt.setDate(dt.getDate()-1);}
+    if(dailyStackDone(DB.dailyStack?.log?.[k],itemId)){s++;dt.setDate(dt.getDate()-1);}
     else break;
   }
   return s;
 }
 
+const COACH_STATUS={on_track:'軌道内',watch:'要観察',off_track:'要修正',data_needed:'計測中'};
+const COACH_LANES=[
+  ['mainline','作品本線'],['reach','届ける'],['business','案件・収益'],['english','クリエイター英語'],
+  ['voice_body','声・身体'],['instrument','楽器'],['finance','38歳資産'],['reflection','振り返り'],
+  ['brand','ブランド'],['marketing','マーケティング'],['workflow','制作フロー'],['capacity','稼働'],['video_career','動画キャリア']
+];
+const COACH_OUTCOMES=[['progressed','前進'],['completed','完了'],['blocked','停止'],['learned','学習'],['decided','決定']];
+const PDCA_SCOPES=[['overall','全体'],['production','制作'],['release','公開'],['marketing','マーケ'],['brand','ブランド'],['workflow','制作フロー'],['capacity','稼働'],['finance','資産'],['video_career','動画キャリア']];
+let coachSnapshotTimer=null;
+
+function originalReleaseCount(){
+  const m=RELEASE_METRICS||DB.releaseMetrics||{};
+  const names=new Set();
+  Object.keys(m.niconico_videos||{}).forEach(name=>{if(!/inst/i.test(name))names.add(name.trim());});
+  Object.keys(m.youtube?.videos||{}).forEach(name=>{if(!/inst/i.test(name))names.add(name.trim());});
+  return names.size||SONGS().filter(song=>song.status==='released').length;
+}
+
+function coachSnapshotPayload(){
+  const done=dailyStackToday(),G=GOALS(),fp=DB.financePlan||{};
+  const portfolio=(DB.assetPortfolio||[]).reduce((sum,item)=>sum+(Number(item.value)||0),0);
+  const totalMusic=(DB.timerLog||[])
+    .filter(log=>MUSIC_CATS.some(cat=>String(log.cat||'').includes(cat)))
+    .reduce((sum,log)=>sum+(Number(log.sec)||0),0);
+  const todayMusic=(DB.timerLog||[])
+    .filter(log=>String(log.date||log.start||'').slice(0,10)===todayStr&&MUSIC_CATS.some(cat=>String(log.cat||'').includes(cat)))
+    .reduce((sum,log)=>sum+(Number(log.sec)||0),0);
+  return{
+    date:todayStr,
+    focus:{id:COMMAND_FOCUS.id,title:COMMAND_FOCUS.title,started:!!DB.commandLog?.[todayStr]?.[COMMAND_FOCUS.id]},
+    rails:{
+      mainline:dailyStackDone(done,'northstar_make'),
+      english:dailyStackDone(done,'creator_english'),
+      voice_body:dailyStackDone(done,'voice_body'),
+      instrument:dailyStackDone(done,'instrument_daily')
+    },
+    kpi:{
+      released_originals:originalReleaseCount(),
+      total_plays:Number(DB.kpi?.total_plays)||0,
+      subscribers:Number(DB.kpi?.subscribers)||0,
+      creative_revenue_ytd:Number(DB.kpi?.revenue)||0,
+      comments:releaseReactionTotal('comment_count'),
+      likes:releaseReactionTotal('like_count')
+    },
+    goals:{annual_releases:G.yearSongs,annual_revenue:G.revenueTarget,play_target:G.playTarget},
+    finance:{
+      cash_man:Number(fp.cashMan)||35,
+      portfolio_value:portfolio,
+      total_assets:0,
+      nisa_monthly:Number(fp.nisaMonthly)||169000,
+      ideco_monthly:Number(fp.idecoMonthly)||20000,
+      source_updated:fp.updated||''
+    },
+    activity:{week_music_minutes:Math.round(musicWeekSec()/60),today_music_minutes:Math.round(todayMusic/60),total_music_minutes:Math.round(totalMusic/60),capacity_mode:DB.capacityLog[todayStr]||'unknown'}
+  };
+}
+
+function releaseReactionTotal(key){
+  const m=RELEASE_METRICS||DB.releaseMetrics||{},nn=m.niconico_videos||{},yt=m.youtube?.videos||{};
+  return [...Object.values(nn),...Object.values(yt)].reduce((sum,item)=>sum+(Number(item?.[key])||0),0);
+}
+
+function scheduleCoachSnapshot(){
+  clearTimeout(coachSnapshotTimer);
+  coachSnapshotTimer=setTimeout(syncCoachSnapshot,1600);
+}
+
+async function fetchCoachState(){
+  try{
+    const res=await fetch(`${COACH_BRIDGE}/api/state?t=${Date.now()}`,{cache:'no-store'});
+    if(!res.ok)throw 0;
+    const payload=await res.json();
+    if(payload.state){DB.coachState=payload.state;saveDB();syncPush();renderTrajectoryBoard();renderPdcaCycle();renderCommandHome();}
+  }catch{}
+}
+
+async function fetchCurrentSprint(){
+  try{
+    const res=await fetch(`${COACH_BRIDGE}/api/sprint?t=${Date.now()}`,{cache:'no-store'});
+    if(!res.ok)throw 0;
+    const payload=await res.json();
+    if(payload.sprint){DB.currentSprint=payload.sprint;saveDB();syncPush();renderCommandHome();}
+  }catch{}
+}
+
+async function syncCoachSnapshot(){
+  try{
+    const payload=await bridgePost('/api/snapshot',coachSnapshotPayload());
+    if(payload.state){DB.coachState=payload.state;saveDB();syncPush();renderTrajectoryBoard();renderPdcaCycle();renderCommandHome();}
+  }catch{}
+}
+
+function coachMoney(value){
+  const n=Number(value)||0;
+  if(n>=100000000)return `${(n/100000000).toFixed(2)}億`;
+  if(n>=10000)return `${Math.round(n/10000).toLocaleString()}万`;
+  return n.toLocaleString();
+}
+
+function renderTrajectoryBoard(){
+  const el=$('#trajectoryBoard');if(!el)return;
+  const s=DB.coachState;
+  if(!s){
+    el.innerHTML=`<div class="trajectory-board"><div class="tr-k">North Star Trajectory</div><div class="tr-title">現在地を計測しています</div><div class="tr-note">MacのDashboard Coachと接続すると、公開実績・行動・資産計画から2つの軌道を表示します。</div></div>`;
+    return;
+  }
+  const ns=s.north_star_2029||{},a=s.age_38||{},q=s.data_quality||{};
+  const releasePct=Math.min(100,Math.max(0,(Number(ns.releases_ytd)||0)/Math.max(1,Number(ns.annual_release_target)||10)*100));
+  const assetPct=Math.min(100,Math.max(0,(Number(a.plan_projected_assets_9pct)||0)/Math.max(1,Number(a.asset_target)||70000000)*100));
+  const financeLabel=a.asset_source==='dashboard'?'最新入力':'2026-05仮値';
+  el.innerHTML=`<div class="trajectory-board">
+    <div class="tr-head"><div><div class="tr-k">North Star Trajectory</div><div class="tr-title">成果で見る、2つの到達軌道</div></div><div class="tr-quality">${q.status==='usable'?'運用データ':'学習中 '+(q.snapshot_days||0)+'/7日'}</div></div>
+    <div class="route-grid">
+      <div class="route-card">
+        <div class="route-top"><div class="route-name">2029 · 送り出す側へ</div><span class="route-status ${ns.status||'data_needed'}">${COACH_STATUS[ns.status]||'計測中'}</span></div>
+        <div class="route-big">${Number(ns.releases_ytd||0)} / ${Number(ns.annual_release_target||10)}曲</div>
+        <div class="route-caption">今年の公開作品 · 現時点期待 ${Number(ns.releases_expected_now||0).toFixed(1)}曲</div>
+        <div class="route-track"><div class="route-fill" style="width:${releasePct}%"></div></div>
+        <div class="route-facts"><span>総再生 <b>${Number(ns.total_plays||0).toLocaleString()}</b></span><span>登録者 <b>${Number(ns.subscribers||0).toLocaleString()}</b></span><span>コメント / いいね <b>${Number(ns.comments||0).toLocaleString()} / ${Number(ns.likes||0).toLocaleString()}</b></span><span>案件・音楽収益 <b>¥${Number(ns.creative_revenue_ytd||0).toLocaleString()}</b></span><span>残り <b>${Number(ns.days_left||0).toLocaleString()}日</b></span></div>
+      </div>
+      <div class="route-card">
+        <div class="route-top"><div class="route-name">38歳 · 会社を選べる状態へ</div><span class="route-status ${a.status||'data_needed'}">${COACH_STATUS[a.status]||'計測中'}</span></div>
+        <div class="route-big">${coachMoney(a.plan_projected_assets_9pct)}円</div>
+        <div class="route-caption">段階増額プランの9%試算 · ${financeLabel}</div>
+        <div class="route-track"><div class="route-fill" style="width:${assetPct}%"></div></div>
+        <div class="route-facts"><span>現在資産 <b>${coachMoney(a.current_assets)}円</b></span><span>7%–11%幅 <b>${coachMoney(a.plan_projected_assets_7pct)}–${coachMoney(a.plan_projected_assets_11pct)}円</b></span><span>7,000万円との差 <b>${coachMoney(a.plan_gap_to_target_9pct)}円</b></span><span>現金ガード <b>${Number(a.cash_man||0)} / 50万円</b></span></div>
+      </div>
+    </div>
+    <div class="tr-note">軌道は実績と前提に基づく推定で、成功保証ではありません。未計測は推測で埋めず、更新待ちとして表示します。</div>
+  </div>`;
+}
+
+function renderPdcaCycle(){
+  const el=$('#pdcaCycle');if(!el)return;
+  const scope=DB.pdcaScope||'overall';
+  const p=DB.coachState?.pdca_by_scope?.[scope]||(scope==='overall'?DB.coachState?.pdca:null)||{};
+  const ex=p.experiment||{};
+  const actions=(ex.actions||[]).slice(0,3);
+  el.innerHTML=`<div class="pdca-cycle">
+    <div class="pdca-head"><div><div class="cmd-eyebrow">This Week's PDCA</div><div class="pdca-title">${esc(ex.title||'この領域は未分析')}</div></div><div class="pdca-tools"><select class="pdca-scope" id="pdcaScope">${PDCA_SCOPES.map(([id,label])=>`<option value="${id}" ${id===scope?'selected':''}>${label}</option>`).join('')}</select><button class="pdca-btn" id="pdcaRefresh">AIで分析</button></div></div>
+    <div class="pdca-bottle">ボトルネック：<b>${esc(p.bottleneck||'7日分の記録がまだありません')}</b></div>
+    <div class="pdca-experiment"><div class="pdca-exp-k">One Experiment</div><div class="pdca-exp-title">${esc(ex.title||'今日の本線を1件記録する')}</div><div class="pdca-actions">${actions.length?actions.map((a,i)=>`<span>${i+1}. ${esc(a)}</span>`).join(''):'<span>1. 記録を始める</span>'}</div><div class="pdca-metric">成功条件：<b>${esc(ex.success_metric||'構造化ログが1件残る')}</b>${ex.review_date?` · 再判定 ${esc(ex.review_date)}`:''}</div></div>
+  </div>`;
+  const sel=$('#pdcaScope');if(sel)sel.addEventListener('change',()=>{DB.pdcaScope=sel.value;save();renderPdcaCycle();});
+  const btn=$('#pdcaRefresh');if(btn)btn.addEventListener('click',async()=>{
+    btn.disabled=true;btn.textContent='保存中…';
+    queueAgentRequest('pdca',{scope:DB.pdcaScope||'overall'},`${DB.pdcaScope||'overall'}のPDCA分析`);
+    save();renderPdcaCycle();await flushAgentQueue();
+  });
+}
+
+function renderCommandHome(){
+  const el=$('#commandHome');if(!el)return;
+  const sprint=DB.currentSprint;
+  const registerHere=(location.port==='8791'||location.hostname.endsWith('.ts.net'))&&!!gc().id&&!!gc().token;
+  if(sprint?.status==='ok'||sprint?.status==='stale'){
+    const gate=(sprint.current_gate||[]).slice(0,10),next=(sprint.next_3||[]).slice(0,3),deadlines=(sprint.deadlines||[]).slice(0,5),frozen=(sprint.frozen||[]);
+    const corrections=(DB.coachState?.corrections||DB.sprintCorrections||[]).slice(-2);
+    el.innerHTML=`<div class="command-home">
+      <div class="cmd-eyebrow">Current Sprint · 2026-07-12 → 2026-08-24</div>
+      <div class="cmd-title">${esc(sprint.outcome)}</div>
+      <div class="sprint-block"><div class="sprint-label">Current Gate</div><div class="sprint-list">${gate.map(x=>`<span>${esc(x)}</span>`).join('')}</div></div>
+      <div class="cmd-meta"><div class="cmd-meta-card"><div class="cmd-meta-k">Next 3</div><div class="cmd-meta-v">${next.map((x,i)=>`${i+1}. ${esc(x)}`).join('<br>')}</div></div><div class="cmd-meta-card"><div class="cmd-meta-k">Deadlines</div><div class="cmd-meta-v">${deadlines.map(esc).join('<br>')}</div></div></div>
+      <div class="sprint-frozen"><b>Frozen until 8/24</b><br>${frozen.map(esc).join(' / ')}</div>
+      ${corrections.length?`<div class="correction-note">訂正待ち: ${corrections.map(c=>`${esc(c.target)} → ${esc(c.corrected)}`).join(' / ')}</div>`:''}
+      <div class="sprint-controls"><select class="capacity-select" id="capacityMode"><option value="unknown">今日の稼働: 未設定</option><option value="busy">忙しい</option><option value="normal">通常</option><option value="open">余裕あり</option></select></div>
+      <div class="feedback-agent"><div class="feedback-agent-head"><div class="feedback-agent-title">Feedback Agent</div><div class="feedback-agent-note">「これ違う」をここへ</div></div><div class="feedback-agent-row"><textarea class="feedback-agent-input" id="feedbackAgentInput" placeholder="例：Aion MVは茶花さんへ依頼済みで、構図とサビ演出も決まっている。未着手なのはAEだけ"></textarea><button class="feedback-agent-btn" id="feedbackAgentSend">AIに伝える</button></div>${DB.feedbackAgentLast?`<div class="feedback-agent-result ${DB.feedbackAgentLast.queued?'waiting':''}">${esc(DB.feedbackAgentLast.reply||'保存しました')}<br><b>${DB.feedbackAgentLast.queued?'AI処理待ち':DB.feedbackAgentLast.applied?'表示へ反映済み':'正本整理待ちとして保存'}</b></div>`:''}${agentQueuePending()?`<div class="agent-queue-status">${agentQueuePending()}件を端末・同期箱に保存済み。Mac復帰時に自動処理します。</div>`:''}${registerHere?`<button class="cmd-btn ${DB.alwaysOnEnabled?'done':''}" id="enableAlwaysOn" style="margin-top:.38rem;width:100%">${DB.alwaysOnEnabled?'✓ 常時利用 有効':'常時利用を有効化'}</button>`:''}</div>
+      <div class="cmd-actions"><button class="cmd-btn primary" id="cmdStart">本線に着手する</button><button class="cmd-btn" id="cmdMore">詳細を見る</button></div>
+    </div>`;
+    const cap=$('#capacityMode');if(cap){cap.value=DB.capacityLog[todayStr]||'unknown';cap.addEventListener('change',()=>{DB.capacityLog[todayStr]=cap.value;save();scheduleCoachSnapshot();});}
+    const feedbackBtn=$('#feedbackAgentSend');if(feedbackBtn)feedbackBtn.addEventListener('click',async()=>{
+      const input=$('#feedbackAgentInput'),feedback=String(input?.value||'').trim();if(!feedback)return;
+      const id=`feedback-${Date.now()}`;
+      queueAgentRequest('feedback',{id,date:todayStr,feedback},feedback);
+      input.value='';feedbackBtn.disabled=true;feedbackBtn.textContent='保存済み';
+      DB.feedbackAgentLast={reply:'フィードバックを保存しました。Mac接続時にAIが確認します。',applied:false,queued:true,id};
+      save();renderCommandHome();await flushAgentQueue();
+    });
+    const enableAlwaysOn=$('#enableAlwaysOn');if(enableAlwaysOn&&!DB.alwaysOnEnabled)enableAlwaysOn.addEventListener('click',async()=>{
+      enableAlwaysOn.disabled=true;enableAlwaysOn.textContent='安全に登録中…';
+      const c=gc();
+      try{
+        await bridgePost('/api/sync/register',{gist_id:c.id,token:c.token});
+        DB.alwaysOnEnabled=true;save();renderCommandHome();
+      }catch{enableAlwaysOn.disabled=false;enableAlwaysOn.textContent='登録に失敗 · 再試行';}
+    });
+    const start=$('#cmdStart');if(start)start.addEventListener('click',()=>{if(!DB.commandLog[todayStr])DB.commandLog[todayStr]={};DB.commandLog[todayStr].aion_current_sprint=true;dailyStackToday().northstar_make=true;recordDay();save();render();});
+    const more=$('#cmdMore');if(more)more.addEventListener('click',()=>{const d=$('#dashboardMore');if(d){d.open=true;d.scrollIntoView({behavior:'smooth',block:'start'});}});
+    return;
+  }
+  const started=!!DB.commandLog?.[todayStr]?.[COMMAND_FOCUS.id];
+  const dueLeft=milestoneDaysLeft(COMMAND_FOCUS.due);
+  const last=new Date(COMMAND_FOCUS.lastProgress+'T00:00:00');
+  const stopped=Math.max(0,Math.floor((today-last)/864e5));
+  const upcoming=milestones().filter(m=>milestoneDaysLeft(m.date)>=0).slice(0,2);
+  el.innerHTML=`<div class="command-home">
+    <div class="cmd-eyebrow">今日見るのは、ここだけ</div>
+    <div class="cmd-title">${COMMAND_FOCUS.title}</div>
+    <div class="cmd-why">${COMMAND_FOCUS.why}</div>
+    <div class="cmd-exit"><div class="cmd-exit-k">今日の出口</div><div class="cmd-exit-v">${COMMAND_FOCUS.exit}</div></div>
+    <div class="cmd-meta">
+      <div class="cmd-meta-card"><div class="cmd-meta-k">本線の状態</div><div class="cmd-meta-v">${stopped}日停止 · 期限まで${Math.max(0,dueLeft)}日</div></div>
+      <div class="cmd-meta-card"><div class="cmd-meta-k">次の締切</div><div class="cmd-meta-v">${upcoming.map(m=>`${milestoneDateLabel(m.date)} ${m.title}`).join('<br>')||'未設定'}</div></div>
+    </div>
+    <div class="cmd-actions"><button class="cmd-btn primary ${started?'done':''}" id="cmdStart">${started?'✓ 着手済み':'本線に着手する'}</button><button class="cmd-btn" id="cmdMore">詳細を見る</button></div>
+  </div>`;
+  const start=$('#cmdStart');
+  if(start)start.addEventListener('click',()=>{
+    if(!DB.commandLog[todayStr])DB.commandLog[todayStr]={};
+    DB.commandLog[todayStr][COMMAND_FOCUS.id]=!started;
+    const day=dailyStackToday();
+    if(!started)day.northstar_make=true;
+    recordDay();save();render();
+  });
+  const more=$('#cmdMore');
+  if(more)more.addEventListener('click',()=>{const d=$('#dashboardMore');if(d){d.open=true;d.scrollIntoView({behavior:'smooth',block:'start'});}});
+}
+
+async function bridgePost(path,payload){
+  const res=await fetch(COACH_BRIDGE+path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+  if(!res.ok)throw new Error('bridge unavailable');
+  return res.json();
+}
+
+function agentQueuePending(){
+  return (DB.agentInbox||[]).filter(i=>i.status!=='recorded').length;
+}
+
+function queueAgentRequest(kind,payload,label){
+  const id=payload?.id||`${kind}-${Date.now()}`;
+  const existing=(DB.agentInbox||[]).find(i=>i.id===id);
+  if(existing)return existing;
+  const item={id,kind,payload:{...payload,id},label:String(label||kind).slice(0,300),created:new Date().toISOString(),updated:new Date().toISOString(),status:'queued',attempts:0};
+  DB.agentInbox.push(item);
+  return item;
+}
+
+function applyAgentResponse(item,r){
+  if(r.sprint)DB.currentSprint=r.sprint;
+  if(r.state)DB.coachState=r.state;
+  if(item.kind==='feedback'){
+    DB.feedbackAgentLast={id:item.id,reply:r.analysis?.reply||'フィードバックを保存しました。',applied:!!r.application?.applied,queued:false};
+    item.reply=DB.feedbackAgentLast.reply;
+    item.applied=DB.feedbackAgentLast.applied;
+  }else if(item.kind==='pdca'){
+    item.reply=r.review?.experiment?.title||'PDCA分析を更新しました。';
+  }else if(item.kind==='coach'){
+    const c=r.coach||{};
+    const reply=`${c.focus||''}${c.why?'\n'+c.why:''}${(c.actions||[]).length?'\n\n'+c.actions.map((a,i)=>`${i+1}. ${a}`).join('\n'):''}`.trim()||'AI回答を保存しました。';
+    DB.coachAnswerLast={id:item.id,question:item.payload?.question||'',reply,recorded_at:new Date().toISOString()};
+    item.reply=reply;
+  }
+}
+
+async function flushAgentQueue(){
+  const pending=(DB.agentInbox||[]).filter(i=>i.status!=='recorded').slice(0,5);
+  if(!pending.length)return;
+  let changed=false;
+  for(const item of pending){
+    const endpoint=item.kind==='feedback'?'/api/feedback':item.kind==='pdca'?'/api/pdca':item.kind==='coach'?'/api/coach':'';
+    if(!endpoint)continue;
+    item.attempts=(item.attempts||0)+1;item.updated=new Date().toISOString();
+    try{
+      const r=await bridgePost(endpoint,item.payload||{});
+      applyAgentResponse(item,r);item.status='recorded';item.recorded_at=new Date().toISOString();changed=true;
+    }catch{
+      item.status='queued';changed=true;break;
+    }
+  }
+  if(changed){saveDB();syncPush();renderCommandHome();renderTrajectoryBoard();renderPdcaCycle();renderSecretaryCapture();}
+}
+
+async function flushSecretaryQueue(){
+  const pending=(DB.secretaryInbox||[]).filter(i=>i.status!=='recorded');
+  if(!pending.length)return;
+  let changed=false;
+  for(const item of pending.slice(0,10)){
+    try{
+      const r=await bridgePost(item.lane?'/api/event':'/api/capture',item);
+      const status=r.event?.status||r.status;
+      item.status=status==='recorded'||status==='duplicate'?'recorded':'queued';
+      if(r.state)DB.coachState=r.state;
+      changed=true;
+    }
+    catch{return;}
+  }
+  if(changed){save();renderSecretaryCapture();renderTrajectoryBoard();renderPdcaCycle();}
+}
+
+function renderSecretaryCapture(){
+  const el=$('#secretaryCapture');if(!el)return;
+  const queued=(DB.secretaryInbox||[]).filter(i=>i.status!=='recorded').length;
+  el.innerHTML=`<div class="secretary-capture">
+    <div class="sc-head"><div><div class="cmd-eyebrow">Evidence Log</div><div class="sc-title">何をして、何が変わったか</div></div><div class="sc-state">${queued?queued+'件 同期待ち':'PDCAへ反映'}</div></div>
+    <div class="sc-fields"><select class="sc-field" id="secretaryLane">${COACH_LANES.map(([v,l])=>`<option value="${v}">${l}</option>`).join('')}</select><select class="sc-field" id="secretaryOutcome">${COACH_OUTCOMES.map(([v,l])=>`<option value="${v}">${l}</option>`).join('')}</select><input class="sc-field" id="secretaryMinutes" type="number" min="0" max="1440" step="5" value="15" aria-label="所要分数"></div>
+    <textarea class="sc-input" id="secretaryText" placeholder="例：AionのBPMを124と128で比較し、128を仮採用した"></textarea>
+    <input class="sc-field sc-evidence" id="secretaryEvidence" placeholder="証拠・リンク（任意）">
+    <div class="sc-actions"><button class="cmd-btn primary" id="secretarySave">記録する</button><button class="cmd-btn" id="secretaryAsk">AIに相談</button></div>
+    <div class="sc-result" id="secretaryResult" ${DB.coachAnswerLast?.reply?'style="display:block"':''}>${esc(DB.coachAnswerLast?.reply||'')}</div>
+  </div>`;
+  const input=$('#secretaryText'),result=$('#secretaryResult');
+  $('#secretarySave').addEventListener('click',async()=>{
+    const text=input.value.trim();if(!text)return;
+    const now=new Date().toISOString();
+    const item={id:`dash-${Date.now()}`,text,lane:$('#secretaryLane').value,outcome:$('#secretaryOutcome').value,minutes:Number($('#secretaryMinutes').value)||0,evidence:$('#secretaryEvidence').value.trim(),date:todayStr,occurred_at:now,created:now,status:'queued'};
+    DB.secretaryInbox.push(item);input.value='';save();renderSecretaryCapture();await flushSecretaryQueue();
+  });
+  $('#secretaryAsk').addEventListener('click',async()=>{
+    const question=input.value.trim()||'今日、北極星へ近づくために最優先で何をすべき？';
+    const item=queueAgentRequest('coach',{question},question);
+    result.style.display='block';result.textContent='質問を保存しました。接続できれば今すぐ、Mac停止中なら復帰時にAIが回答します。';
+    save();await flushAgentQueue();
+    if(item.status==='recorded'&&item.reply)result.textContent=item.reply;
+  });
+}
+
+function dailyStackWeekCount(itemId){
+  let n=0,dt=new Date(today);
+  for(let i=0;i<7;i++){
+    const k=localDateStr(dt);
+    if(dailyStackDone(DB.dailyStack?.log?.[k],itemId))n++;
+    dt.setDate(dt.getDate()-1);
+  }
+  return n;
+}
+
 function renderDailyStack(){
   const el=$('#dailyStack');if(!el)return;
+  const items=dailyStackItems();
   const done=dailyStackToday();
-  const doneN=DAILY_STACK.filter(i=>done[i.id]).length;
-  const coreN=DAILY_STACK.filter(i=>i.core&&done[i.id]).length;
-  const pct=Math.round(doneN/DAILY_STACK.length*100);
+  const doneN=items.filter(i=>dailyStackDone(done,i.id)).length;
+  const coreN=items.filter(i=>i.core&&dailyStackDone(done,i.id)).length;
+  const pct=Math.round(doneN/items.length*100);
+  const weeklyVotes=items.reduce((sum,item)=>sum+dailyStackWeekCount(item.id),0);
+  const weeklyTarget=items.length*7;
   const target=new Date(DB.dailyStack?.targetDate||'2027-05-01');
   const daysLeft=Math.max(0,Math.ceil((target-today)/864e5));
-  const chips=DAILY_STACK.map(item=>{
-    const isDone=!!done[item.id];
+  const chips=items.map(item=>{
+    const isDone=dailyStackDone(done,item.id);
     const streakN=dailyStackStreak(item.id);
+    const weekN=dailyStackWeekCount(item.id);
     const streakText=streakN>=2?` · ${streakN}日`:'';
     return `<div class="ds-chip ${isDone?'done':''} ${item.core?'core':''}" data-dsid="${item.id}">
       <div class="ds-dot">${isDone?'✓':''}</div>
-      <div><div class="ds-t">${item.title}</div><div class="ds-s">${item.group}${streakText} / ${item.sub}</div></div>
+      <div><div class="ds-t">${item.title}</div><div class="ds-s">${item.group}${streakText} / ${item.sub}</div><div class="ds-week"><div class="ds-week-track"><div class="ds-week-fill" style="width:${weekN/7*100}%"></div></div><div class="ds-week-n">${weekN}/7</div></div></div>
     </div>`;
   }).join('');
+  const G=GOALS(),rp=calcRealProgress();
   el.innerHTML=`<div class="daily-stack">
     <div class="ds-head">
-      <div><div class="ds-k">Daily Stack</div><div class="ds-title">声・身体・楽器の長期投資</div><div class="ds-sub">JBG録音演習まであと${daysLeft}日。今日は小さく積む。</div></div>
-      <div class="ds-score"><div class="ds-num">${doneN}/${DAILY_STACK.length}</div><div class="ds-lbl">done</div></div>
+      <div><div class="ds-k">North Star Rail</div><div class="ds-title">毎日同じ入口。判断せず、北極星へ。</div><div class="ds-sub">今日の楽器は自動で1つだけ。最低量で連続性を守り、作品を最優先にする。</div></div>
+      <div class="ds-score"><div class="ds-num">${doneN}/${items.length}</div><div class="ds-lbl">done</div></div>
     </div>
     <div class="ds-track"><div class="ds-fill" style="width:${pct}%"></div></div>
     <div class="ds-grid">${chips}</div>
-    <div class="ds-foot"><span>Core ${coreN}/2。キツい日はCoreだけで勝ち。</span><span class="ds-detail" id="dailyStackDetail">詳細</span></div>
+    <div class="ns-ladder">
+      <div class="ns-step"><div class="ns-step-k">積む</div><div class="ns-step-v">${weeklyVotes}/${weeklyTarget}</div><div class="ns-step-s">直近7日</div></div>
+      <div class="ns-step"><div class="ns-step-k">作る</div><div class="ns-step-v">${rp.released}/${G.yearSongs}</div><div class="ns-step-s">公開作品</div></div>
+      <div class="ns-step"><div class="ns-step-k">届く</div><div class="ns-step-v">${(DB.kpi?.total_plays||0).toLocaleString()}</div><div class="ns-step-s">総再生</div></div>
+      <div class="ns-step"><div class="ns-step-k">仕事</div><div class="ns-step-v">¥${(DB.kpi?.revenue||0).toLocaleString()}</div><div class="ns-step-s">音楽収益</div></div>
+    </div>
+    <div class="ds-foot"><span>Core ${coreN}/${items.length} · JBG録音演習まで${daysLeft}日。未達は翌日に持ち越さない。</span><span class="ds-detail" id="dailyStackDetail">意味を見る</span></div>
   </div>`;
   el.querySelectorAll('.ds-chip').forEach(chip=>chip.addEventListener('click',()=>{
     const id=chip.dataset.dsid;
     const todayDone=dailyStackToday();
-    todayDone[id]=!todayDone[id];
-    if(!todayDone[id])delete todayDone[id];
+    if(dailyStackDone(todayDone,id)){
+      delete todayDone[id];
+      if(id==='instrument_daily'){delete todayDone.melodics;delete todayDone.guitar;}
+      if(id==='voice_body'){delete todayDone.uiro_plank;delete todayDone.stretch_pole;}
+    }else todayDone[id]=true;
     recordDay();save();render();
   }));
   const detail=$('#dailyStackDetail');
@@ -1438,6 +1927,67 @@ function mergeDB(remote){
     });
   }
 
+  // Merge Command Home checks across devices.
+  if(remote.commandLog&&typeof remote.commandLog==='object'){
+    if(!local.commandLog)local.commandLog={};
+    Object.entries(remote.commandLog).forEach(([date,items])=>{
+      const before=JSON.stringify(local.commandLog[date]||{});
+      local.commandLog[date]={...(local.commandLog[date]||{}),...(items||{})};
+      if(JSON.stringify(local.commandLog[date])!==before)changed=true;
+    });
+  }
+
+  // Merge Secretary items by stable id. A recorded item always wins over queued.
+  if(Array.isArray(remote.secretaryInbox)){
+    if(!Array.isArray(local.secretaryInbox))local.secretaryInbox=[];
+    const secretaryById=new Map(local.secretaryInbox.map(item=>[item.id,item]));
+    remote.secretaryInbox.forEach(item=>{
+      if(!item?.id)return;
+      const current=secretaryById.get(item.id);
+      if(!current)secretaryById.set(item.id,item);
+      else if(current.status!=='recorded'&&item.status==='recorded')secretaryById.set(item.id,item);
+    });
+    const secretaryMerged=[...secretaryById.values()].sort((a,b)=>(a.created||'').localeCompare(b.created||''));
+    if(JSON.stringify(secretaryMerged)!==JSON.stringify(local.secretaryInbox)){
+      local.secretaryInbox=secretaryMerged;
+      changed=true;
+    }
+  }
+
+  // Merge deferred agent requests by stable id. Processed responses always win.
+  if(Array.isArray(remote.agentInbox)){
+    if(!Array.isArray(local.agentInbox))local.agentInbox=[];
+    const rank={queued:1,recorded:2};
+    const agentById=new Map(local.agentInbox.map(item=>[item.id,item]));
+    remote.agentInbox.forEach(item=>{
+      if(!item?.id)return;
+      const current=agentById.get(item.id);
+      if(!current)agentById.set(item.id,item);
+      else if((rank[item.status]||0)>(rank[current.status]||0))agentById.set(item.id,item);
+      else if((rank[item.status]||0)===(rank[current.status]||0)&&String(item.updated||'')>String(current.updated||''))agentById.set(item.id,item);
+    });
+    const agentMerged=[...agentById.values()].sort((a,b)=>String(a.created||'').localeCompare(String(b.created||''))).slice(-200);
+    if(JSON.stringify(agentMerged)!==JSON.stringify(local.agentInbox)){local.agentInbox=agentMerged;changed=true;}
+  }
+
+  // Current Sprint and AI answers are derived caches, never a second SSoT.
+  if(remote.currentSprint&&(!local.currentSprint||Number(remote.currentSprint.updated_at||0)>Number(local.currentSprint.updated_at||0))){
+    local.currentSprint=remote.currentSprint;changed=true;
+  }
+  if(remote.feedbackAgentLast&&(!local.feedbackAgentLast||String(remote.feedbackAgentLast.id||'')>String(local.feedbackAgentLast.id||''))){
+    local.feedbackAgentLast=remote.feedbackAgentLast;changed=true;
+  }
+  if(remote.coachAnswerLast&&(!local.coachAnswerLast||String(remote.coachAnswerLast.recorded_at||'')>String(local.coachAnswerLast.recorded_at||''))){
+    local.coachAnswerLast=remote.coachAnswerLast;changed=true;
+  }
+
+  // Coach state is derived from the Obsidian SSoT. Keep the newest computed copy
+  // so the phone can display it even when the Mac bridge is offline.
+  if(remote.coachState&&(!local.coachState||String(remote.coachState.generated_at||'')>String(local.coachState.generated_at||''))){
+    local.coachState=remote.coachState;
+    changed=true;
+  }
+
   // Merge Ops Brief: per date, union checked items
   if(remote.opsBrief&&typeof remote.opsBrief==='object'){
     if(!local.opsBrief)local.opsBrief={log:{}};
@@ -1522,6 +2072,8 @@ async function syncPull(){
       localStorage.setItem(DB_KEY,JSON.stringify(DB));
       lastSyncHash=dbHash();
       render();
+      setTimeout(flushSecretaryQueue,0);
+      setTimeout(flushAgentQueue,0);
       await syncPush(true);
     }else{
       lastSyncHash=dbHash();
@@ -1546,11 +2098,12 @@ async function syncPush(immediate){
   }catch{ss('ng');}
 }
 
-function save(){saveDB();syncPush();}
+function save(){saveDB();syncPush();scheduleCoachSnapshot();}
 
 // Auto-sync: poll every 30s + on tab focus
 setInterval(()=>{if(!document.hidden)syncPull();},30000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)syncPull();});
+setInterval(()=>{if(!document.hidden)flushAgentQueue();},30000);
 
 // ── YouTube Auto KPI ──
 function ytConf(){
@@ -2167,6 +2720,10 @@ function render(){
   if(insights.length){ib.style.display='block';ib.innerHTML=insights.slice(0,5).join('<br>');}
   else{ib.style.display='none';}
 
+  renderTrajectoryBoard();
+  renderPdcaCycle();
+  renderCommandHome();
+  renderSecretaryCapture();
   renderDailyStack();
 
   // Focus
@@ -2810,20 +3367,21 @@ function openModal(type,extra){
   $('#mSave').textContent='保存';
   if(type==='dailyStack'){
     const done=dailyStackToday();
-    const rows=DAILY_STACK.map(item=>{
-      const isDone=!!done[item.id];
+    const rows=dailyStackItems().map(item=>{
+      const isDone=dailyStackDone(done,item.id);
       const streakN=dailyStackStreak(item.id);
+      const weekN=dailyStackWeekCount(item.id);
       return `<div style="border:1px solid rgba(255,255,255,.07);border-radius:8px;padding:.45rem .55rem;margin-bottom:.35rem;background:${isDone?'rgba(106,191,138,.07)':'var(--s1)'}">
         <div style="display:flex;justify-content:space-between;gap:.4rem;align-items:baseline">
           <div style="font-size:.65rem;font-weight:700;color:var(--t1)">${isDone?'✓ ':''}${item.title}</div>
-          <div style="font-size:.42rem;color:${item.core?'var(--gold)':'var(--t3)'}">${item.core?'Core':'Long'}${streakN>=2?' · '+streakN+'日':''}</div>
+          <div style="font-size:.42rem;color:var(--gold)">直近7日 ${weekN}/7${streakN>=2?' · '+streakN+'日連続':''}</div>
         </div>
         <div style="font-size:.48rem;color:var(--t3);line-height:1.6;margin-top:.18rem">${item.detail}</div>
       </div>`;
     }).join('');
-    $('#mTitle').textContent='Daily Stack';
+    $('#mTitle').textContent='North Star Rail';
     $('#mFields').innerHTML=`
-      <div style="font-size:.5rem;color:var(--t3);line-height:1.7;margin-bottom:.55rem">10ヶ月後のJBG録音演習で「おっ、うまい」と言われる声と、長期的に効く楽器の土台を作る。キツい日はCoreだけでOK。</div>
+      <div style="font-size:.5rem;color:var(--t3);line-height:1.7;margin-bottom:.55rem">見るのは4本だけ。作品→英語→声・身体→今日の楽器。最低量で毎日つなぎ、補助練習が作品制作を追い越さないようにする。</div>
       <div class="mf"><label>JBG録音演習の目標日</label><input type="date" id="dsTarget" value="${DB.dailyStack?.targetDate||'2027-05-01'}"></div>
       ${rows}`;
     $('#mSave').onclick=()=>{
@@ -3299,6 +3857,10 @@ $('#ftr').textContent=`Day ${dayN}`;
 // ログ基盤：起動時にスナップショット・評価・提案ログ
 snapshotIfNeeded();
 evaluateSuggestions();
+fetchCurrentSprint();
+fetchCoachState();
+flushSecretaryQueue();
+flushAgentQueue();
 // 提案ログ：今週の主要提案を記録
 (function seedSuggestions(){
   const G=GOALS();
@@ -3446,6 +4008,10 @@ $('#btnWeeklyCopy').addEventListener('click',()=>{
 })();
 
 render();
+setTimeout(flushSecretaryQueue,800);
+setTimeout(flushAgentQueue,1000);
+setTimeout(syncCoachSnapshot,1200);
+setTimeout(fetchCoachState,2200);
 syncPull();
 fetchYT();
 fetchNN();
