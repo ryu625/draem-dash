@@ -729,7 +729,8 @@ function safePct(current,target){
 }
 const MUSIC_CATS=['🎵作曲','🎛️MIX','🎬MV','🎤ボーカル','🚀リリース'];
 const DREAM_DATE=new Date('2029-02-11');
-const COACH_BRIDGE=(location.port==='8791'||location.hostname.endsWith('.ts.net'))
+const IS_LOCAL_COACH=(location.port==='8791'||location.hostname.endsWith('.ts.net'));
+const COACH_BRIDGE=IS_LOCAL_COACH
   ?location.origin
   :'http://127.0.0.1:8791';
 const COMMAND_FOCUS={
@@ -1219,7 +1220,7 @@ async function fetchCoachHealth(){
     const res=await fetch(`${COACH_BRIDGE}/api/health?t=${Date.now()}`,{cache:'no-store'});
     if(!res.ok)throw 0;
     const payload=await res.json();
-    if(payload.queue_enabled){DB.alwaysOnEnabled=true;saveDB();renderCommandHome();}
+    if(payload.queue_enabled){localSyncEnabled=true;DB.alwaysOnEnabled=true;saveDB();renderCommandHome();}
   }catch{}
 }
 
@@ -1748,7 +1749,7 @@ processRecurring();
 const GK='draem_gist';
 const YT_KEY='draem_yt';
 const NN_KEY='draem_nn';
-let lastSyncHash='',syncBusy=false;
+let lastSyncHash='',syncBusy=false,localSyncEnabled=false;
 function setCookie(k,v,days){document.cookie=`${k}=${encodeURIComponent(v)};max-age=${days*86400};path=/;SameSite=Strict`;}
 function getCookie(k){const m=document.cookie.match(new RegExp('(?:^|;\\s*)'+k+'=([^;]*)'));return m?decodeURIComponent(m[1]):null;}
 function readJSONCookie(k){try{return JSON.parse(getCookie(k)||'null')||{}}catch{return{}}}
@@ -2064,7 +2065,13 @@ async function initSyncSettings(){
   restoreApiFromDB();
   const c=gc();
   const b=$('#gistWarnBanner');
-  if(c.id&&c.token){
+  if(IS_LOCAL_COACH){
+    try{
+      const health=await fetch(`${COACH_BRIDGE}/api/health?t=${Date.now()}`,{cache:'no-store'}).then(r=>r.ok?r.json():null);
+      localSyncEnabled=!!health?.queue_enabled;
+    }catch{localSyncEnabled=false;}
+  }
+  if(localSyncEnabled||(c.id&&c.token)){
     if(b)b.style.display='none';
     ss('wait');
     syncPull();
@@ -2075,16 +2082,40 @@ async function initSyncSettings(){
 }
 initSyncSettings();
 
+async function readSyncedDashboard(){
+  if(localSyncEnabled){
+    const r=await fetch(`${COACH_BRIDGE}/api/sync/data?t=${Date.now()}`,{cache:'no-store'});
+    if(!r.ok)throw new Error('local sync unavailable');
+    const payload=await r.json();
+    return payload.data;
+  }
+  const c=gc();
+  if(!c.id||!c.token)throw new Error('sync is not configured');
+  const r=await fetch('https://api.github.com/gists/'+c.id,{headers:{'Authorization':'token '+c.token,'If-None-Match':''}});
+  if(!r.ok)throw new Error('Gist sync unavailable');
+  const g=await r.json();
+  return JSON.parse(g.files['draem.json'].content);
+}
+
+async function writeSyncedDashboard(payload){
+  if(localSyncEnabled){
+    const r=await fetch(`${COACH_BRIDGE}/api/sync/data`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({data:payload})});
+    if(!r.ok)throw new Error('local sync unavailable');
+    return;
+  }
+  const c=gc();
+  if(!c.id||!c.token)throw new Error('sync is not configured');
+  const backupKey=`draem_backup_${todayStr}.json`;
+  const r=await fetch('https://api.github.com/gists/'+c.id,{method:'PATCH',headers:{'Authorization':'token '+c.token,'Content-Type':'application/json'},body:JSON.stringify({files:{'draem.json':{content:JSON.stringify(payload)},[backupKey]:{content:JSON.stringify(payload)}}})});
+  if(!r.ok)throw new Error('Gist同期に失敗: '+r.status);
+}
+
 async function syncPull(){
-  const c=gc();if(!c.id||!c.token)return;
+  const c=gc();if(!localSyncEnabled&&(!c.id||!c.token))return;
   if(syncBusy)return;syncBusy=true;
   ss('wait');
   try{
-    const r=await fetch('https://api.github.com/gists/'+c.id,{headers:{'Authorization':'token '+c.token,'If-None-Match':''}});
-    if(r.status===304){ss('ok');syncBusy=false;return;}
-    if(!r.ok)throw 0;
-    const g=await r.json();
-    const rm=JSON.parse(g.files['draem.json'].content);
+    const rm=await readSyncedDashboard();
     const changed=mergeDB(rm);
     // リモートにapiSettingsがあればlocalStorageに復元
     if(rm.apiSettings)restoreApiFromDB();
@@ -2107,14 +2138,12 @@ async function syncPull(){
 
 let st=null;
 async function syncPush(immediate){
-  const c=gc();if(!c.id||!c.token)return;
+  const c=gc();if(!localSyncEnabled&&(!c.id||!c.token))return;
   if(!immediate){clearTimeout(st);st=setTimeout(()=>syncPush(true),1200);return;}
   ss('wait');
   try{
-    const backupKey=`draem_backup_${todayStr}.json`;
     const payload=syncPayload();
-    const r=await fetch('https://api.github.com/gists/'+c.id,{method:'PATCH',headers:{'Authorization':'token '+c.token,'Content-Type':'application/json'},body:JSON.stringify({files:{'draem.json':{content:JSON.stringify(payload)},[backupKey]:{content:JSON.stringify(payload)}}})});
-    if(!r.ok)throw new Error('Gist同期に失敗: '+r.status);
+    await writeSyncedDashboard(payload);
     lastSyncHash=dbHash();
     ss('ok');
   }catch{ss('ng');}
@@ -4171,7 +4200,7 @@ if(_dfbBtn) _dfbBtn.addEventListener('click', () => {
 
 if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js');
 const _syncDot=$('#syncDot');
-if(_syncDot)_syncDot.addEventListener('click',()=>{const c=gc();if(!c.id||!c.token){openModal('sync');}else{syncPull();}});
+if(_syncDot)_syncDot.addEventListener('click',()=>{const c=gc();if(!localSyncEnabled&&(!c.id||!c.token)){openModal('sync');}else{syncPull();}});
 </script>
 </body>
 </html>
