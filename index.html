@@ -1289,6 +1289,24 @@ function renderPdcaCycle(){
   });
 }
 
+function alwaysOnButtonHtml(registerHere){
+  if(!registerHere)return '';
+  return `<button class="cmd-btn ${DB.alwaysOnEnabled?'done':''}" id="enableAlwaysOn" style="margin-top:.38rem;width:100%">${DB.alwaysOnEnabled?'✓ 常時利用 有効':'常時利用を有効化'}</button>`;
+}
+
+function bindAlwaysOnButton(){
+  const enableAlwaysOn=$('#enableAlwaysOn');
+  if(!enableAlwaysOn||DB.alwaysOnEnabled)return;
+  enableAlwaysOn.addEventListener('click',async()=>{
+    enableAlwaysOn.disabled=true;enableAlwaysOn.textContent='安全に登録中…';
+    const c=gc();
+    try{
+      await bridgePost('/api/sync/register',{gist_id:c.id,token:c.token});
+      DB.alwaysOnEnabled=true;save();renderCommandHome();
+    }catch{enableAlwaysOn.disabled=false;enableAlwaysOn.textContent='登録に失敗 · 再試行';}
+  });
+}
+
 function renderCommandHome(){
   const el=$('#commandHome');if(!el)return;
   const sprint=DB.currentSprint;
@@ -1304,7 +1322,7 @@ function renderCommandHome(){
       <div class="sprint-frozen"><b>Frozen until 8/24</b><br>${frozen.map(esc).join(' / ')}</div>
       ${corrections.length?`<div class="correction-note">訂正待ち: ${corrections.map(c=>`${esc(c.target)} → ${esc(c.corrected)}`).join(' / ')}</div>`:''}
       <div class="sprint-controls"><select class="capacity-select" id="capacityMode"><option value="unknown">今日の稼働: 未設定</option><option value="busy">忙しい</option><option value="normal">通常</option><option value="open">余裕あり</option></select></div>
-      <div class="feedback-agent"><div class="feedback-agent-head"><div class="feedback-agent-title">Feedback Agent</div><div class="feedback-agent-note">「これ違う」をここへ</div></div><div class="feedback-agent-row"><textarea class="feedback-agent-input" id="feedbackAgentInput" placeholder="例：Aion MVは茶花さんへ依頼済みで、構図とサビ演出も決まっている。未着手なのはAEだけ"></textarea><button class="feedback-agent-btn" id="feedbackAgentSend">AIに伝える</button></div>${DB.feedbackAgentLast?`<div class="feedback-agent-result ${DB.feedbackAgentLast.queued?'waiting':''}">${esc(DB.feedbackAgentLast.reply||'保存しました')}<br><b>${DB.feedbackAgentLast.queued?'AI処理待ち':DB.feedbackAgentLast.applied?'表示へ反映済み':'正本整理待ちとして保存'}</b></div>`:''}${agentQueuePending()?`<div class="agent-queue-status">${agentQueuePending()}件を端末・同期箱に保存済み。Mac復帰時に自動処理します。</div>`:''}${registerHere?`<button class="cmd-btn ${DB.alwaysOnEnabled?'done':''}" id="enableAlwaysOn" style="margin-top:.38rem;width:100%">${DB.alwaysOnEnabled?'✓ 常時利用 有効':'常時利用を有効化'}</button>`:''}</div>
+      <div class="feedback-agent"><div class="feedback-agent-head"><div class="feedback-agent-title">Feedback Agent</div><div class="feedback-agent-note">「これ違う」をここへ</div></div><div class="feedback-agent-row"><textarea class="feedback-agent-input" id="feedbackAgentInput" placeholder="例：Aion MVは茶花さんへ依頼済みで、構図とサビ演出も決まっている。未着手なのはAEだけ"></textarea><button class="feedback-agent-btn" id="feedbackAgentSend">AIに伝える</button></div>${DB.feedbackAgentLast?`<div class="feedback-agent-result ${DB.feedbackAgentLast.queued?'waiting':''}">${esc(DB.feedbackAgentLast.reply||'保存しました')}<br><b>${DB.feedbackAgentLast.queued?'AI処理待ち':DB.feedbackAgentLast.applied?'表示へ反映済み':'正本整理待ちとして保存'}</b></div>`:''}${agentQueuePending()?`<div class="agent-queue-status">${agentQueuePending()}件を端末・同期箱に保存済み。Mac復帰後、Codex/Claude開始時に自動反映します。</div>`:''}${alwaysOnButtonHtml(registerHere)}</div>
       <div class="cmd-actions"><button class="cmd-btn primary" id="cmdStart">本線に着手する</button><button class="cmd-btn" id="cmdMore">詳細を見る</button></div>
     </div>`;
     const cap=$('#capacityMode');if(cap){cap.value=DB.capacityLog[todayStr]||'unknown';cap.addEventListener('change',()=>{DB.capacityLog[todayStr]=cap.value;save();scheduleCoachSnapshot();});}
@@ -1316,14 +1334,7 @@ function renderCommandHome(){
       DB.feedbackAgentLast={reply:'フィードバックを保存しました。Mac接続時にAIが確認します。',applied:false,queued:true,id};
       save();renderCommandHome();await flushAgentQueue();
     });
-    const enableAlwaysOn=$('#enableAlwaysOn');if(enableAlwaysOn&&!DB.alwaysOnEnabled)enableAlwaysOn.addEventListener('click',async()=>{
-      enableAlwaysOn.disabled=true;enableAlwaysOn.textContent='安全に登録中…';
-      const c=gc();
-      try{
-        await bridgePost('/api/sync/register',{gist_id:c.id,token:c.token});
-        DB.alwaysOnEnabled=true;save();renderCommandHome();
-      }catch{enableAlwaysOn.disabled=false;enableAlwaysOn.textContent='登録に失敗 · 再試行';}
-    });
+    bindAlwaysOnButton();
     const start=$('#cmdStart');if(start)start.addEventListener('click',()=>{if(!DB.commandLog[todayStr])DB.commandLog[todayStr]={};DB.commandLog[todayStr].aion_current_sprint=true;dailyStackToday().northstar_make=true;recordDay();save();render();});
     const more=$('#cmdMore');if(more)more.addEventListener('click',()=>{const d=$('#dashboardMore');if(d){d.open=true;d.scrollIntoView({behavior:'smooth',block:'start'});}});
     return;
@@ -1342,6 +1353,7 @@ function renderCommandHome(){
       <div class="cmd-meta-card"><div class="cmd-meta-k">本線の状態</div><div class="cmd-meta-v">${stopped}日停止 · 期限まで${Math.max(0,dueLeft)}日</div></div>
       <div class="cmd-meta-card"><div class="cmd-meta-k">次の締切</div><div class="cmd-meta-v">${upcoming.map(m=>`${milestoneDateLabel(m.date)} ${m.title}`).join('<br>')||'未設定'}</div></div>
     </div>
+    ${alwaysOnButtonHtml(registerHere)}
     <div class="cmd-actions"><button class="cmd-btn primary ${started?'done':''}" id="cmdStart">${started?'✓ 着手済み':'本線に着手する'}</button><button class="cmd-btn" id="cmdMore">詳細を見る</button></div>
   </div>`;
   const start=$('#cmdStart');
@@ -1352,6 +1364,7 @@ function renderCommandHome(){
     if(!started)day.northstar_make=true;
     recordDay();save();render();
   });
+  bindAlwaysOnButton();
   const more=$('#cmdMore');
   if(more)more.addEventListener('click',()=>{const d=$('#dashboardMore');if(d){d.open=true;d.scrollIntoView({behavior:'smooth',block:'start'});}});
 }
