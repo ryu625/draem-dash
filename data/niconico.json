@@ -16,7 +16,7 @@
       "isPremium": true,
       "registeredVersion": "(to i)",
       "followeeCount": 27,
-      "followerCount": 25,
+      "followerCount": 26,
       "userLevel": {
         "currentLevel": 12,
         "nextLevelThresholdExperience": 600,
@@ -52,6 +52,6 @@
   },
   "videoStats": {
     "videoCount": 6,
-    "totalViews": 1315
+    "totalViews": 1317
   }
 }
