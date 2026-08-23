@@ -16,12 +16,12 @@
       "isPremium": true,
       "registeredVersion": "(to i)",
       "followeeCount": 27,
-      "followerCount": 27,
+      "followerCount": 28,
       "userLevel": {
         "currentLevel": 12,
         "nextLevelThresholdExperience": 600,
         "nextLevelExperience": 3400,
-        "currentLevelExperience": 20
+        "currentLevelExperience": 208
       },
       "userChannel": null,
       "isNicorepoReadable": true,
@@ -52,6 +52,6 @@
   },
   "videoStats": {
     "videoCount": 6,
-    "totalViews": 1386
+    "totalViews": 1387
   }
 }
