@@ -16,12 +16,12 @@
       "isPremium": true,
       "registeredVersion": "(to i)",
       "followeeCount": 27,
-      "followerCount": 28,
+      "followerCount": 27,
       "userLevel": {
         "currentLevel": 12,
         "nextLevelThresholdExperience": 600,
         "nextLevelExperience": 3400,
-        "currentLevelExperience": 208
+        "currentLevelExperience": 20
       },
       "userChannel": null,
       "isNicorepoReadable": true,
