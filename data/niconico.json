@@ -18,10 +18,10 @@
       "followeeCount": 27,
       "followerCount": 28,
       "userLevel": {
-        "currentLevel": 12,
-        "nextLevelThresholdExperience": 600,
-        "nextLevelExperience": 3400,
-        "currentLevelExperience": 20
+        "currentLevel": 11,
+        "nextLevelThresholdExperience": 500,
+        "nextLevelExperience": 2800,
+        "currentLevelExperience": 332
       },
       "userChannel": null,
       "isNicorepoReadable": true,
